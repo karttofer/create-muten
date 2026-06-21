@@ -77,9 +77,7 @@ try {
   # stylesheet choice: rename the file, fix the import, and request the sass devDependency.
   $scssDep = ""
   if ($Style -eq "scss") {
-    Rename-Item (Join-Path $Name "src\styles.css") "styles.scss"
-    $main = Join-Path $Name "src\main.js"
-    [System.IO.File]::WriteAllText($main, ((Get-Content $main -Raw) -replace 'styles\.css', 'styles.scss'))
+    Rename-Item (Join-Path $Name "src\styles.css") "styles.scss"   # the muten vite plugin auto-detects .css vs .scss
     $scssDep = ",`n  `"devDependencies`": {`n    `"sass`": `"^1.101.0`"`n  }"
   }
 

@@ -85,9 +85,7 @@ cp -R "$template" "$name"
 # stylesheet choice: rename the file, fix the import, and request the sass devDependency.
 scss_dep=""
 if [ "$style" = "scss" ]; then
-  mv "$name/src/styles.css" "$name/src/styles.scss"
-  sed 's/styles\.css/styles.scss/' "$name/src/main.js" > "$name/src/main.js.tmp"
-  mv "$name/src/main.js.tmp" "$name/src/main.js"
+  mv "$name/src/styles.css" "$name/src/styles.scss"   # the muten vite plugin auto-detects .css vs .scss
   scss_dep=',
   "devDependencies": {
     "sass": "^1.101.0"
