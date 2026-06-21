@@ -8,7 +8,7 @@
     "lint": "muten lint"
   },
   "dependencies": {
-    "@karttofer/muten": "^0.0.1",
+    "muten": "^0.0.1",
     "vite": "^8.0.16"
   }
 }
