@@ -1,1 +1,6 @@
+# dependencies (create-muten itself has none, but a clone might add tooling)
 node_modules/
+
+# OS / editor junk
+.DS_Store
+*.log
