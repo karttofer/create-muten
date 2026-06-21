@@ -94,6 +94,8 @@ async function main() {
   cpSync(TEMPLATE, target, { recursive: true });
   const ignore = join(target, '_gitignore');                        // npm strips a real .gitignore on publish
   if (existsSync(ignore)) renameSync(ignore, join(target, '.gitignore'));
+  const npmrc = join(target, '_npmrc');                             // points @karttofer at GitHub Packages
+  if (existsSync(npmrc)) renameSync(npmrc, join(target, '.npmrc'));
   if (style === 'scss') renameSync(join(target, 'src', 'styles.css'), join(target, 'src', 'styles.scss')); // plugin auto-detects
 
   const pkgPath = join(target, 'package.json');

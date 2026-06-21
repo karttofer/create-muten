@@ -1,10 +1,13 @@
 {
-  "name": "create-muten",
+  "name": "@karttofer/create-muten",
   "version": "0.0.1",
   "description": "Scaffold a new Muten app.",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/karttofer/create-muten.git"
+  },
+  "publishConfig": {
+    "registry": "https://npm.pkg.github.com"
   },
   "license": "MIT",
   "type": "module",
