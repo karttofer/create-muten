@@ -2,6 +2,10 @@
   "name": "create-muten",
   "version": "0.0.1",
   "description": "Shell scaffolder for a new Muten app (create-muten.sh / create-muten.ps1).",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/karttofer/create-muten.git"
+  },
   "license": "MIT",
   "keywords": ["muten", "create-muten", "scaffold", "starter", "cli", "frontend"],
   "files": ["create-muten.sh", "create-muten.ps1", "template"]

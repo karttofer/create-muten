@@ -104,7 +104,7 @@ cat > "$name/package.json" <<EOF
     "lint": "muten lint"
   },
   "dependencies": {
-    "muten": "^0.0.1",
+    "muten": "github:karttofer/muten",
     "vite": "^8.0.16"
   }$scss_dep
 }
