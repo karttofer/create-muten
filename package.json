@@ -1,0 +1,7 @@
+{
+  "name": "create-muten",
+  "version": "0.0.1",
+  "description": "Shell scaffolder for a new Muten app (create-muten.sh / create-muten.ps1).",
+  "files": ["create-muten.sh", "create-muten.ps1", "template"],
+  "license": "MIT"
+}
