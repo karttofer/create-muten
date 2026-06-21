@@ -6,6 +6,9 @@
     "type": "git",
     "url": "git+https://github.com/karttofer/create-muten.git"
   },
+  "publishConfig": {
+    "access": "public"
+  },
   "license": "MIT",
   "type": "module",
   "bin": {
