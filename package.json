@@ -14,6 +14,10 @@
   "bin": {
     "create-muten": "index.js"
   },
+  "dependencies": {
+    "@clack/prompts": "^0.7.0",
+    "picocolors": "^1.0.1"
+  },
   "keywords": ["muten", "create-muten", "scaffold", "starter", "cli", "frontend"],
   "files": ["index.js", "template"]
 }

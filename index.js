@@ -1,86 +1,86 @@
 #!/usr/bin/env node
-// create-muten — scaffold a new Muten app. Zero runtime deps (Node built-ins only).
+// create-muten — scaffold a new Muten app, with modern interactive prompts (@clack/prompts).
 //
-//   npm create muten@latest [name]              (when published to npm)
-//   npx github:karttofer/create-muten [name]    (from GitHub, not yet public)
-//   create-muten [name] [--css|--scss] [--pm npm|pnpm|yarn|bun] [--no-install]
+//   npm create muten@latest [name]              (or: npx create-muten)
+//   create-muten [name] [--css|--scss|--tailwind] [--pm npm|pnpm|yarn|bun] [--no-install]
 //
-// Interactive in a TTY (prompts for name, stylesheet, package manager); flags / non-TTY make it
-// scriptable. The package manager defaults to the one that invoked us. Then it scaffolds and,
-// unless --no-install, runs `<pm> install` + `<pm> run dev`.
+// Interactive in a TTY (styled prompts: name, styling, package manager); flags / non-TTY make it
+// scriptable. It scaffolds and — unless declined — runs `<pm> install` + `<pm> run dev`.
 import { cpSync, existsSync, readFileSync, writeFileSync, renameSync } from 'node:fs';
 import { join, dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { createInterface } from 'node:readline/promises';
 import { spawnSync } from 'node:child_process';
+import { intro, outro, text, select, confirm, isCancel, cancel, note } from '@clack/prompts';
+import color from 'picocolors';
 
 const SELF = dirname(fileURLToPath(import.meta.url));
 const TEMPLATE = join(SELF, 'template');
 const PKG = JSON.parse(readFileSync(join(SELF, 'package.json'), 'utf8'));
 const PMS = ['npm', 'pnpm', 'yarn', 'bun'];
+const STYLES = ['css', 'scss', 'tailwind'];
 
-const BANNER = [
-  '',
-  '                  _',
-  '  _ __ ___  _   _| |_ ___ _ __',
-  " | '_ ` _ \\| | | | __/ _ \\ '_ \\",
-  ' | | | | | | |_| | ||  __/ | | |',
-  ' |_| |_| |_|\\__,_|\\__\\___|_| |_|',
-  '',
-  ' AI-first frontend framework',
-  '',
-].join('\n');
+// the starter reset — written by the CLI so the template stays pure .muten (no default styles file).
+const RESET = `/* Your look. Muten ships STRUCTURE + LAYOUT (style() tokens); the LOOK lives here, via class("…"). */
+* { box-sizing: border-box; }
+body { margin: 0; font: 15px/1.55 system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif; color: #111; }
+h1, h2, h3, h4, h5, h6, p { margin: 0; }
+h1 { font-size: 32px; font-weight: 700; letter-spacing: -.02em; }
+.stack { display: flex; flex-direction: column; }
+img { max-width: 100%; display: block; }
+a { color: inherit; text-decoration: none; }
+`;
+// Tailwind v4: one @import + the @tailwindcss/vite plugin (no config file). Preflight does the reset;
+// .stack is a Muten layout primitive Tailwind doesn't know about, so it stays.
+const TAILWIND_STYLES = `@import "tailwindcss";
 
-// Which PM launched us? npm/pnpm/yarn/bun all set npm_config_user_agent (e.g. "pnpm/8.6 ...").
-// Detecting it is what create-vue/vite do — the idiomatic default, no guessing.
-const detectPM = () => {
-  const ua = process.env.npm_config_user_agent || '';
-  return PMS.find((p) => ua.startsWith(p + '/')) || 'npm';
+/* Muten layout primitive Tailwind doesn't define */
+.stack { display: flex; flex-direction: column; }
+`;
+const TAILWIND_VITE = `import muten from '@muten/core/vite-plugin-muten.js';
+import tailwindcss from '@tailwindcss/vite';
+
+export default {
+  plugins: [muten(), tailwindcss()],
 };
+`;
+const TAILWIND_NOTE = `
+## Styling: Tailwind CSS v4 (installed)
+This app has Tailwind. Write the LOOK with \`class("…")\` using Tailwind utilities, e.g.
+\`class("flex gap-4 rounded-lg bg-zinc-900 text-white")\`. \`style()\` still owns Muten's layout/
+typography tokens — don't put Tailwind classes in \`style()\`, and don't put layout in \`class()\`.
+`;
 
-// Safe folder name: starts alphanumeric, then [A-Za-z0-9._-]. Blocks path traversal / odd input.
+// Which PM launched us? npm/pnpm/yarn/bun set npm_config_user_agent — the idiomatic default.
+const detectPM = () => { const ua = process.env.npm_config_user_agent || ''; return PMS.find((p) => ua.startsWith(p + '/')) || 'npm'; };
 const validName = (n) => /^[A-Za-z0-9][A-Za-z0-9._-]*$/.test(n);
-const die = (msg) => { console.error(msg); process.exit(1); };
+const keep = (v) => { if (isCancel(v)) { cancel('Cancelled.'); process.exit(0); } return v; };
 
 async function main() {
-  // args: one positional name + optional flags (so the CLI is also scriptable / CI-friendly)
   const argv = process.argv.slice(2);
   const has = (f) => argv.includes(f);
   const val = (f) => { const i = argv.indexOf(f); return i >= 0 ? argv[i + 1] : undefined; };
   if (has('-v') || has('--version')) { console.log(PKG.version); return; }
-  console.log(BANNER);
-  if (has('-h') || has('--help')) { console.log('  Usage: create-muten [name] [--css|--scss] [--pm npm|pnpm|yarn|bun] [--no-install]\n'); return; }
+  if (has('-h') || has('--help')) { console.log('Usage: create-muten [name] [--css|--scss|--tailwind] [--pm npm|pnpm|yarn|bun] [--no-install]'); return; }
 
   let name = argv.filter((a, i) => !a.startsWith('-') && argv[i - 1] !== '--pm')[0];
-  let style = has('--scss') ? 'scss' : has('--css') ? 'css' : undefined;
+  let style = has('--tailwind') ? 'tailwind' : has('--scss') ? 'scss' : has('--css') ? 'css' : undefined;
   let pm = val('--pm');
   let install = has('--no-install') ? false : undefined;
-
-  if (name && !validName(name)) die(`Invalid name: "${name}" (letters, digits, . _ -)`);
-  if (pm && !PMS.includes(pm)) die(`Unknown package manager: "${pm}" (${PMS.join(', ')})`);
-
+  if (name && !validName(name)) { console.error(`Invalid name: "${name}" (letters, digits, . _ -)`); process.exit(1); }
+  if (pm && !PMS.includes(pm)) { console.error(`Unknown package manager: "${pm}" (${PMS.join(', ')})`); process.exit(1); }
   const dpm = detectPM();
 
-  // Prompt only with a real TTY — piped/CI input drops lines through readline, so there we use
-  // flags + defaults instead of hanging on a prompt.
+  // Styled prompts only with a real TTY (piped/CI input would hang); otherwise use flags + defaults.
   if (process.stdin.isTTY) {
-    const rl = createInterface({ input: process.stdin, output: process.stdout });
-    const ask = async (q, def) => (await rl.question(q)).trim() || def;
-    const pick = async (q, opts, def) => {
-      for (;;) {
-        const v = (await ask(q, def)).toLowerCase();
-        if (opts.includes(v)) return v;
-        console.log(`  Choose: ${opts.join(', ')}.`);
-      }
-    };
-    while (!name) {
-      const a = await ask('Project name: (muten-app) ', 'muten-app');
-      if (validName(a)) name = a; else console.log('  Letters, digits, . _ - (start alphanumeric).');
-    }
-    if (!style) style = await pick('Stylesheet? [css/scss] (css) ', ['css', 'scss'], 'css');
-    if (!pm) pm = await pick(`Package manager? [${PMS.join('/')}] (${dpm}) `, PMS, dpm);
-    if (install === undefined) install = (await ask('Install deps and start the dev server now? [Y/n] ', 'y')).toLowerCase() !== 'n';
-    rl.close();
+    intro(color.bgCyan(color.black(' create-muten ')) + color.dim('  the AI-first frontend framework'));
+    if (!name) name = keep(await text({ message: 'Project name', placeholder: 'muten-app', defaultValue: 'muten-app', validate: (v) => (v && !validName(v)) ? 'Use letters, digits, . _ - (start alphanumeric).' : undefined }));
+    if (!style) style = keep(await select({ message: 'Styling', options: [
+      { value: 'css', label: 'Plain CSS', hint: 'zero deps' },
+      { value: 'scss', label: 'SCSS', hint: 'adds sass' },
+      { value: 'tailwind', label: 'Tailwind CSS', hint: 'utility classes via class("…") — fastest to style' },
+    ] }));
+    if (!pm) pm = keep(await select({ message: 'Package manager', initialValue: dpm, options: PMS.map((p) => ({ value: p, label: p })) }));
+    if (install === undefined) install = keep(await confirm({ message: 'Install dependencies and start the dev server now?' }));
   }
   name = name || 'muten-app';
   style = style || 'css';
@@ -88,24 +88,37 @@ async function main() {
   if (install === undefined) install = false;
 
   const target = resolve(name);
-  if (existsSync(target)) die(`"${name}" already exists.`);
+  if (existsSync(target)) { (process.stdin.isTTY ? cancel : console.error)(`"${name}" already exists.`); process.exit(1); }
 
-  // scaffold from ./template
+  // scaffold from ./template (pure .muten) + apply the styling choice
   cpSync(TEMPLATE, target, { recursive: true });
-  const ignore = join(target, '_gitignore');                        // npm strips a real .gitignore on publish
+  const ignore = join(target, '_gitignore');
   if (existsSync(ignore)) renameSync(ignore, join(target, '.gitignore'));
-  if (style === 'scss') renameSync(join(target, 'src', 'styles.css'), join(target, 'src', 'styles.scss')); // plugin auto-detects
 
   const pkgPath = join(target, 'package.json');
   const pkg = JSON.parse(readFileSync(pkgPath, 'utf8'));
   pkg.name = name;
-  if (style === 'scss') pkg.devDependencies = { ...(pkg.devDependencies || {}), sass: '^1.101.0' };
+  const addDev = (deps) => { pkg.devDependencies = { ...(pkg.devDependencies || {}), ...deps }; };
+
+  if (style === 'tailwind') {
+    writeFileSync(join(target, 'src', 'styles.css'), TAILWIND_STYLES);
+    writeFileSync(join(target, 'vite.config.mjs'), TAILWIND_VITE);
+    addDev({ tailwindcss: '^4.0.0', '@tailwindcss/vite': '^4.0.0' });
+    const agents = join(target, '.claude', 'AGENTS.md');                 // tell the AI Tailwind is available
+    if (existsSync(agents)) writeFileSync(agents, readFileSync(agents, 'utf8') + TAILWIND_NOTE);
+  } else {
+    writeFileSync(join(target, 'src', style === 'scss' ? 'styles.scss' : 'styles.css'), RESET);
+    if (style === 'scss') addDev({ sass: '^1.101.0' });
+  }
   writeFileSync(pkgPath, JSON.stringify(pkg, null, 2) + '\n');
 
-  console.log(`\n  Created ${name}  (${style}, ${pm})\n`);
+  if (!install) {
+    if (process.stdin.isTTY) { note(`cd ${name}\n${pm} install\n${pm} run dev`, 'Next steps'); outro(color.green(`Created ${name}  (${style})`)); }
+    else console.log(`\n  Created ${name} (${style}, ${pm})\n  cd ${name} && ${pm} install && ${pm} run dev\n`);
+    return;
+  }
 
-  if (!install) { console.log(`  cd ${name}\n  ${pm} install\n  ${pm} run dev\n`); return; }
-
+  if (process.stdin.isTTY) outro(color.green(`Created ${name} (${style}) — installing with ${pm}…`));
   // PMs are .cmd shims on Windows → spawn needs shell:true to find them.
   const run = (a) => spawnSync(pm, a, { cwd: target, stdio: 'inherit', shell: process.platform === 'win32' });
   if (run(['install']).status === 0) run(['run', 'dev']);
