@@ -1,4 +1,0 @@
-# Keep the shell script LF so it runs on macOS/Linux even when cloned on Windows.
-# (A .sh checked out with CRLF fails with "bad interpreter".)
-*.sh text eol=lf
-*.ps1 text eol=crlf

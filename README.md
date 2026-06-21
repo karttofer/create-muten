@@ -1,46 +1,23 @@
 # create-muten
 
-Shell scaffolder for a new [Muten](../muten) app. It holds only the **template + the scripts**; the
-engine (`muten`) is a separate package the generated app installs as a dependency — the same split as
-`create-vue` ↔ `vue`.
-
-## Create an app
-
-**macOS / Linux** (or Git Bash on Windows):
+Scaffold a new [Muten](https://github.com/karttofer/muten) app.
 
 ```sh
-sh create-muten.sh
+npm create muten@latest            # when published to npm
+npx github:karttofer/create-muten  # from GitHub (not yet public)
 ```
 
-**Windows** (PowerShell):
+It prompts for:
 
-```powershell
-.\create-muten.ps1
-```
+- **project name**
+- **stylesheet** — CSS or SCSS
+- **package manager** — npm / pnpm / yarn / bun (default = the one you invoked it with)
 
-Both print the banner and prompt for the **project name** and the **stylesheet** (CSS or SCSS). Then:
+…then scaffolds the app and, if you accept, runs `<pm> install` + `<pm> run dev`.
 
-```sh
-cd my-app
-npm install      # pulls in `muten` (the engine) + vite  (+ sass, if you chose SCSS)
-npm run dev
-```
+The engine (`muten`) is a **separate** package the generated app installs as a dependency — the same
+split as `create-vue` ↔ `vue`. It's a Node CLI (not a shell script), so the command works the same on
+Windows and macOS.
 
-### Skip the prompts (CI / scripted)
-
-Pass the name and stylesheet as arguments:
-
-```sh
-sh create-muten.sh my-app scss
-.\create-muten.ps1 my-app css      # Windows
-```
-
-## Notes
-
-- **Two scripts** because a single `.sh` does not run on native Windows: `.sh` covers macOS/Linux,
-  `.ps1` covers Windows. Both do exactly the same work.
-- **Hardened name** — only `[A-Za-z0-9._-]`, must start alphanumeric. This blocks path traversal
-  (`../`), absolute paths, spaces and shell metacharacters; bad input is rejected, and a half-written
-  directory is removed if anything fails.
-- **SCSS** renames `src/styles.css` → `.scss`, fixes the import in `main.js`, and adds `sass` as a
-  devDependency. `package.json` is regenerated deterministically (no fragile text surgery).
+> Not on npm yet: the template depends on `github:karttofer/muten`, so a scaffolded app's
+> `<pm> install` pulls the engine straight from GitHub (its `prepare` step builds it).
