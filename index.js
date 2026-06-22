@@ -2,7 +2,7 @@
 // create-muten — scaffold a new Muten app, with modern interactive prompts (@clack/prompts).
 //
 //   npm create muten@latest [name]              (or: npx create-muten)
-//   create-muten [name] [--template basic|routing|full] [--css|--scss] [--tailwind] [--daisyui] [--svelte] [--react] [--pm npm|pnpm|yarn|bun] [--no-install]
+//   create-muten [name] [--template muten|react|svelte] [--css|--scss] [--tailwind] [--daisyui] [--vercel] [--tauri] [--pm npm|pnpm|yarn|bun] [--no-install]
 //
 // Stylesheet (CSS or SCSS) is the base; Tailwind is an optional add-on ON TOP of CSS (it's a styling
 // library, not a stylesheet replacement). Interactive in a TTY; flags / non-TTY make it scriptable.
@@ -54,7 +54,6 @@ const WELCOME_CSS = `
 .stat-l { color: #71717a; font-size: 12px; line-height: 1.45; margin-top: 6px; }
 .section { display: flex; flex-direction: column; gap: 14px; }
 .h2 { font-size: 22px; font-weight: 700; letter-spacing: -.02em; }
-.snippet { background: #18181b; color: #e4e4e7; border-radius: 14px; padding: 20px 22px; margin: 0; overflow-x: auto; white-space: pre; font: 13px/1.7 ui-monospace, 'SF Mono', Menlo, Consolas, monospace; }
 .note { color: #71717a; font-size: 13px; line-height: 1.55; }
 .cards { display: grid; grid-template-columns: repeat(2, 1fr); gap: 14px; }
 .card { border: 1px solid #e4e4e7; border-radius: 14px; padding: 18px; background: #fff; }
@@ -120,8 +119,9 @@ const TAURI_NOTE = (pm) => `
 This app also ships as a native desktop app via Tauri (\`src-tauri/\`). The SAME \`.muten\` frontend runs in
 an OS-webview window — build the UI exactly like the web app (routing works as-is: the webview runs the SPA,
 no server, no URL bar, no fallback needed).
-- \`${pm} run tauri dev\` — run the desktop app (hot-reloads the frontend).
-- \`${pm} run tauri build\` — native installer in \`src-tauri/target/release/bundle/\`.
+- \`${pm} run tauri:dev\` — run the desktop app (opens the native window; hot-reloads the frontend).
+- \`${pm} run tauri:build\` — standalone native installer in \`src-tauri/target/release/bundle/\` (frontend embedded, no server).
+- (\`${pm} run tauri\` alone does nothing — the Tauri CLI needs a subcommand like \`dev\`/\`build\`.)
 - Needs the **Rust toolchain** on the machine (https://rustup.rs) — Tauri compiles a small native shell. Not auto-installed.
 - Custom icon: \`${pm} run tauri icon path/to/logo.png\` regenerates \`src-tauri/icons/\`.
 `;
@@ -247,7 +247,8 @@ async function main() {
     conf.build.beforeBuildCommand = `${pm} run build`;
     writeFileSync(confPath, JSON.stringify(conf, null, 2) + '\n');
     addDev({ '@tauri-apps/cli': '^2.0.0' });
-    pkg.scripts = { ...pkg.scripts, tauri: 'tauri' };
+    // `tauri` alone errors (it needs a subcommand) → ship explicit run scripts so `tauri dev`/`build` are obvious.
+    pkg.scripts = { ...pkg.scripts, tauri: 'tauri', 'tauri:dev': 'tauri dev', 'tauri:build': 'tauri build' };
     appendAgents(TAURI_NOTE(pm));
   }
   writeFileSync(join(target, 'vite.config.mjs'), viteConfig({ tailwind, svelte, react })); // composed: muten + chosen plugins

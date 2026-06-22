@@ -1,6 +1,5 @@
 # The starter welcome page. Skin with class(…) + src/styles.css. Delete it and build your own — or just
-# ask your AI assistant; it has the full muten reference in .claude/. The code sample is a Custom component
-# (src/components/Snippet.js) because a .muten string can't hold the quotes/braces of muten source.
+# ask your AI assistant; it has the full muten reference in .claude/. Pure muten — no JS, no escape hatch.
 screen home
 
 Page class("welcome") {
@@ -17,12 +16,6 @@ Page class("welcome") {
       Stack class("stat") { Title "2.8 KB" h3 class("stat-n")  Text "muten ships, gzipped" class("stat-l") }
       Stack class("stat") { Title "5 to 21x" h3 class("stat-n")  Text "less JS than React, Vue, Svelte" class("stat-l") }
       Stack class("stat") { Title "0 KB" h3 class("stat-n")  Text "on a static page" class("stat-l") }
-    }
-
-    Stack class("section") {
-      Title "A whole page, in muten" h2 class("h2")
-      Custom Snippet
-      Text "Reactivity is automatic — read a state and only that spot re-renders. No hooks, no effects to wire." class("note")
     }
 
     Stack class("section") {
