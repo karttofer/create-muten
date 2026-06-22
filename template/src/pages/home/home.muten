@@ -1,9 +1,45 @@
-# A page = one .muten file; its folder name (home) is the route target from app.muten.
-# `Page` is the <main> landmark; lay it out with style() tokens, skin it with class("…").
+# The starter welcome page. Skin with class(…) + src/styles.css. Delete it and build your own — or just
+# ask your AI assistant; it has the full muten reference in .claude/. The code sample is a Custom component
+# (src/components/Snippet.js) because a .muten string can't hold the quotes/braces of muten source.
 screen home
 
-Page style(padding.xl, gap.md) {
-  Title "Hello, Muten"
-  Text "Edit src/pages/home/home.muten to build your first page."
-  Text "Add routes in src/app.muten; define your token scale in theme.muten."
+Page class("welcome") {
+  Stack class("wrap") {
+
+    Stack class("hero") {
+      Image "/muten.svg" alt "muten logo" class("logo")
+      Title "muten" class("brand")
+      Text "An AI-first frontend framework." class("tagline")
+      Text "You write small .muten files. muten compiles them to vanilla JS plus fine-grained signals — no virtual DOM, no runtime to ship. The language stays small and analyzable, so an AI can locate and mutate your app cheaply." class("lead")
+    }
+
+    Stack class("stats") {
+      Stack class("stat") { Title "2.8 KB" h3 class("stat-n")  Text "muten ships, gzipped" class("stat-l") }
+      Stack class("stat") { Title "5 to 21x" h3 class("stat-n")  Text "less JS than React, Vue, Svelte" class("stat-l") }
+      Stack class("stat") { Title "0 KB" h3 class("stat-n")  Text "on a static page" class("stat-l") }
+    }
+
+    Stack class("section") {
+      Title "A whole page, in muten" h2 class("h2")
+      Custom Snippet
+      Text "Reactivity is automatic — read a state and only that spot re-renders. No hooks, no effects to wire." class("note")
+    }
+
+    Stack class("section") {
+      Title "Where to go next" h2 class("h2")
+      Stack class("cards") {
+        Stack class("card") { Title "Edit this page" h3 class("card-title")  Text "src/pages/home/home.muten" class("card-text") }
+        Stack class("card") { Title "Add a route" h3 class("card-title")  Text "Map URLs to pages in src/app.muten" class("card-text") }
+        Stack class("card") { Title "Style it" h3 class("card-title")  Text "class(…) plus your CSS in src/styles.css — Tailwind optional" class("card-text") }
+        Stack class("card") { Title "Need React or Svelte?" h3 class("card-title")  Text "Drop a real component in as an island, lazy and code-split" class("card-text") }
+      }
+    }
+
+    Stack class("section") {
+      Title "Your AI already knows muten" h2 class("h2")
+      Text "The full language reference ships in this project under .claude — an AGENTS guide plus a Claude skill. Ask your assistant to build a page; it reads that instead of guessing." class("lead")
+      Text "More Claude skills: docs.claude.com — Claude Code, Skills." class("note")
+    }
+
+  }
 }

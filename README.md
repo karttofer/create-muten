@@ -60,34 +60,35 @@ In an interactive terminal it prompts for a few things (defaults in parentheses)
 | Prompt | Options | Default |
 |---|---|---|
 | **Project name** | any valid folder name | `muten-app` |
-| **Template** | `basic` / `routing` / `full` | `basic` |
-| **Stylesheet** | `css` / `scss` | `css` |
+| **Template** | `muten` / `muten + React` / `muten + Svelte` | `muten` |
+| **Styling** | `css` / `scss` | `css` |
 | **Add Tailwind CSS?** | `Y` / `n` (CSS only) | `n` |
 | **Add DaisyUI?** | `Y` / `n` (needs Tailwind) | `n` |
-| **Framework islands?** | `none` / `svelte` / `react` / `both` | `none` |
 | **Package manager** | `npm` / `pnpm` / `yarn` / `bun` | the one that launched it |
 | **Install deps and start dev now?** | `Y` / `n` | `Y` |
 
 Tailwind is an optional add-on **on top of** CSS (the look layer; you still style via `class("…")`) — it
 wires `@tailwindcss/vite` + an `@import "tailwindcss"` and notes the setup in the app's `.claude/` guide.
 
-## Templates
+## Templates (flavors)
+
+Every flavor scaffolds the **same** welcome page and the same `.muten` workflow — the only difference is
+whether a framework's island plugin is pre-wired:
 
 | Template | What you get |
 |---|---|
-| **basic** | one page — the minimal starter |
-| **routing** | a persistent shell (navbar + footer) + multiple real-path routes + a static `about` page |
-| **full** | routing + a `.store` + an `api` block + a source-backed products page + Tailwind — a real data app |
+| **muten** | pure muten — the AI-first DSL, zero framework runtime |
+| **muten + React** | same, plus `@vitejs/plugin-react` + React, so you can drop in a **React island** (shadcn/Radix, any React lib) |
+| **muten + Svelte** | same, plus `@sveltejs/vite-plugin-svelte` + Svelte, for **Svelte islands** (a lighter runtime) |
 
-When **Tailwind or DaisyUI** is selected, `theme.muten` is centralized to **match Tailwind's scale** (so
+An *island* is a real framework component used as a node — `use X from "react:./X.jsx"` →
+`X(value: @s, onChange: act) client:visible` (props ↓ + events ↑, lazy + code-split). Default to `.muten`;
+reach for an island only for a widget muten can't express.
+
+When **Tailwind or DaisyUI** is added, `theme.muten` is centralized to **match Tailwind's scale** (so
 `style()` tokens and Tailwind utilities share one scale, e.g. `style(gap.md)` == `gap-4`); plain CSS/SCSS
 keeps the default scale. **DaisyUI** adds component classes (`btn`, `card`, `modal`) usable in `class("…")` —
 pure classes, no React; behavior is Muten state + `on()`.
-
-**Framework islands** (`svelte` / `react` / `both`) wire `@sveltejs/vite-plugin-svelte` / `@vitejs/plugin-react`
-into `vite.config.mjs` so you can drop a real Svelte/React component (incl. React libs like **shadcn/Radix**)
-into a page as an *island* — `use X from "react:./X.jsx"` → `X(value: @s, onChange: act) client:visible`
-(props ↓ + events ↑, lazy + code-split). Default to `.muten`; reach for an island only for the hard widget.
 
 If you accept the last prompt it runs `<pm> install` followed by `<pm> run dev` — your app is live in a
 single step. Choosing SCSS also adds `sass` and switches the stylesheet to `.scss` automatically.
@@ -105,11 +106,10 @@ create-muten my-app --css --no-install    # just scaffold, decide later
 | Flag | Effect |
 |---|---|
 | `<name>` | the project folder (positional argument) |
-| `--template <basic\|routing\|full>` | which starter (default: `basic`; `full` implies Tailwind) |
+| `--template <muten\|react\|svelte>` | flavor (default: `muten`); `--react` / `--svelte` are shortcuts |
 | `--css` / `--scss` | pick the stylesheet (default: `css`) |
 | `--tailwind` | add Tailwind CSS v4 on top of CSS (forces `--css`) |
 | `--daisyui` | add DaisyUI component classes (implies `--tailwind`) |
-| `--svelte` / `--react` | wire the Svelte / React island plugin (drop in framework components, e.g. shadcn) |
 | `--pm <npm\|pnpm\|yarn\|bun>` | package manager to use (default: detected) |
 | `--no-install` | scaffold only — don't install or start the dev server |
 | `--help` | print usage and exit |

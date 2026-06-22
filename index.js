@@ -15,8 +15,7 @@ import color from 'picocolors';
 
 const SELF = dirname(fileURLToPath(import.meta.url));
 const TEMPLATE = join(SELF, 'template');
-const OVERLAYS = join(SELF, 'overlays');   // additive layers per template variant (routing, full)
-const TEMPLATES = ['basic', 'routing', 'full'];
+const TEMPLATES = ['muten', 'react', 'svelte']; // the "template" IS the flavor: pure muten, or muten + a framework for islands
 const PKG = JSON.parse(readFileSync(join(SELF, 'package.json'), 'utf8'));
 const PMS = ['npm', 'pnpm', 'yarn', 'bun'];
 
@@ -36,6 +35,31 @@ const tailwindStyles = (daisyui) => `@import "tailwindcss";${daisyui ? '\n@plugi
 
 /* Muten layout primitive Tailwind doesn't define */
 .stack { display: flex; flex-direction: column; }
+`;
+// Starter welcome page styles (used by the scaffolded home.muten). Self-contained plain CSS — looks good
+// with or without Tailwind; delete it (and the page) when you build your own.
+const WELCOME_CSS = `
+/* — starter welcome page (src/pages/home/home.muten) — delete when you build your own — */
+.welcome { background: #fafafa; color: #18181b; padding: 64px 24px; }
+.wrap { max-width: 720px; margin: 0 auto; display: flex; flex-direction: column; gap: 52px; }
+.hero { text-align: center; }
+.logo { width: 64px; height: 64px; border-radius: 16px; margin: 0 auto; box-shadow: 0 6px 20px rgba(255,94,0,.28); }
+.brand { font-size: clamp(40px, 8vw, 58px); font-weight: 800; letter-spacing: -.04em; line-height: 1; margin-top: 22px; background: linear-gradient(135deg, #ff5e00, #ff9a00); -webkit-background-clip: text; background-clip: text; color: transparent; }
+.tagline { font-size: 18px; font-weight: 600; color: #27272a; margin-top: 10px; }
+.lead { max-width: 580px; margin: 14px auto 0; color: #52525b; font-size: 16px; line-height: 1.65; }
+.stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
+.stat { border: 1px solid #e4e4e7; border-radius: 14px; padding: 22px 16px; text-align: center; background: #fff; }
+.stat-n { font-size: 26px; font-weight: 800; letter-spacing: -.02em; color: #ff5e00; }
+.stat-l { color: #71717a; font-size: 12px; line-height: 1.45; margin-top: 6px; }
+.section { display: flex; flex-direction: column; gap: 14px; }
+.h2 { font-size: 22px; font-weight: 700; letter-spacing: -.02em; }
+.snippet { background: #18181b; color: #e4e4e7; border-radius: 14px; padding: 20px 22px; margin: 0; overflow-x: auto; white-space: pre; font: 13px/1.7 ui-monospace, 'SF Mono', Menlo, Consolas, monospace; }
+.note { color: #71717a; font-size: 13px; line-height: 1.55; }
+.cards { display: grid; grid-template-columns: repeat(2, 1fr); gap: 14px; }
+.card { border: 1px solid #e4e4e7; border-radius: 14px; padding: 18px; background: #fff; }
+.card-title { font-size: 14px; font-weight: 600; margin-bottom: 5px; }
+.card-text { color: #71717a; font-size: 13px; line-height: 1.5; }
+@media (max-width: 560px) { .stats, .cards { grid-template-columns: 1fr; } }
 `;
 // vite.config composed from the chosen options — muten always; svelte/react add island plugins; tailwind last.
 const viteConfig = ({ tailwind, svelte, react }) => {
@@ -95,20 +119,26 @@ const detectPM = () => { const ua = process.env.npm_config_user_agent || ''; ret
 const validName = (n) => /^[A-Za-z0-9][A-Za-z0-9._-]*$/.test(n);
 const keep = (v) => { if (isCancel(v)) { cancel('Cancelled.'); process.exit(0); } return v; };
 
+// The muten mark + wordmark, in the brand orange (#FF5E00) — shown before the prompts. Truecolor ANSI
+// (modern terminals); degrades to plain text where unsupported.
+const logo = () => {
+  const o = '\x1b[38;2;255;94;0m', tile = '\x1b[48;2;255;94;0m\x1b[1m\x1b[97m', b = '\x1b[1m', d = '\x1b[2m', r = '\x1b[0m';
+  console.log(`\n  ${tile} M ${r}  ${b}${o}muten${r}`);
+  console.log(`  ${d}     the AI-first frontend framework${r}\n`);
+};
+
 async function main() {
   const argv = process.argv.slice(2);
   const has = (f) => argv.includes(f);
   const val = (f) => { const i = argv.indexOf(f); return i >= 0 ? argv[i + 1] : undefined; };
   if (has('-v') || has('--version')) { console.log(PKG.version); return; }
-  if (has('-h') || has('--help')) { console.log('Usage: create-muten [name] [--template basic|routing|full] [--css|--scss] [--tailwind] [--daisyui] [--svelte] [--react] [--pm npm|pnpm|yarn|bun] [--no-install]'); return; }
+  if (has('-h') || has('--help')) { console.log('Usage: create-muten [name] [--template muten|react|svelte] [--css|--scss] [--tailwind] [--daisyui] [--pm npm|pnpm|yarn|bun] [--no-install]'); return; }
 
   let name = argv.filter((a, i) => !a.startsWith('-') && argv[i - 1] !== '--pm' && argv[i - 1] !== '--template')[0];
-  let template = val('--template') || (has('--full') ? 'full' : has('--routing') ? 'routing' : has('--basic') ? 'basic' : undefined);
+  let template = val('--template') || (has('--react') ? 'react' : has('--svelte') ? 'svelte' : has('--muten') ? 'muten' : undefined); // flavor: muten | react | svelte
   let style = has('--scss') ? 'scss' : has('--css') ? 'css' : undefined;     // the base stylesheet
   let tailwind = has('--tailwind') ? true : undefined;                        // optional add-on (CSS only)
   let daisyui = has('--daisyui') ? true : undefined;                          // component classes on Tailwind
-  let svelte = has('--svelte') ? true : undefined;                            // island: Svelte components
-  let react = has('--react') ? true : undefined;                              // island: React components (shadcn/Radix)
   let pm = val('--pm');
   let install = has('--no-install') ? false : undefined;
   if (name && !validName(name)) { console.error(`Invalid name: "${name}" (letters, digits, . _ -)`); process.exit(1); }
@@ -118,51 +148,39 @@ async function main() {
 
   // Styled prompts only with a real TTY (piped/CI input would hang); otherwise use flags + defaults.
   if (process.stdin.isTTY) {
-    intro(color.bgCyan(color.black(' create-muten ')) + color.dim('  the AI-first frontend framework'));
+    logo();
+    intro(color.dim(`create-muten v${PKG.version}`));
     if (!name) name = keep(await text({ message: 'Project name', placeholder: 'muten-app', defaultValue: 'muten-app', validate: (v) => (v && !validName(v)) ? 'Use letters, digits, . _ - (start alphanumeric).' : undefined }));
     if (!template) template = keep(await select({ message: 'Template', options: [
-      { value: 'basic', label: 'Basic', hint: 'one page' },
-      { value: 'routing', label: 'Routing', hint: 'shell + multiple pages' },
-      { value: 'full', label: 'Routing + store + API + Tailwind', hint: 'a real data app' },
+      { value: 'muten', label: 'muten', hint: 'pure — the AI-first DSL, zero framework runtime' },
+      { value: 'react', label: 'muten + React', hint: 'React islands: shadcn, Radix, any React lib' },
+      { value: 'svelte', label: 'muten + Svelte', hint: 'Svelte islands: a lighter runtime' },
     ] }));
-    if (template === 'full') tailwind = true;   // the full template implies Tailwind
-    // Tailwind is an add-on on top of CSS (Tailwind v4 is CSS-native; Sass isn't recommended).
-    if (!style && !tailwind) style = keep(await select({ message: 'Stylesheet', options: [
+    if (!style) style = keep(await select({ message: 'Styling', options: [
       { value: 'css', label: 'CSS', hint: 'plain, zero deps' },
       { value: 'scss', label: 'SCSS', hint: 'adds sass' },
     ] }));
-    if (tailwind === undefined) tailwind = style === 'css' ? keep(await confirm({ message: 'Add Tailwind CSS? (utility classes via class("…"))', initialValue: false })) : false;
-    if (tailwind && daisyui === undefined) daisyui = keep(await confirm({ message: 'Add DaisyUI? (component classes: btn, card, modal…)', initialValue: template === 'full' }));
-    if (svelte === undefined && react === undefined) {
-      const islands = keep(await select({ message: 'Framework islands? (drop in Svelte/React components for hard widgets)', options: [
-        { value: 'none', label: 'None', hint: 'pure Muten' },
-        { value: 'svelte', label: 'Svelte', hint: 'lighter to embed' },
-        { value: 'react', label: 'React', hint: 'shadcn / Radix ecosystem' },
-        { value: 'both', label: 'Both' },
-      ] }));
-      svelte = islands === 'svelte' || islands === 'both';
-      react = islands === 'react' || islands === 'both';
-    }
+    if (tailwind === undefined) tailwind = style === 'css' ? keep(await confirm({ message: 'Add Tailwind CSS?', initialValue: false })) : false;
+    if (tailwind && daisyui === undefined) daisyui = keep(await confirm({ message: 'Add DaisyUI? (component classes: btn, card, modal…)', initialValue: false }));
   }
   name = name || 'muten-app';
-  template = template || 'basic';
-  if (template === 'full') tailwind = true;     // full implies Tailwind
-  if (daisyui) tailwind = true;                 // DaisyUI is a Tailwind plugin
+  template = template || 'muten';
   style = style || 'css';
+  if (daisyui) tailwind = true;                 // DaisyUI is a Tailwind plugin
   if (tailwind === undefined) tailwind = false;
   if (daisyui === undefined) daisyui = false;
-  if (svelte === undefined) svelte = false;
-  if (react === undefined) react = false;
-  if (tailwind) style = 'css';            // Tailwind implies a CSS base (not SCSS)
+  if (tailwind) style = 'css';                  // Tailwind v4 is CSS-native (not SCSS)
+  const svelte = template === 'svelte';         // the flavor IS the islands choice
+  const react = template === 'react';
   pm = pm || dpm;
   if (install === undefined) install = false;
 
   const target = resolve(name);
   if (existsSync(target)) { (process.stdin.isTTY ? cancel : console.error)(`"${name}" already exists.`); process.exit(1); }
 
-  // scaffold from ./template (the basic base) + layer the chosen variant's overlay + the stylesheet/add-ons
+  // EVERY flavor scaffolds the SAME base template (identical welcome page); react/svelte only add the
+  // island plugin + deps below, and tailwind/daisyui only swap the stylesheet.
   cpSync(TEMPLATE, target, { recursive: true });
-  if (template !== 'basic') cpSync(join(OVERLAYS, template), target, { recursive: true });  // routing / full overlay
   const ignore = join(target, '_gitignore');
   if (existsSync(ignore)) renameSync(ignore, join(target, '.gitignore'));
 
@@ -174,13 +192,13 @@ async function main() {
   const appendAgents = (text) => { const f = join(target, '.claude', 'AGENTS.md'); if (existsSync(f)) writeFileSync(f, readFileSync(f, 'utf8') + text); };
 
   if (tailwind) {
-    writeFileSync(join(target, 'src', 'styles.css'), tailwindStyles(daisyui));
+    writeFileSync(join(target, 'src', 'styles.css'), tailwindStyles(daisyui) + WELCOME_CSS);
     writeFileSync(join(target, 'theme.muten'), TAILWIND_THEME);          // scale centralized to Tailwind's
     addDev({ tailwindcss: '^4.0.0', '@tailwindcss/vite': '^4.0.0' });
     if (daisyui) addDev({ daisyui: '^5.0.0' });
     appendAgents(TAILWIND_NOTE + (daisyui ? DAISY_NOTE : ''));           // tell the AI what styling is available
   } else {
-    writeFileSync(join(target, 'src', style === 'scss' ? 'styles.scss' : 'styles.css'), RESET);
+    writeFileSync(join(target, 'src', style === 'scss' ? 'styles.scss' : 'styles.css'), RESET + WELCOME_CSS);
   }
   if (style === 'scss') addDev({ sass: '^1.101.0' });
   if (svelte) { addDep({ svelte: '^5.0.0' }); addDev({ '@sveltejs/vite-plugin-svelte': '^7.0.0' }); }
@@ -189,8 +207,7 @@ async function main() {
   writeFileSync(join(target, 'vite.config.mjs'), viteConfig({ tailwind, svelte, react })); // composed: muten + chosen plugins
   writeFileSync(pkgPath, JSON.stringify(pkg, null, 2) + '\n');
 
-  const islandDesc = [svelte && 'Svelte', react && 'React'].filter(Boolean).join('+');
-  const desc = `${template}, ${style}${tailwind ? ' + Tailwind' : ''}${daisyui ? ' + DaisyUI' : ''}${islandDesc ? ' + ' + islandDesc + ' islands' : ''}`;
+  const desc = `${template}, ${style}${tailwind ? ' + Tailwind' : ''}${daisyui ? ' + DaisyUI' : ''}`;
   if (!install) {
     if (process.stdin.isTTY) { note(`cd ${name}\n${pm} install\n${pm} run dev`, 'Next steps'); outro(color.green(`Created ${name}  (${desc})`)); }
     else console.log(`\n  Created ${name} (${desc}, ${pm})\n  cd ${name} && ${pm} install && ${pm} run dev\n`);
