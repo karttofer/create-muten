@@ -1,0 +1,26 @@
+# A real data page: `query` state backed by a `sources` URL (relative → joined to the app's `api.base`).
+# `muten build` fetches it at build and bakes the rows into the HTML (SSG); the runtime then takes over.
+# Clicking "Add" calls the cart store action — the navbar count updates reactively.
+screen products
+
+meta { title "Products" }
+
+entity Product { title text  price text }
+
+state { products = query products : list<Product> }
+
+sources { products: "/products" }
+
+Page style(padding.lg, gap.md) {
+  Title "Products" class("text-2xl font-bold")
+  when products.loading { Text "Loading…" class("opacity-60") }
+  each products as p {
+    Stack style(gap.sm) class("p-4 rounded-lg shadow bg-white") {
+      Text "{p.title}" class("font-semibold")
+      Stack style(row, between, center) {
+        Span "$ {p.price}" class("text-lg")
+        Button "Add to cart" -> cart.add(p.id) class("px-3 py-1 rounded bg-black text-white")
+      }
+    }
+  }
+}

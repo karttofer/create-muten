@@ -1,0 +1,15 @@
+# A second page. `meta { … }` sets the <head> title/description (og:* auto-derived) — applied on
+# navigation and baked into the static HTML at build. This page has no reactivity, so `muten build`
+# pre-renders it to zero-JS HTML (crawlable).
+screen about
+
+meta {
+  title "About"
+  description "About this Muten app."
+}
+
+Page style(padding.lg, gap.md) {
+  Title "About"
+  Text "Static pages compile to zero-JS HTML at build — crawlable and instant."
+  Link "← Home" -> /
+}

@@ -19,5 +19,5 @@
     "picocolors": "^1.0.1"
   },
   "keywords": ["muten", "create-muten", "scaffold", "starter", "cli", "frontend"],
-  "files": ["index.js", "template"]
+  "files": ["index.js", "template", "overlays"]
 }

@@ -1,0 +1,21 @@
+# The app ROOT. `api` is the backend config (one place: base URL + default headers) — every `sources`
+# inherits it. The shell's navbar reads the cart store (global) and shows a live count.
+api {
+  base: "https://fakestoreapi.com"
+}
+
+shell {
+  Header style(row, between, center) class("p-4 shadow bg-white") {
+    Link "Shop" -> / class("text-xl font-bold")
+    Nav "Main" style(row, gap.md, center) {
+      Link "Products" -> /products
+      Span "🛒 {cart.count}" class("font-medium")
+    }
+  }
+  slot
+}
+
+routes {
+  /         -> home
+  /products -> products
+}

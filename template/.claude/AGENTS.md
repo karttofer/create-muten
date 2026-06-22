@@ -43,7 +43,12 @@ Page style(padding.lg, gap.md) {
 - **Content:** `Text`, `Title "x" h2`, `Span`, `Image "{src}" alt "…"` (alt required), `Link "x" -> /route`, `Button "x" -> action(arg)`.
 - **Data:** `DataTable @list columns(a, b)`, `Form bind @draft submit create`, `SearchField bind @q`.
 - **Control:** `when <expr> { … }`, `each <list> as item { … }`.
+- **Interactivity:** reactive class `class(active when isOpen)`; events on any element `on(keydown: act, mouseenter: act)`; a `/404` route catches unmatched paths.
 - **State:** `state { q = "" : text  users = query listUsers : list<User> }` — query states expose `.loading/.error/.data`.
+- **Backend:** `sources { x: { url, method?, headers?, body?, at? } }` feeds a `query`. Shared base+auth go in `api { base, headers }` (app.muten, named clients via `{ api: "shop" }`) — relative source urls join to `base`. GET sources pre-render at build (SSG).
+- **Writes:** a source-backed list gets `create`/`update`/`delete` in an action (`orders.create(draft)` → POST/PUT/DELETE the resource, optimistic + updates the list). The action is async with reactive `name.pending`/`name.error` for UX. Local-only mutations stay `push`/`set`/`reset`/`remove`.
+- **Refetch:** re-run a query with N params (search / paginate / filter): `products.refetch(q: term, page: n)` in an action → builds `?q=&page=` and reloads the list.
+- **Escape hatch:** non-RESTful API? `post`/`put`/`delete` a `"client:/path"` (interpolated) with optional `body` in an action: `post "shop:/orders" body item`. Uses the client's base+headers; `mutates` is optional for pure commands.
 - **Actions:** `action add mutates users <- item { users.push(item) }` — ops: `push/set/reset/remove`; branch with `if/else`.
 - **Tokens:** `gap.md padding.lg cols.3 text.lg row center between` — responsive prefix: `md:cols.2`.
 
@@ -51,7 +56,7 @@ Page style(padding.lg, gap.md) {
 - **CSS / Tailwind / SCSS: YES** — it's a Vite app; install them and use `class("…")` + your CSS.
 - **React / Vue / Svelte UI libraries: NO** — the UI is `.muten` (vanilla DOM, no JS framework runtime).
   Need a JS widget? Wrap it in a `Custom` host component (`src/components/<Name>.js`).
-- Routing is **hash-based with static paths** (no `:id` params yet). Shell has no local state → use a
+- Routing uses **real paths** (`/path`, History API; deploy serves `index.html` for any path); route params work (`/product/:id` → `param id`). SEO: `meta { title "…" description "…" }` per page → `<head>` tags (og auto-derived). Shell has no local state → use a
   `.store`. No `toggle` op → `set(not x)`. `style()` is layout tokens only; visuals go in `class()`.
 - The full reference (stores, routing, theme, every primitive) is in [`skills/muten/SKILL.md`](skills/muten/SKILL.md).
 

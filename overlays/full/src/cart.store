@@ -1,0 +1,9 @@
+# An app-global store (any `*.store` under src/). State is shared across pages + the shell, no imports.
+# `get` is a derived value; `action`s are the only way to mutate.
+store { items = [] : list<text> }
+
+get count = items.length
+
+action add mutates items <- id {
+  items.push(id)
+}
