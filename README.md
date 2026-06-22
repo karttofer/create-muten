@@ -64,6 +64,7 @@ In an interactive terminal it prompts for a few things (defaults in parentheses)
 | **Stylesheet** | `css` / `scss` | `css` |
 | **Add Tailwind CSS?** | `Y` / `n` (CSS only) | `n` |
 | **Add DaisyUI?** | `Y` / `n` (needs Tailwind) | `n` |
+| **Framework islands?** | `none` / `svelte` / `react` / `both` | `none` |
 | **Package manager** | `npm` / `pnpm` / `yarn` / `bun` | the one that launched it |
 | **Install deps and start dev now?** | `Y` / `n` | `Y` |
 
@@ -81,7 +82,12 @@ wires `@tailwindcss/vite` + an `@import "tailwindcss"` and notes the setup in th
 When **Tailwind or DaisyUI** is selected, `theme.muten` is centralized to **match Tailwind's scale** (so
 `style()` tokens and Tailwind utilities share one scale, e.g. `style(gap.md)` == `gap-4`); plain CSS/SCSS
 keeps the default scale. **DaisyUI** adds component classes (`btn`, `card`, `modal`) usable in `class("…")` —
-the closest fit to shadcn that works in Muten (pure classes, no React; behavior is Muten state + `on()`).
+pure classes, no React; behavior is Muten state + `on()`.
+
+**Framework islands** (`svelte` / `react` / `both`) wire `@sveltejs/vite-plugin-svelte` / `@vitejs/plugin-react`
+into `vite.config.mjs` so you can drop a real Svelte/React component (incl. React libs like **shadcn/Radix**)
+into a page as an *island* — `use X from "react:./X.jsx"` → `X(value: @s, onChange: act) client:visible`
+(props ↓ + events ↑, lazy + code-split). Default to `.muten`; reach for an island only for the hard widget.
 
 If you accept the last prompt it runs `<pm> install` followed by `<pm> run dev` — your app is live in a
 single step. Choosing SCSS also adds `sass` and switches the stylesheet to `.scss` automatically.
@@ -103,6 +109,7 @@ create-muten my-app --css --no-install    # just scaffold, decide later
 | `--css` / `--scss` | pick the stylesheet (default: `css`) |
 | `--tailwind` | add Tailwind CSS v4 on top of CSS (forces `--css`) |
 | `--daisyui` | add DaisyUI component classes (implies `--tailwind`) |
+| `--svelte` / `--react` | wire the Svelte / React island plugin (drop in framework components, e.g. shadcn) |
 | `--pm <npm\|pnpm\|yarn\|bun>` | package manager to use (default: detected) |
 | `--no-install` | scaffold only — don't install or start the dev server |
 | `--help` | print usage and exit |
@@ -127,6 +134,23 @@ my-app/
 
 There is **no hand-written `main.js`**: the Vite plugin compiles `src/app.muten` into the app's entry,
 so the whole app is `.muten` from the first line.
+
+## What you can build
+
+A muten app reaches the whole web platform through bounded escapes — reach for the **lowest tier that works**:
+
+- **Pure muten** — CRUD / SaaS / catalog / dashboard / content: pages, routing, `state`/`store`, `query` over
+  REST, `Form` + validation, `DataTable`, `when`/`each`, SSG + SEO. The declarative 80%, zero extra deps.
+- **muten + the platform** *(no framework runtime)* — native HTML (`<input type="date">`, `<dialog>`) + `class()`,
+  CSS libs (Tailwind / DaisyUI), **vanilla JS via `Custom`** (charts, maps, date-pickers, rich-text, grids),
+  `use fmt from "./lib.ts"` for any JS logic. Almost every "hard widget" lands here, *without React*.
+- **Svelte / React island** (`--svelte` / `--react`) — only when the component *is* a framework component
+  (shadcn/ui, a React-only lib). Ships that runtime, lazy + code-split. The narrow last resort.
+
+Full reference (every primitive, the three tiers, the roadmap): [`@muten/core`](https://www.npmjs.com/package/@muten/core).
+
+> **Status: pre-1.0.** The core (language, compiler, CLI, Vite plugin, extension, islands) is solid; the
+> ecosystem is young and full island SSR is experimental. Great for real apps, not yet for critical production.
 
 ## Requirements
 

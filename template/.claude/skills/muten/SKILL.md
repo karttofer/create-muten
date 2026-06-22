@@ -6,7 +6,8 @@ description: Read and write Muten — the AI-first frontend DSL this app is buil
 # Muten — complete language reference
 
 Muten compiles `.muten` files to vanilla JS + fine-grained signals (no virtual DOM). The `@muten/core`
-Vite plugin does the compiling. You write a small declarative DSL — **never** React/JSX/Vue/Svelte/HTML.
+Vite plugin does the compiling. You write a small declarative DSL for the UI — **not** React/JSX/Vue/Svelte/HTML;
+foreign code comes in only through explicit escapes (`use` for JS functions, **islands** for Svelte/React widgets — §14).
 A page with no reactivity compiles to plain zero-runtime HTML; a reactive one ships ~1KB of signals.
 
 ## Mental model & golden rules
@@ -24,16 +25,21 @@ This is a normal **Vite** project, so the whole Vite/npm ecosystem for **styling
   `class()` emits raw class names, so any CSS framework (Tailwind, UnoCSS, Bootstrap CSS, your own CSS) works.
 - **Sass/SCSS** — supported out of the box if you scaffolded with SCSS (or add `sass`); use `src/styles.scss`.
 - **Any Vite plugin / PostCSS plugin** — add it to `vite.config.mjs` alongside `muten()`.
-- **Data / utility npm packages** — usable inside `.store` logic and inside `Custom` host components
-  (date libs, fetch wrappers, zod, etc.).
+- **Data / utility npm packages** — usable inside `.store` logic, inside `Custom` host components, and via
+  **`use` logic imports** (date libs, fetch wrappers, zod, etc.).
+- **JS logic via `use … from "./lib.ts"` — YES.** Import named functions and call them in any expression
+  (`use fmt from "./lib.ts"` → `Text "{fmt(x)}"`). The `.ts` is a facade over any npm. See §14.
+- **Svelte / React components via ISLANDS — YES.** A genuinely-interactive widget or a framework UI lib
+  Muten can't express → mount a real `.svelte`/`.jsx` with `use X from "svelte:…"`. See §14.
 - **Host UI via the `Custom` primitive** — write vanilla JS in `src/components/<Name>.js` (charts,
   maps, a third-party widget) and mount it with `Custom`. See §Custom.
 
 ## 2. What you CANNOT do
-- **No React / Vue / Svelte component libraries as UI.** There is no React/Vue runtime — the UI is
-  `.muten` compiled to vanilla DOM. You cannot drop in MUI, Chakra, Ant, shadcn, a React table, etc.
-  If you truly need a JS widget, wrap it yourself in a `Custom` component (vanilla JS).
-- **No JSX / `.jsx` / `.vue` / hand-written DOM in pages.** No `className`, no hooks, no lifecycle.
+- **Don't build the page UI out of React / Vue / Svelte.** Pages are `.muten` → vanilla DOM, no framework
+  runtime; you don't compose the app from MUI/Chakra/shadcn. BUT a *specific* interactive widget or framework
+  lib CAN enter as an **island** (`use X from "react:…"`, §14) or a vanilla-JS `Custom` — for the foreign piece,
+  not the whole UI. Default to `.muten`; reach for an island only when Muten genuinely can't express it.
+- **No JSX / hooks / `className` inside `.muten`.** Those live in the island's own `.svelte`/`.jsx` file, never in a page.
 - **No arbitrary inline CSS via `style()`** — `style()` only takes the layout/typography tokens below.
   Visual styling (colors, borders, shadows) goes through `class("…")` + your CSS.
 
@@ -325,15 +331,45 @@ Custom Chart inputs(data: @sales) on(pointSelect: select)
 # → src/components/Chart.js exports a mount(el, { inputs, on }) that builds vanilla DOM.
 ```
 
-## 14. Gotchas
-- It's NOT React: PascalCase primitives + `{ }` children; no JSX/hooks/`className`.
+## 14. `use` — JS logic functions & framework islands
+Two escapes that pull in real JS/npm behind a typed border. Both reuse `use … from`; the prefix decides which.
+
+**Logic functions** — `use` named exports from a `.ts`/`.js` file and call them in any expression:
+```
+use fmt, slug from "./lib/format.ts"        # named exports ONLY (the .ts is a facade over any npm)
+Text "{fmt(order.total)}"                    # called like any expression
+Link "{slug(post.title)}" -> /blog/{post.id}
+```
+Import zod/date-fns/nanoid/whatever *inside* `format.ts` and expose tidy named functions; Muten sees only the
+names, so the oracle still checks your calls. Keep the border **synchronous** (no async functions).
+
+**Islands** — mount a real **Svelte or React** component for an interactive widget or framework UI lib Muten
+can't express (a date-picker, rich editor, a React charting component):
+```
+use Counter from "svelte:./Counter.svelte"   # `svelte:` / `react:` prefix = an ISLAND (not a logic fn)
+use Likes   from "react:./Likes.jsx"
+Page {
+  Counter(start: @total, onChange: setTotal)               # props ↓ (@state) + events ↑ (a muten action)
+  Likes(start: @total, onLike: setTotal) client:visible    # lazy: hydrate when scrolled into view
+}
+```
+- `prop: @state` sends a value **down** (snapshot; a React island re-renders when the signal changes). `onX: action`
+  sends a callback that fires a **muten action** — that's how the island writes **back** to muten state.
+- `client:visible` / `client:idle` = **lazy** hydration (load the island's JS only when visible / idle). No
+  directive = on load. Every island is code-split, so it never bloats the main bundle.
+- **Install the framework's Vite plugin** (`@sveltejs/vite-plugin-svelte` or `@vitejs/plugin-react`) next to
+  `muten()` in `vite.config.mjs`. The component file is normal Svelte/React — it owns its own tooling; Muten
+  only validates the node + its args. This is how a **React/Svelte component lib** comes in: wrap it in an island.
+
+## 15. Gotchas
+- It's NOT React: PascalCase primitives + `{ }` children; no JSX/hooks/`className` (those live in island files, §14).
 - No `main.js`/`<script>` — `app.muten` is the entry.
 - `style()` (layout tokens) ≠ `class()` (look). No colors/borders in `style()`.
 - `Image` without `alt` fails validation (`alt ""` for decorative).
 - Actions may only touch their declared `mutates`.
-- Want a library? If it's CSS → `class()`. If it's a JS widget → `Custom`. If it's React/Vue UI → not possible.
+- Want a library? CSS → `class()`. JS function → `use` (§14). A widget → `Custom`. A React/Svelte component → an **island** (§14).
 
-## 15. Minimal full app
+## 16. Minimal full app
 ```
 # src/app.muten
 routes { / -> home }

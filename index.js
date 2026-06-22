@@ -2,7 +2,7 @@
 // create-muten — scaffold a new Muten app, with modern interactive prompts (@clack/prompts).
 //
 //   npm create muten@latest [name]              (or: npx create-muten)
-//   create-muten [name] [--template basic|routing|full] [--css|--scss] [--tailwind] [--daisyui] [--pm npm|pnpm|yarn|bun] [--no-install]
+//   create-muten [name] [--template basic|routing|full] [--css|--scss] [--tailwind] [--daisyui] [--svelte] [--react] [--pm npm|pnpm|yarn|bun] [--no-install]
 //
 // Stylesheet (CSS or SCSS) is the base; Tailwind is an optional add-on ON TOP of CSS (it's a styling
 // library, not a stylesheet replacement). Interactive in a TTY; flags / non-TTY make it scriptable.
@@ -37,13 +37,30 @@ const tailwindStyles = (daisyui) => `@import "tailwindcss";${daisyui ? '\n@plugi
 /* Muten layout primitive Tailwind doesn't define */
 .stack { display: flex; flex-direction: column; }
 `;
-const TAILWIND_VITE = `import muten from '@muten/core/vite-plugin-muten.js';
-import tailwindcss from '@tailwindcss/vite';
-
-export default {
-  plugins: [muten(), tailwindcss()],
+// vite.config composed from the chosen options — muten always; svelte/react add island plugins; tailwind last.
+const viteConfig = ({ tailwind, svelte, react }) => {
+  const imports = [`import muten from '@muten/core/vite-plugin-muten.js';`];
+  const plugins = ['muten()'];
+  if (svelte) { imports.push(`import { svelte } from '@sveltejs/vite-plugin-svelte';`); plugins.push('svelte()'); }
+  if (react) { imports.push(`import react from '@vitejs/plugin-react';`); plugins.push('react()'); }
+  if (tailwind) { imports.push(`import tailwindcss from '@tailwindcss/vite';`); plugins.push('tailwindcss()'); }
+  return `${imports.join('\n')}\n\nexport default {\n  plugins: [${plugins.join(', ')}],\n};\n`;
 };
+// Tell the AI the island plugin is wired so it can drop in a real Svelte/React component (incl. shadcn/Radix).
+const ISLANDS_NOTE = ({ svelte, react }) => {
+  const techs = [svelte && 'Svelte', react && 'React'].filter(Boolean).join(' + ');
+  const ex = react
+    ? `use Widget from "react:./Widget.jsx"` + '  →  ' + `Widget(value: @sel, onChange: pick) client:visible`
+    : `use Widget from "svelte:./Widget.svelte"` + '  →  ' + `Widget(value: @sel, onChange: pick) client:visible`;
+  return `
+## Framework islands (${techs} — wired)
+The ${techs} Vite plugin is installed. For a genuinely-interactive widget Muten can't express (date-picker,
+combobox, command palette, rich editor — including React/Svelte libs like shadcn/Radix), write the component
+in its own \`.${react ? 'jsx' : 'svelte'}\` file and mount it as a node: \`${ex}\`. props ↓ (\`@state\`) + events ↑
+(an \`onX: action\` calls a Muten action), lazy + code-split. Default to \`.muten\` for the UI; reach for an
+island only for the foreign piece. Full details: SKILL §14.
 `;
+};
 // When Tailwind/DaisyUI is chosen, the Muten token scale is centralized to MATCH Tailwind's defaults, so
 // style() tokens and Tailwind utilities share one scale (e.g. style(gap.md) == gap-4 == 1rem). Plain
 // css/scss keeps the default theme.muten. (DaisyUI builds on Tailwind's scale; its colors come via @plugin.)
@@ -83,13 +100,15 @@ async function main() {
   const has = (f) => argv.includes(f);
   const val = (f) => { const i = argv.indexOf(f); return i >= 0 ? argv[i + 1] : undefined; };
   if (has('-v') || has('--version')) { console.log(PKG.version); return; }
-  if (has('-h') || has('--help')) { console.log('Usage: create-muten [name] [--template basic|routing|full] [--css|--scss] [--tailwind] [--daisyui] [--pm npm|pnpm|yarn|bun] [--no-install]'); return; }
+  if (has('-h') || has('--help')) { console.log('Usage: create-muten [name] [--template basic|routing|full] [--css|--scss] [--tailwind] [--daisyui] [--svelte] [--react] [--pm npm|pnpm|yarn|bun] [--no-install]'); return; }
 
   let name = argv.filter((a, i) => !a.startsWith('-') && argv[i - 1] !== '--pm' && argv[i - 1] !== '--template')[0];
   let template = val('--template') || (has('--full') ? 'full' : has('--routing') ? 'routing' : has('--basic') ? 'basic' : undefined);
   let style = has('--scss') ? 'scss' : has('--css') ? 'css' : undefined;     // the base stylesheet
   let tailwind = has('--tailwind') ? true : undefined;                        // optional add-on (CSS only)
   let daisyui = has('--daisyui') ? true : undefined;                          // component classes on Tailwind
+  let svelte = has('--svelte') ? true : undefined;                            // island: Svelte components
+  let react = has('--react') ? true : undefined;                              // island: React components (shadcn/Radix)
   let pm = val('--pm');
   let install = has('--no-install') ? false : undefined;
   if (name && !validName(name)) { console.error(`Invalid name: "${name}" (letters, digits, . _ -)`); process.exit(1); }
@@ -114,6 +133,16 @@ async function main() {
     ] }));
     if (tailwind === undefined) tailwind = style === 'css' ? keep(await confirm({ message: 'Add Tailwind CSS? (utility classes via class("…"))', initialValue: false })) : false;
     if (tailwind && daisyui === undefined) daisyui = keep(await confirm({ message: 'Add DaisyUI? (component classes: btn, card, modal…)', initialValue: template === 'full' }));
+    if (svelte === undefined && react === undefined) {
+      const islands = keep(await select({ message: 'Framework islands? (drop in Svelte/React components for hard widgets)', options: [
+        { value: 'none', label: 'None', hint: 'pure Muten' },
+        { value: 'svelte', label: 'Svelte', hint: 'lighter to embed' },
+        { value: 'react', label: 'React', hint: 'shadcn / Radix ecosystem' },
+        { value: 'both', label: 'Both' },
+      ] }));
+      svelte = islands === 'svelte' || islands === 'both';
+      react = islands === 'react' || islands === 'both';
+    }
   }
   name = name || 'muten-app';
   template = template || 'basic';
@@ -122,6 +151,8 @@ async function main() {
   style = style || 'css';
   if (tailwind === undefined) tailwind = false;
   if (daisyui === undefined) daisyui = false;
+  if (svelte === undefined) svelte = false;
+  if (react === undefined) react = false;
   if (tailwind) style = 'css';            // Tailwind implies a CSS base (not SCSS)
   pm = pm || dpm;
   if (install === undefined) install = false;
@@ -139,22 +170,27 @@ async function main() {
   const pkg = JSON.parse(readFileSync(pkgPath, 'utf8'));
   pkg.name = name;
   const addDev = (deps) => { pkg.devDependencies = { ...(pkg.devDependencies || {}), ...deps }; };
+  const addDep = (deps) => { pkg.dependencies = { ...(pkg.dependencies || {}), ...deps }; };
+  const appendAgents = (text) => { const f = join(target, '.claude', 'AGENTS.md'); if (existsSync(f)) writeFileSync(f, readFileSync(f, 'utf8') + text); };
 
   if (tailwind) {
     writeFileSync(join(target, 'src', 'styles.css'), tailwindStyles(daisyui));
-    writeFileSync(join(target, 'vite.config.mjs'), TAILWIND_VITE);
     writeFileSync(join(target, 'theme.muten'), TAILWIND_THEME);          // scale centralized to Tailwind's
     addDev({ tailwindcss: '^4.0.0', '@tailwindcss/vite': '^4.0.0' });
     if (daisyui) addDev({ daisyui: '^5.0.0' });
-    const agents = join(target, '.claude', 'AGENTS.md');                 // tell the AI what styling is available
-    if (existsSync(agents)) writeFileSync(agents, readFileSync(agents, 'utf8') + TAILWIND_NOTE + (daisyui ? DAISY_NOTE : ''));
+    appendAgents(TAILWIND_NOTE + (daisyui ? DAISY_NOTE : ''));           // tell the AI what styling is available
   } else {
     writeFileSync(join(target, 'src', style === 'scss' ? 'styles.scss' : 'styles.css'), RESET);
   }
   if (style === 'scss') addDev({ sass: '^1.101.0' });
+  if (svelte) { addDep({ svelte: '^5.0.0' }); addDev({ '@sveltejs/vite-plugin-svelte': '^7.0.0' }); }
+  if (react) { addDep({ react: '^19.0.0', 'react-dom': '^19.0.0' }); addDev({ '@vitejs/plugin-react': '^6.0.0' }); }
+  if (svelte || react) appendAgents(ISLANDS_NOTE({ svelte, react }));
+  writeFileSync(join(target, 'vite.config.mjs'), viteConfig({ tailwind, svelte, react })); // composed: muten + chosen plugins
   writeFileSync(pkgPath, JSON.stringify(pkg, null, 2) + '\n');
 
-  const desc = `${template}, ${style}${tailwind ? ' + Tailwind' : ''}${daisyui ? ' + DaisyUI' : ''}`;
+  const islandDesc = [svelte && 'Svelte', react && 'React'].filter(Boolean).join('+');
+  const desc = `${template}, ${style}${tailwind ? ' + Tailwind' : ''}${daisyui ? ' + DaisyUI' : ''}${islandDesc ? ' + ' + islandDesc + ' islands' : ''}`;
   if (!install) {
     if (process.stdin.isTTY) { note(`cd ${name}\n${pm} install\n${pm} run dev`, 'Next steps'); outro(color.green(`Created ${name}  (${desc})`)); }
     else console.log(`\n  Created ${name} (${desc}, ${pm})\n  cd ${name} && ${pm} install && ${pm} run dev\n`);
