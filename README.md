@@ -61,14 +61,20 @@ In an interactive terminal it prompts for a few things (defaults in parentheses)
 |---|---|---|
 | **Project name** | any valid folder name | `muten-app` |
 | **Template** | `muten` / `muten + React` / `muten + Svelte` | `muten` |
-| **Styling** | `css` / `scss` | `css` |
-| **Add Tailwind CSS?** | `Y` / `n` (CSS only) | `n` |
-| **Add DaisyUI?** | `Y` / `n` (needs Tailwind) | `n` |
+| **Styling** | `CSS` / `SCSS` / `Tailwind CSS` / `DaisyUI` (brings Tailwind) | `CSS` |
+| **Add Vercel deploy config?** | `Y` / `n` | `n` |
+| **Desktop app (Tauri)?** | `Y` / `n` | `n` |
 | **Package manager** | `npm` / `pnpm` / `yarn` / `bun` | the one that launched it |
 | **Install deps and start dev now?** | `Y` / `n` | `Y` |
 
-Tailwind is an optional add-on **on top of** CSS (the look layer; you still style via `class("…")`) — it
-wires `@tailwindcss/vite` + an `@import "tailwindcss"` and notes the setup in the app's `.claude/` guide.
+**Styling is one explicit choice** — each is opt-in, nothing is bundled by default: `CSS` (plain) or `SCSS`
+ship no framework; `Tailwind CSS` adds `@tailwindcss/vite` + `@import "tailwindcss"`; `DaisyUI` adds its
+component classes on top (and brings Tailwind). You always style via `class("…")`.
+
+**Targets are independent opt-ins** — web, desktop, both, or neither, from the same `.muten` source:
+- **Vercel** writes a `vercel.json` so muten's real-path routes don't 404 on a hard refresh (SPA fallback to `index.html`).
+- **Tauri** adds `src-tauri/` (a native desktop app — ships the OS webview, *not* a browser) + a `tauri` script:
+  `npm run tauri dev` / `tauri build`. Needs the [Rust toolchain](https://rustup.rs) installed (not auto-installed).
 
 ## Templates (flavors)
 
@@ -110,6 +116,8 @@ create-muten my-app --css --no-install    # just scaffold, decide later
 | `--css` / `--scss` | pick the stylesheet (default: `css`) |
 | `--tailwind` | add Tailwind CSS v4 on top of CSS (forces `--css`) |
 | `--daisyui` | add DaisyUI component classes (implies `--tailwind`) |
+| `--vercel` | add `vercel.json` (SPA fallback so real-path routes work on Vercel) |
+| `--tauri` | add `src-tauri/` — a native desktop app (needs the Rust toolchain) |
 | `--pm <npm\|pnpm\|yarn\|bun>` | package manager to use (default: detected) |
 | `--no-install` | scaffold only — don't install or start the dev server |
 | `--help` | print usage and exit |

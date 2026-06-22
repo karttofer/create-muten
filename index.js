@@ -15,6 +15,7 @@ import color from 'picocolors';
 
 const SELF = dirname(fileURLToPath(import.meta.url));
 const TEMPLATE = join(SELF, 'template');
+const TAURI_TEMPLATE = join(SELF, 'template-tauri'); // src-tauri/ overlay, copied only when --tauri
 const TEMPLATES = ['muten', 'react', 'svelte']; // the "template" IS the flavor: pure muten, or muten + a framework for islands
 const PKG = JSON.parse(readFileSync(join(SELF, 'package.json'), 'utf8'));
 const PMS = ['npm', 'pnpm', 'yarn', 'bun'];
@@ -113,6 +114,24 @@ DaisyUI adds **component classes** on top of Tailwind — use them in \`class("�
 \`@plugin "daisyui";\` is already in \`src/styles.css\`. Interactive behavior (toggle a modal/dropdown) you build
 with Muten: \`state\` + \`class(active when isOpen)\` + \`on(click: …)\`.
 `;
+// Tauri = the SAME web build wrapped in a native OS-webview window (no browser bundled). Desktop target.
+const TAURI_NOTE = (pm) => `
+## Desktop app (Tauri)
+This app also ships as a native desktop app via Tauri (\`src-tauri/\`). The SAME \`.muten\` frontend runs in
+an OS-webview window — build the UI exactly like the web app (routing works as-is: the webview runs the SPA,
+no server, no URL bar, no fallback needed).
+- \`${pm} run tauri dev\` — run the desktop app (hot-reloads the frontend).
+- \`${pm} run tauri build\` — native installer in \`src-tauri/target/release/bundle/\`.
+- Needs the **Rust toolchain** on the machine (https://rustup.rs) — Tauri compiles a small native shell. Not auto-installed.
+- Custom icon: \`${pm} run tauri icon path/to/logo.png\` regenerates \`src-tauri/icons/\`.
+`;
+
+// Deploy on Vercel: muten routes are real paths (History API), so an unmatched path must fall back to
+// index.html (else a hard refresh of /about 404s). Static assets are served first; only routes rewrite.
+const VERCEL_JSON = `{
+  "rewrites": [{ "source": "/(.*)", "destination": "/index.html" }]
+}
+`;
 
 // Which PM launched us? npm/pnpm/yarn/bun set npm_config_user_agent — the idiomatic default.
 const detectPM = () => { const ua = process.env.npm_config_user_agent || ''; return PMS.find((p) => ua.startsWith(p + '/')) || 'npm'; };
@@ -132,13 +151,15 @@ async function main() {
   const has = (f) => argv.includes(f);
   const val = (f) => { const i = argv.indexOf(f); return i >= 0 ? argv[i + 1] : undefined; };
   if (has('-v') || has('--version')) { console.log(PKG.version); return; }
-  if (has('-h') || has('--help')) { console.log('Usage: create-muten [name] [--template muten|react|svelte] [--css|--scss] [--tailwind] [--daisyui] [--pm npm|pnpm|yarn|bun] [--no-install]'); return; }
+  if (has('-h') || has('--help')) { console.log('Usage: create-muten [name] [--template muten|react|svelte] [--css|--scss] [--tailwind] [--daisyui] [--vercel] [--tauri] [--pm npm|pnpm|yarn|bun] [--no-install]'); return; }
 
   let name = argv.filter((a, i) => !a.startsWith('-') && argv[i - 1] !== '--pm' && argv[i - 1] !== '--template')[0];
   let template = val('--template') || (has('--react') ? 'react' : has('--svelte') ? 'svelte' : has('--muten') ? 'muten' : undefined); // flavor: muten | react | svelte
   let style = has('--scss') ? 'scss' : has('--css') ? 'css' : undefined;     // the base stylesheet
   let tailwind = has('--tailwind') ? true : undefined;                        // optional add-on (CSS only)
   let daisyui = has('--daisyui') ? true : undefined;                          // component classes on Tailwind
+  let vercel = has('--vercel') ? true : undefined;                            // a vercel.json with the SPA fallback rewrite
+  let tauri = has('--tauri') ? true : undefined;                              // src-tauri/ → native desktop app
   let pm = val('--pm');
   let install = has('--no-install') ? false : undefined;
   if (name && !validName(name)) { console.error(`Invalid name: "${name}" (letters, digits, . _ -)`); process.exit(1); }
@@ -156,12 +177,19 @@ async function main() {
       { value: 'react', label: 'muten + React', hint: 'React islands: shadcn, Radix, any React lib' },
       { value: 'svelte', label: 'muten + Svelte', hint: 'Svelte islands: a lighter runtime' },
     ] }));
-    if (!style) style = keep(await select({ message: 'Styling', options: [
-      { value: 'css', label: 'CSS', hint: 'plain, zero deps' },
-      { value: 'scss', label: 'SCSS', hint: 'adds sass' },
-    ] }));
-    if (tailwind === undefined) tailwind = style === 'css' ? keep(await confirm({ message: 'Add Tailwind CSS?', initialValue: false })) : false;
-    if (tailwind && daisyui === undefined) daisyui = keep(await confirm({ message: 'Add DaisyUI? (component classes: btn, card, modal…)', initialValue: false }));
+    if (!style && tailwind === undefined) { // ONE explicit styling choice — each is opt-in, "CSS" = nothing extra
+      const styling = keep(await select({ message: 'Styling', options: [
+        { value: 'css', label: 'CSS', hint: 'plain — no framework, zero deps' },
+        { value: 'scss', label: 'SCSS', hint: 'adds sass' },
+        { value: 'tailwind', label: 'Tailwind CSS', hint: 'utility classes on top of CSS' },
+        { value: 'daisyui', label: 'DaisyUI', hint: 'component classes (btn, card, modal) — brings Tailwind with it' },
+      ] }));
+      style = styling === 'scss' ? 'scss' : 'css';
+      tailwind = styling === 'tailwind' || styling === 'daisyui';
+      daisyui = styling === 'daisyui';
+    }
+    if (vercel === undefined) vercel = keep(await confirm({ message: 'Add Vercel deploy config? (vercel.json — fixes real-path routing on Vercel)', initialValue: false }));
+    if (tauri === undefined) tauri = keep(await confirm({ message: 'Desktop app? (Tauri — native window, ships the OS webview, needs Rust)', initialValue: false }));
   }
   name = name || 'muten-app';
   template = template || 'muten';
@@ -169,6 +197,8 @@ async function main() {
   if (daisyui) tailwind = true;                 // DaisyUI is a Tailwind plugin
   if (tailwind === undefined) tailwind = false;
   if (daisyui === undefined) daisyui = false;
+  if (vercel === undefined) vercel = false;
+  if (tauri === undefined) tauri = false;
   if (tailwind) style = 'css';                  // Tailwind v4 is CSS-native (not SCSS)
   const svelte = template === 'svelte';         // the flavor IS the islands choice
   const react = template === 'react';
@@ -183,6 +213,7 @@ async function main() {
   cpSync(TEMPLATE, target, { recursive: true });
   const ignore = join(target, '_gitignore');
   if (existsSync(ignore)) renameSync(ignore, join(target, '.gitignore'));
+  if (vercel) writeFileSync(join(target, 'vercel.json'), VERCEL_JSON); // SPA fallback so real-path routes work on Vercel
 
   const pkgPath = join(target, 'package.json');
   const pkg = JSON.parse(readFileSync(pkgPath, 'utf8'));
@@ -204,10 +235,25 @@ async function main() {
   if (svelte) { addDep({ svelte: '^5.0.0' }); addDev({ '@sveltejs/vite-plugin-svelte': '^7.0.0' }); }
   if (react) { addDep({ react: '^19.0.0', 'react-dom': '^19.0.0' }); addDev({ '@vitejs/plugin-react': '^6.0.0' }); }
   if (svelte || react) appendAgents(ISLANDS_NOTE({ svelte, react }));
+  if (tauri) {                                  // native desktop wrapper around the same web build (dist)
+    cpSync(join(TAURI_TEMPLATE, 'src-tauri'), join(target, 'src-tauri'), { recursive: true });
+    writeFileSync(join(target, 'src-tauri', '.gitignore'), '/target\n/gen/schemas\n'); // npm strips real .gitignore from packages
+    const confPath = join(target, 'src-tauri', 'tauri.conf.json');
+    const conf = JSON.parse(readFileSync(confPath, 'utf8'));
+    conf.productName = name;
+    conf.identifier = `com.muten.${name.replace(/[^a-z0-9]/gi, '').toLowerCase() || 'app'}`; // reverse-DNS, no dashes/underscores
+    conf.app.windows[0].title = name;
+    conf.build.beforeDevCommand = `${pm} run dev`;
+    conf.build.beforeBuildCommand = `${pm} run build`;
+    writeFileSync(confPath, JSON.stringify(conf, null, 2) + '\n');
+    addDev({ '@tauri-apps/cli': '^2.0.0' });
+    pkg.scripts = { ...pkg.scripts, tauri: 'tauri' };
+    appendAgents(TAURI_NOTE(pm));
+  }
   writeFileSync(join(target, 'vite.config.mjs'), viteConfig({ tailwind, svelte, react })); // composed: muten + chosen plugins
   writeFileSync(pkgPath, JSON.stringify(pkg, null, 2) + '\n');
 
-  const desc = `${template}, ${style}${tailwind ? ' + Tailwind' : ''}${daisyui ? ' + DaisyUI' : ''}`;
+  const desc = `${template}, ${style}${tailwind ? ' + Tailwind' : ''}${daisyui ? ' + DaisyUI' : ''}${vercel ? ' + Vercel' : ''}${tauri ? ' + Tauri' : ''}`;
   if (!install) {
     if (process.stdin.isTTY) { note(`cd ${name}\n${pm} install\n${pm} run dev`, 'Next steps'); outro(color.green(`Created ${name}  (${desc})`)); }
     else console.log(`\n  Created ${name} (${desc}, ${pm})\n  cd ${name} && ${pm} install && ${pm} run dev\n`);
