@@ -1,4 +1,5 @@
-# create-muten
+## ALPHA - STILL ON DEVELOPMENT
+Muten is still under active development. We are currently in the alpha stage and are working on training models with Muten. Please keep in mind that improvements are being made gradually, and version 1.0 has not been released yet.
 
 The official scaffolder for **[Muten](https://www.npmjs.com/package/@muten/core)** — an AI-first
 frontend framework. One command bootstraps a complete, ready-to-run Muten app, so you never copy
@@ -145,15 +146,25 @@ so the whole app is `.muten` from the first line.
 
 ## What you can build
 
-A muten app reaches the whole web platform through bounded escapes — reach for the **lowest tier that works**:
+**Honest framing first.** muten isn't trying to beat React/Vue/Svelte at being general-purpose — they win there.
+muten wins when an **AI builds and maintains the app**: the whole language fits in context, a compiler (`muten
+check`) catches mistakes in milliseconds without a browser, edits stay tiny, and almost no JS ships. Best fit: the
+declarative 80% — CRUD, dashboards, catalogs, content, internal tools. For the rest, you don't fight it — you
+**couple in other tech** through bounded escapes. Reach for the **lowest tier that works**:
 
-- **Pure muten** — CRUD / SaaS / catalog / dashboard / content: pages, routing, `state`/`store`, `query` over
-  REST, `Form` + validation, `DataTable`, `when`/`each`, SSG + SEO. The declarative 80%, zero extra deps.
+- **Pure muten** — CRUD / SaaS / catalog / dashboard / content: pages, routing, `state`/`store` (with page→store
+  action composition), `query` over REST, `Form` (text/number/email/bool/enum + validation), `DataTable`,
+  `when`/`each`, SSG + SEO, and the bounded **list toolkit** — inline objects, `patch` in-place edit, `each…where`
+  filter, aggregates (`sum`/`count`/`avg`/`min`/`max`), `sort`/`sortDesc`. The declarative 80%, zero extra deps.
 - **muten + the platform** *(no framework runtime)* — native HTML (`<input type="date">`, `<dialog>`) + `class()`,
   CSS libs (Tailwind / DaisyUI), **vanilla JS via `Custom`** (charts, maps, date-pickers, rich-text, grids),
   `use fmt from "./lib.ts"` for any JS logic. Almost every "hard widget" lands here, *without React*.
 - **Svelte / React island** (`--svelte` / `--react`) — only when the component *is* a framework component
   (shadcn/ui, a React-only lib). Ships that runtime, lazy + code-split. The narrow last resort.
+
+**Deploy, honestly:** `npm run dev` runs every tier. For production, pure-muten static content can ship via
+`muten build` (zero-JS HTML); the moment you use `use`/islands/shared cross-page state, deploy with a normal
+`vite build` (it bundles them — the static build doesn't). Most real apps use `vite build`.
 
 Full reference (every primitive, the three tiers, the roadmap): [`@muten/core`](https://www.npmjs.com/package/@muten/core).
 

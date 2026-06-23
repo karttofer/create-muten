@@ -15,7 +15,7 @@ A page with no reactivity compiles to plain zero-runtime HTML; a reactive one sh
 - **`src/app.muten` is the entry.** `index.html` loads it; the plugin boots it. **Never create `main.js`** or a `<script>` bootstrap.
 - Primitives are **PascalCase** (`Stack`, `Text`); keywords/control flow are **lowercase** (`when`, `each`, `state`).
 - `style(...)` = layout/typography **tokens** (Muten builds STRUCTURE). `class("...")` = **look** (your CSS / Tailwind); toggle reactively with `class(active when isOpen)`. Muten ships no skin.
-- `@name` = a state reference. `{expr}` = interpolation inside any string: `Text "Hi, {user.name}"`.
+- `@name` = a state reference. `{expr}` = interpolation inside a Text/label/path string: `Text "Hi, {user.name}"`. (NOT inside `class("…")` — for a dynamic class use `class(name when cond)`.)
 - Each page has **one root node**. Reactivity is automatic: reading a state in interpolation / `when` / `each` re-renders just that spot.
 
 ## 1. What you CAN install / use
@@ -85,10 +85,11 @@ const TAX = 0.21                 # compile-time immutable scalar (inlined, never
 
 action add mutates users <- item {   # mutation; `mutates` lists what it may change (enforced)
   users.push(item)               # ops: push | set | reset | remove
+  users.push({ name: item.name, role: "admin" })   # inline object literal — build a record inline
   if item.vip { rating.set(5) } else { rating.set(1) }   # if/else = the only branching in actions
 }
 
-mock    { listUsers: [ { name: "Ana", role: admin } ] }          # mock data for a query
+mock    { listUsers: [ { name: "Ana", role: "admin" } ] }        # mock data (quote text/enum values, like everywhere)
 sources { listUsers: { url: "https://api…", at: "results" } }    # real data source for a query
 ```
 
@@ -233,10 +234,17 @@ Responsive: prefix any token with a breakpoint → `md:cols.2`, `lg:cols.4` (`sm
 - `query` state is async → render with `when @x.loading { … }`, then use `@x.data`.
 - Mutate **only** through `action`s, and only the state in `mutates` (the linter enforces it):
   - `list.push(x)` (append; auto-fills uuid fields) · `s.set(v)` · `s.reset()` · `list.remove(x => x.id == id)`
+  - **Inline object literal** (build a record without leaving Muten): `posts.push({ title: draft.title, body: draft.body })`, `draft.set({ name: c.name })`. Keys must be real fields of the entity.
+  - **Edit / move / toggle an item in place**: `list.patch(x => x.id == c.id, { done: not x.done })` — position-preserving, list ONLY the changed fields. This is the right tool for toggle/update/move (NOT remove+push, which reorders the item to the end).
   - There is no `toggle`: `flag.set(not flag)`.
-- Control flow in the tree: `when <expr> { … }` (mount/unmount), `each <list> as item { … }` (item is a scope var).
+- Control flow in the tree: `when <expr> { … }` (mount/unmount), `each <list> as item { … }` (item is a scope var). Filter a list with `where`: `each posts as p where p.published { … }` renders only matching items.
 - Expressions: `== != < > <= >=`, `and or not`, `contains` (case-insensitive substring / list membership),
   `+ - * /`, ternary `c ? a : b`, parentheses, refs (`user.name`, `cart.total`, `$item.x`).
+- **List aggregates** (method + lambda, like `remove`) — for a cart total / KPI count / "N active", NO JS needed:
+  - `lines.sum(l => l.price * l.qty)` · `todos.count(t => not t.done)` · `reviews.avg(r => r.score)` · `min/max(x => …)`.
+  - `.length` is the count-all; `count(x => cond)` is the filtered count. Works in interpolation, `when`, and store `get`.
+- **Sort a list** (same method+lambda shape; returns a sorted COPY): `each contacts.sort(c => c.name) as c { … }` (ascending) ·
+  `each scores.sortDesc(s => s.points) as s { … }` (descending). Use in `each` or a store `get`.
 
 ## 9. Stores — app-global state
 A `.store` file = state shared across pages, **no prop drilling**. The file name is the domain.
@@ -249,6 +257,8 @@ effect { /* runs whenever the store state it reads changes */ }
 ```
 Use it from any page/shell by name: `when ui.menuOpen { … }`, `Button "☰" -> ui.toggleMenu`. The Vite
 plugin auto-detects every `.store` file. `get` = memoized; `effect` = reactive side-effect (Angular-style).
+**A page action can CALL a store action** (composition) — `action add <- d { cart.add(d)  draft.reset() }` does
+store work AND local work in one handler (e.g. add to the store, then clear the form). Wire it with `Form submit add`.
 
 ## 10. Routing — how it works
 `src/app.muten` maps URLs to pages. It uses **real paths** (`/about`, History API — client-side nav, no
