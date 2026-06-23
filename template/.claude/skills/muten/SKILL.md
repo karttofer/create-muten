@@ -167,6 +167,14 @@ Button "Next"   -> next
 ```
 Pass as many params as you need (`q`, `page`, `sort`, `category`, …). The query's `.loading`/`.error` reflect the refetch.
 
+**Live data — `every Ns` (auto-refresh)** — append `every <duration>` to a query to poll it on a timer (`5s`, `500ms`, `2m`). The background refetch is **silent** (no loading flash) and rendering is **keyed by id**, so only the rows whose data actually changed re-render — fine for live dashboards / stats / prices, even with large lists:
+```
+state   { prices = query prices every 5s : list<Price> }
+sources { prices: { url: "/prices", at: "data" } }
+# each prices.data as p { Text "{p.symbol}  {p.value}" }   — only changed rows update, focus/scroll survive
+```
+Client-side only (deploy via `vite build`; static `muten build` pages don't poll). Use `refetch` for user-driven refresh, `every` for background refresh.
+
 **Escape hatch — explicit request** (when the API isn't RESTful): `post`/`put`/`delete` a `"client:/path"` (interpolated) with an optional `body`, in an action:
 ```
 action buy    <- item { post "shop:/orders" body item }        # any method, any path
