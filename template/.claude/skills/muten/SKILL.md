@@ -6,16 +6,17 @@ description: Read and write Muten — the AI-first frontend DSL this app is buil
 # Muten — complete language reference
 
 Muten compiles `.muten` files to vanilla JS + fine-grained signals (no virtual DOM). The `@muten/core`
-Vite plugin does the compiling. You write a small declarative DSL for the UI — **not** React/JSX/Vue/Svelte/HTML;
-foreign code comes in only through explicit escapes (`use` for JS functions, **islands** for Svelte/React widgets — §14).
-A page with no reactivity compiles to plain zero-runtime HTML; a reactive one ships ~1KB of signals.
+Vite plugin does the compiling. You write a small declarative DSL for the UI — **not** React/JSX/Vue/Svelte/HTML.
+Muten ships ZERO framework runtime; foreign code comes in only through explicit escapes (`use` for JS logic
+functions — §14, `Custom` for a vanilla-JS widget — §13). A page with no reactivity compiles to plain
+zero-runtime HTML; a reactive one ships ~1KB of signals.
 
 ## Mental model & golden rules
 - **UI** → `.muten` files (pages, parts, the app root, the theme). **App-global state** → `.store` files.
 - **`src/app.muten` is the entry.** `index.html` loads it; the plugin boots it. **Never create `main.js`** or a `<script>` bootstrap.
 - Primitives are **PascalCase** (`Stack`, `Text`); keywords/control flow are **lowercase** (`when`, `each`, `state`).
 - `style(...)` = layout/typography **tokens** (Muten builds STRUCTURE). `class("...")` = **look** (your CSS / Tailwind); toggle reactively with `class(active when isOpen)`. Muten ships no skin.
-- `@name` = a state reference. `{expr}` = interpolation inside a Text/label/path string: `Text "Hi, {user.name}"`. (NOT inside `class("…")` — for a dynamic class use `class(name when cond)`.)
+- A reference is a **bare name** (no sigil) everywhere — `count`, `user.name`, `cart.total`. `{expr}` = interpolation inside a Text/label/path string: `Text "Hi, {user.name}"`. (NOT inside `class("…")` — for a dynamic class use `class(name when cond)`.)
 - Each page has **one root node**. Reactivity is automatic: reading a state in interpolation / `when` / `each` re-renders just that spot.
 
 ## 1. What you CAN install / use
@@ -29,17 +30,13 @@ This is a normal **Vite** project, so the whole Vite/npm ecosystem for **styling
   **`use` logic imports** (date libs, fetch wrappers, zod, etc.).
 - **JS logic via `use … from "./lib.ts"` — YES.** Import named functions and call them in any expression
   (`use fmt from "./lib.ts"` → `Text "{fmt(x)}"`). The `.ts` is a facade over any npm. See §14.
-- **Svelte / React components via ISLANDS — YES.** A genuinely-interactive widget or a framework UI lib
-  Muten can't express → mount a real `.svelte`/`.jsx` with `use X from "svelte:…"`. See §14.
 - **Host UI via the `Custom` primitive** — write vanilla JS in `src/components/<Name>.js` (charts,
   maps, a third-party widget) and mount it with `Custom`. See §Custom.
 
 ## 2. What you CANNOT do
-- **Don't build the page UI out of React / Vue / Svelte.** Pages are `.muten` → vanilla DOM, no framework
-  runtime; you don't compose the app from MUI/Chakra/shadcn. BUT a *specific* interactive widget or framework
-  lib CAN enter as an **island** (`use X from "react:…"`, §14) or a vanilla-JS `Custom` — for the foreign piece,
-  not the whole UI. Default to `.muten`; reach for an island only when Muten genuinely can't express it.
-- **No JSX / hooks / `className` inside `.muten`.** Those live in the island's own `.svelte`/`.jsx` file, never in a page.
+- **No React / Vue / Svelte — at all.** Muten ships ZERO framework runtime. Pages are `.muten` → vanilla DOM;
+  you don't compose the app from MUI/Chakra/shadcn. For a widget Muten can't express, drop to a vanilla-JS
+  `Custom` (§13); for JS logic, `use` a function (§14). There is no JSX/hooks/`className` anywhere.
 - **No arbitrary inline CSS via `style()`** — `style()` only takes the layout/typography tokens below.
   Visual styling (colors, borders, shadows) goes through `class("…")` + your CSS.
 
@@ -49,7 +46,7 @@ This is a normal **Vite** project, so the whole Vite/npm ecosystem for **styling
   static pages ship zero JS; reactive pages get their content (lists, `each`, interpolation from mock data)
   baked into the HTML, then the runtime boots for interactivity. No special syntax needed.
 - **Shell has no local state** — put shell/cross-page state in a `.store` (see the mobile-menu pattern).
-- **No `toggle` op** — flip a bool with `set(not x)`.
+- **Flip a bool** with `x.toggle()` (or `x.set(not x)`).
 - **Forms**: `Form` (auto-generated from an entity) and `SearchField` (single text input) are the
   built-ins; richer custom inputs need a `Custom` component for now.
 - **Pages are single-root** (one top node per page).
@@ -78,13 +75,13 @@ entity User {                    # data shape + validation (implicit `id uuid`)
 
 state {                          # page-LOCAL reactive state
   q     = ""              : text
-  users = query listUsers : list<User>   # query → async; exposes @users.loading/.error/.data
+  users = query listUsers : list<User>   # query → async; exposes users.loading/.error/.data
 }
 
 const TAX = 0.21                 # compile-time immutable scalar (inlined, never reactive)
 
-action add mutates users <- item {   # mutation; `mutates` lists what it may change (enforced)
-  users.push(item)               # ops: push | set | reset | remove
+action add(item: User) mutates users {   # mutation; typed params in (…); `mutates` lists what it may change (enforced)
+  users.push(item)               # local ops: push | set | reset | remove | toggle | patch
   users.push({ name: item.name, role: "admin" })   # inline object literal — build a record inline
   if item.vip { rating.set(5) } else { rating.set(1) }   # if/else = the only branching in actions
 }
@@ -140,9 +137,9 @@ No `api` field → the client named `default`. The flat `api { base, headers }` 
 state { orders = query orders : list<Order> }
 sources { orders: { api: "shop", url: "/orders", at: "data" } }
 
-action buy  mutates orders <- item { orders.create(item) }   # POST   /orders       → append the result
-action edit mutates orders <- item { orders.update(item) }   # PUT    /orders/{id}  → replace by id
-action drop mutates orders <- item { orders.delete(item) }   # DELETE /orders/{id}  → remove by id
+action buy(item: Order)  mutates orders { orders.create(item) }   # POST   /orders       → append the result
+action edit(item: Order) mutates orders { orders.update(item) }   # PUT    /orders/{id}  → replace by id
+action drop(item: Order) mutates orders { orders.delete(item) }   # DELETE /orders/{id}  → remove by id
 
 Button "Buy" -> buy(product)
 ```
@@ -158,27 +155,27 @@ when buy.error { Text "Could not save: {buy.error}" }
 state { q = "" : text  page = 1 : number  products = query products : list<Product> }
 sources { products: { url: "/products", at: "data" } }
 
-action search mutates products <- term { products.refetch(q: term, page: 1) }
+action search(term: text) mutates products { products.refetch(q: term, page: 1) }
 action next   mutates products         { page.set(page + 1)  products.refetch(q: q, page: page) }
 
-SearchField bind q
+SearchField bind(q)
 Button "Search" -> search(q)
 Button "Next"   -> next
 ```
 Pass as many params as you need (`q`, `page`, `sort`, `category`, …). The query's `.loading`/`.error` reflect the refetch.
 
-**Live data — `every Ns` (auto-refresh)** — append `every <duration>` to a query to poll it on a timer (`5s`, `500ms`, `2m`). The background refetch is **silent** (no loading flash) and rendering is **keyed by id**, so only the rows whose data actually changed re-render — fine for live dashboards / stats / prices, even with large lists:
+**Live data — `query x live` (WebSocket)** — append `live` to a query to subscribe to a **WebSocket** instead of fetching: the server PUSHES, muten reacts (event-driven, NOT polling). Each message replaces the data; the **keyed reconciliation** updates only the rows whose fields changed (focus/scroll survive) and writes **batch** into one render per frame:
 ```
-state   { prices = query prices every 5s : list<Price> }
-sources { prices: { url: "/prices", at: "data" } }
-# each prices.data as p { Text "{p.symbol}  {p.value}" }   — only changed rows update, focus/scroll survive
+state   { prices = query prices live : list<Price> }
+sources { prices: { url: "ws://feed.example.com/prices", at: "data" } }
+# each prices.data as p { Text "{p.symbol}  {p.value}" }   — only changed rows touch the DOM
 ```
-Client-side only (deploy via `vite build`; static `muten build` pages don't poll). Use `refetch` for user-driven refresh, `every` for background refresh.
+Plain `WebSocket` under the hood, exposed as one keyword; the socket closes automatically when the page unmounts. Client-side only (deploy via `vite build`). Use `refetch` for user-driven refresh, `live` for server-pushed real-time. (Polling via a timer was intentionally NOT added — it isn't reactive. For *huge* live lists you still virtualize + send server-side deltas, as in any framework.)
 
 **Escape hatch — explicit request** (when the API isn't RESTful): `post`/`put`/`delete` a `"client:/path"` (interpolated) with an optional `body`, in an action:
 ```
-action buy    <- item { post "shop:/orders" body item }        # any method, any path
-action cancel <- o    { delete "shop:/orders/{o.id}/cancel" }   # custom path, interpolated
+action buy(item: Order) { post "shop:/orders" body item }        # any method, any path
+action cancel(o: Order) { delete "shop:/orders/{o.id}/cancel" }   # custom path, interpolated
 action ping           { post "shop:/health" }                   # no body, no `mutates` needed
 ```
 It uses the named client's base + headers; the action is async with `.pending`/`.error`. Prefer `create`/`update`/`delete` when the API is RESTful (those also update the list); reach for `post`/`put`/`delete` only when the convention doesn't fit.
@@ -194,21 +191,21 @@ A bare string is the node's main prop. `{ }` = children. Lay out with `style()`,
 | `Text` | paragraph, interpolates | `Text "Hi, {user.name}"` |
 | `Title` | heading; level keyword | `Title "Dashboard" h2` |
 | `Span` | inline text | `Span "{cart.total}"` |
-| `Image` | `<img>`, **alt required** | `Image "{p.image}" alt "{p.title}"` |
+| `Image` | `<img>`, **alt required** | `Image "{p.image}" alt("{p.title}")` |
 | `Link` | client-side nav | `Link "Catalog" -> /catalog` |
 | `Button` | runs an action | `Button "Save" -> save(draft)` |
-| `SearchField` | text input bound to state | `SearchField bind @q "Search…"` |
-| `Form` | auto-form from an entity draft | `Form bind @draft submit create "Save"` |
-| `DataTable` | reactive table over a list/query | `DataTable @users columns(name, email)` |
+| `SearchField` | text input bound to state | `SearchField bind(q) "Search…"` |
+| `Form` | auto-form from an entity draft | `Form bind(draft) submit(create) "Save"` |
+| `DataTable` | reactive table over a list/query | `DataTable users columns(name, email)` |
 | `RowAction` | a button inside each table row | `RowAction "Delete" -> remove(row.id)` |
 | `slot` | outlet inside `shell` | `slot` |
-| `Custom` | host-JS escape hatch | `Custom Chart inputs(data: @sales) on(pick: select)` |
+| `Custom` | host-JS escape hatch | `Custom Chart inputs(data: sales) on(pick: select)` |
 
 Horizontal layout = a region with `style(row)` (there is no `Row` primitive). Clickable card =
 `Button { … }` or `Link "" -> /x { … }` with children instead of a label.
 
-Modifiers (after a primitive): `style(tokens)` · `class("css")` · `bind @state` · `submit action` ·
-`where(clauses)` · `columns(a, b)` · `alt "…"` · `inputs(k: v)` · `on(event: action)`.
+Modifiers (after a primitive): `style(tokens)` · `class("css")` · `bind(state)` · `submit(action)` ·
+`where(clauses)` · `columns(a, b)` · `alt("…")` · `inputs(k: v)` · `on(event: action)`.
 `class()` also toggles reactively (`class(active when isOpen)`); `on(event: action)` works on **any** element
 (keydown, mouseenter, change, blur, …) and calls the action — use `Button -> action(arg)` when you need an arg.
 
@@ -239,20 +236,22 @@ Responsive: prefix any token with a breakpoint → `md:cols.2`, `lg:cols.4` (`sm
 
 ## 8. State, actions & reactivity
 - `state` cells are signals; reading them in interpolation / `when` / `each` auto-updates that spot.
-- `query` state is async → render with `when @x.loading { … }`, then use `@x.data`.
+- `query` state is async → render with `when x.loading { … }`, then use `x.data`.
 - Mutate **only** through `action`s, and only the state in `mutates` (the linter enforces it):
-  - `list.push(x)` (append; auto-fills uuid fields) · `s.set(v)` · `s.reset()` · `list.remove(x => x.id == id)`
+  - `list.push(x)` (append; auto-fills uuid fields) · `s.set(v)` · `s.reset()` · `s.toggle()` (flip a bool) · `list.remove where id == itemId`
   - **Inline object literal** (build a record without leaving Muten): `posts.push({ title: draft.title, body: draft.body })`, `draft.set({ name: c.name })`. Keys must be real fields of the entity.
-  - **Edit / move / toggle an item in place**: `list.patch(x => x.id == c.id, { done: not x.done })` — position-preserving, list ONLY the changed fields. This is the right tool for toggle/update/move (NOT remove+push, which reorders the item to the end).
+  - **Edit / move / toggle an item in place**: `list.patch where id == c.id with { done: not done }` — position-preserving, list ONLY the changed fields. This is the right tool for toggle/update/move (NOT remove+push, which reorders the item to the end).
+  - **Item fields are bare inside `where`/`with`** (item-implicit, like a `where`-filter). So a param must be named DIFFERENTLY from any field: `remove where id == id` is an error (both mean the field) — write `remove where id == itemId` with the param named `itemId`. The oracle flags the clash and tells you to rename.
   - There is no `toggle`: `flag.set(not flag)`.
 - Control flow in the tree: `when <expr> { … }` (mount/unmount), `each <list> as item { … }` (item is a scope var). Filter a list with `where`: `each posts as p where p.published { … }` renders only matching items.
 - Expressions: `== != < > <= >=`, `and or not`, `contains` (case-insensitive substring / list membership),
   `+ - * /`, ternary `c ? a : b`, parentheses, refs (`user.name`, `cart.total`, `$item.x`).
-- **List aggregates** (method + lambda, like `remove`) — for a cart total / KPI count / "N active", NO JS needed:
-  - `lines.sum(l => l.price * l.qty)` · `todos.count(t => not t.done)` · `reviews.avg(r => r.score)` · `min/max(x => …)`.
-  - `.length` is the count-all; `count(x => cond)` is the filtered count. Works in interpolation, `when`, and store `get`.
-- **Sort a list** (same method+lambda shape; returns a sorted COPY): `each contacts.sort(c => c.name) as c { … }` (ascending) ·
-  `each scores.sortDesc(s => s.points) as s { … }` (descending). Use in `each` or a store `get`.
+- **List aggregates** — `by` projects a value per item, `where` is a predicate; item fields are bare (item-implicit). For a cart total / KPI count / "N active", NO JS needed:
+  - `lines.sum by price * qty` · `todos.count where not done` · `reviews.avg by score` · `prices.min by amount` · `prices.max by amount`.
+  - `.length` is the count-all; `count where cond` is the filtered count. Works in interpolation, `when`, and a `get`.
+  - **Embedding in a bigger expression needs grouping `()`** (the `by`/`where` body runs to the end): `when (todos.count where not done) > 0 { … }`. Standalone (in a `get`) needs none: `get openCount = todos.count where not done`.
+- **Sort a list** (`sort by` ascending / `sortDesc by` descending; returns a sorted COPY): `each contacts.sort by name as c { … }` ·
+  `each scores.sortDesc by points as s { … }`. Use in `each` or a `get`.
 
 ## 9. Stores — app-global state
 A `.store` file = state shared across pages, **no prop drilling**. The file name is the domain.
@@ -260,13 +259,13 @@ A `.store` file = state shared across pages, **no prop drilling**. The file name
 # src/ui.store   → referenced everywhere as ui.<member>
 state  { menuOpen = false : bool }
 get    isOpen = menuOpen                 # derived/memoized value (read as ui.isOpen)
-action toggleMenu mutates menuOpen <- x { menuOpen.set(not menuOpen) }
+action toggleMenu mutates menuOpen { menuOpen.toggle() }
 effect { /* runs whenever the store state it reads changes */ }
 ```
 Use it from any page/shell by name: `when ui.menuOpen { … }`, `Button "☰" -> ui.toggleMenu`. The Vite
 plugin auto-detects every `.store` file. `get` = memoized; `effect` = reactive side-effect (Angular-style).
-**A page action can CALL a store action** (composition) — `action add <- d { cart.add(d)  draft.reset() }` does
-store work AND local work in one handler (e.g. add to the store, then clear the form). Wire it with `Form submit add`.
+**A page action can CALL a store action** (composition) — `action add(d: Item) mutates draft { cart.add(d)  draft.reset() }` does
+store work AND local work in one handler (e.g. add to the store, then clear the form). Wire it with `Form submit(add)`.
 
 ## 10. Routing — how it works
 `src/app.muten` maps URLs to pages. It uses **real paths** (`/about`, History API — client-side nav, no
@@ -316,13 +315,13 @@ routes { / -> home }
 ```
 
 ## 11. Entities, forms & validation
-`entity` defines a shape + constraints. `Form bind @draft submit create` auto-renders one input per
+`entity` defines a shape + constraints. `Form bind(draft) submit(create)` auto-renders one input per
 field and validates on submit (per-field `.field-error`), blocking the action if invalid.
 ```
 entity Task { title text required  notes text  done bool }
 state  { draft = {} : Task  tasks = [] : list<Task> }
-action create mutates tasks, draft <- t { tasks.push(draft)  draft.reset() }
-# in the page:  Form bind @draft submit create "Add task"
+action create(t: Task) mutates tasks, draft { tasks.push(t)  draft.reset() }
+# in the page:  Form bind(draft) submit(create) "Add task"
 ```
 
 ## 12. Parts — reusable composition
@@ -345,47 +344,30 @@ For anything Muten can't express (a chart, a 3rd-party widget), write vanilla JS
 `src/components/<Name>.js` and mount it with `Custom`. It receives `inputs` (values/state) and wires
 DOM events to your actions via `on`. This is the ONLY way to use non-Muten UI code.
 ```
-Custom Chart inputs(data: @sales) on(pointSelect: select)
+Custom Chart inputs(data: sales) on(pointSelect: select)
 # → src/components/Chart.js exports a mount(el, { inputs, on }) that builds vanilla DOM.
 ```
 
-## 14. `use` — JS logic functions & framework islands
-Two escapes that pull in real JS/npm behind a typed border. Both reuse `use … from`; the prefix decides which.
-
-**Logic functions** — `use` named exports from a `.ts`/`.js` file and call them in any expression:
+## 14. `use` — JS logic functions
+One escape that pulls in real JS/npm behind a typed, **synchronous** border. `use` named exports from a
+`.ts`/`.js` file and call them in any expression:
 ```
 use fmt, slug from "./lib/format.ts"        # named exports ONLY (the .ts is a facade over any npm)
 Text "{fmt(order.total)}"                    # called like any expression
 Link "{slug(post.title)}" -> /blog/{post.id}
 ```
 Import zod/date-fns/nanoid/whatever *inside* `format.ts` and expose tidy named functions; Muten sees only the
-names, so the oracle still checks your calls. Keep the border **synchronous** (no async functions).
-
-**Islands** — mount a real **Svelte or React** component for an interactive widget or framework UI lib Muten
-can't express (a date-picker, rich editor, a React charting component):
-```
-use Counter from "svelte:./Counter.svelte"   # `svelte:` / `react:` prefix = an ISLAND (not a logic fn)
-use Likes   from "react:./Likes.jsx"
-Page {
-  Counter(start: @total, onChange: setTotal)               # props ↓ (@state) + events ↑ (a muten action)
-  Likes(start: @total, onLike: setTotal) client:visible    # lazy: hydrate when scrolled into view
-}
-```
-- `prop: @state` sends a value **down** (snapshot; a React island re-renders when the signal changes). `onX: action`
-  sends a callback that fires a **muten action** — that's how the island writes **back** to muten state.
-- `client:visible` / `client:idle` = **lazy** hydration (load the island's JS only when visible / idle). No
-  directive = on load. Every island is code-split, so it never bloats the main bundle.
-- **Install the framework's Vite plugin** (`@sveltejs/vite-plugin-svelte` or `@vitejs/plugin-react`) next to
-  `muten()` in `vite.config.mjs`. The component file is normal Svelte/React — it owns its own tooling; Muten
-  only validates the node + its args. This is how a **React/Svelte component lib** comes in: wrap it in an island.
+names, so the oracle still checks your calls. Keep the border **synchronous** (no async functions). For a
+visual widget Muten can't express (a chart, a map, a date-picker), drop to a vanilla-JS `Custom` (§13) — there
+is no framework-component escape; Muten owns the whole UI.
 
 ## 15. Gotchas
-- It's NOT React: PascalCase primitives + `{ }` children; no JSX/hooks/`className` (those live in island files, §14).
+- It is NOT JSX — PascalCase primitives + `{ }` children; no JSX/hooks/`className` anywhere.
 - No `main.js`/`<script>` — `app.muten` is the entry.
 - `style()` (layout tokens) ≠ `class()` (look). No colors/borders in `style()`.
-- `Image` without `alt` fails validation (`alt ""` for decorative).
+- `Image` without `alt` fails validation (`alt("")` for decorative).
 - Actions may only touch their declared `mutates`.
-- Want a library? CSS → `class()`. JS function → `use` (§14). A widget → `Custom`. A React/Svelte component → an **island** (§14).
+- Want a library? CSS → `class()`. JS function → `use` (§14). A widget → `Custom` (§13). There is no framework-component escape.
 
 ## 16. Minimal full app
 ```
@@ -395,11 +377,11 @@ routes { / -> home }
 # src/pages/home/home.muten
 screen home
 state  { name = "" : text }
-action greet mutates name <- v { name.set(v) }
+action greet(v: text) mutates name { name.set(v) }
 
 Page style(padding.lg, gap.md) {
   Title "Hello"
-  SearchField bind @name "Your name"
+  SearchField bind(name) "Your name"
   when name { Text "Hi, {name}!" }
 }
 ```

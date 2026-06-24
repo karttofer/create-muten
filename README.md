@@ -89,7 +89,7 @@ whether a framework's island plugin is pre-wired:
 | **muten + Svelte** | same, plus `@sveltejs/vite-plugin-svelte` + Svelte, for **Svelte islands** (a lighter runtime) |
 
 An *island* is a real framework component used as a node - `use X from "react:./X.jsx"` →
-`X(value: @s, onChange: act) client:visible` (props ↓ + events ↑, lazy + code-split). Default to `.muten`;
+`X(value: s, onChange: act) client:visible` (props ↓ + events ↑, lazy + code-split). Default to `.muten`;
 reach for an island only for a widget muten can't express.
 
 When **Tailwind or DaisyUI** is added, `theme.muten` is centralized to **match Tailwind's scale** (so

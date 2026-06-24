@@ -2,7 +2,7 @@
 // create-muten — scaffold a new Muten app, with modern interactive prompts (@clack/prompts).
 //
 //   npm create muten@latest [name]              (or: npx create-muten)
-//   create-muten [name] [--template muten|react|svelte] [--css|--scss] [--tailwind] [--daisyui] [--vercel] [--tauri] [--pm npm|pnpm|yarn|bun] [--no-install]
+//   create-muten [name] [--css|--scss] [--tailwind] [--daisyui] [--vercel] [--tauri] [--pm npm|pnpm|yarn|bun] [--no-install]
 //
 // Stylesheet (CSS or SCSS) is the base; Tailwind is an optional add-on ON TOP of CSS (it's a styling
 // library, not a stylesheet replacement). Interactive in a TTY; flags / non-TTY make it scriptable.
@@ -16,7 +16,6 @@ import color from 'picocolors';
 const SELF = dirname(fileURLToPath(import.meta.url));
 const TEMPLATE = join(SELF, 'template');
 const TAURI_TEMPLATE = join(SELF, 'template-tauri'); // src-tauri/ overlay, copied only when --tauri
-const TEMPLATES = ['muten', 'react', 'svelte']; // the "template" IS the flavor: pure muten, or muten + a framework for islands
 const PKG = JSON.parse(readFileSync(join(SELF, 'package.json'), 'utf8'));
 const PMS = ['npm', 'pnpm', 'yarn', 'bun'];
 
@@ -61,29 +60,12 @@ const WELCOME_CSS = `
 .card-text { color: #71717a; font-size: 13px; line-height: 1.5; }
 @media (max-width: 560px) { .stats, .cards { grid-template-columns: 1fr; } }
 `;
-// vite.config composed from the chosen options — muten always; svelte/react add island plugins; tailwind last.
-const viteConfig = ({ tailwind, svelte, react }) => {
+// vite.config composed from the chosen options — muten always; tailwind last.
+const viteConfig = ({ tailwind }) => {
   const imports = [`import muten from '@muten/core/vite-plugin-muten.js';`];
   const plugins = ['muten()'];
-  if (svelte) { imports.push(`import { svelte } from '@sveltejs/vite-plugin-svelte';`); plugins.push('svelte()'); }
-  if (react) { imports.push(`import react from '@vitejs/plugin-react';`); plugins.push('react()'); }
   if (tailwind) { imports.push(`import tailwindcss from '@tailwindcss/vite';`); plugins.push('tailwindcss()'); }
   return `${imports.join('\n')}\n\nexport default {\n  plugins: [${plugins.join(', ')}],\n};\n`;
-};
-// Tell the AI the island plugin is wired so it can drop in a real Svelte/React component (incl. shadcn/Radix).
-const ISLANDS_NOTE = ({ svelte, react }) => {
-  const techs = [svelte && 'Svelte', react && 'React'].filter(Boolean).join(' + ');
-  const ex = react
-    ? `use Widget from "react:./Widget.jsx"` + '  →  ' + `Widget(value: @sel, onChange: pick) client:visible`
-    : `use Widget from "svelte:./Widget.svelte"` + '  →  ' + `Widget(value: @sel, onChange: pick) client:visible`;
-  return `
-## Framework islands (${techs} — wired)
-The ${techs} Vite plugin is installed. For a genuinely-interactive widget Muten can't express (date-picker,
-combobox, command palette, rich editor — including React/Svelte libs like shadcn/Radix), write the component
-in its own \`.${react ? 'jsx' : 'svelte'}\` file and mount it as a node: \`${ex}\`. props ↓ (\`@state\`) + events ↑
-(an \`onX: action\` calls a Muten action), lazy + code-split. Default to \`.muten\` for the UI; reach for an
-island only for the foreign piece. Full details: SKILL §14.
-`;
 };
 // When Tailwind/DaisyUI is chosen, the Muten token scale is centralized to MATCH Tailwind's defaults, so
 // style() tokens and Tailwind utilities share one scale (e.g. style(gap.md) == gap-4 == 1rem). Plain
@@ -151,10 +133,9 @@ async function main() {
   const has = (f) => argv.includes(f);
   const val = (f) => { const i = argv.indexOf(f); return i >= 0 ? argv[i + 1] : undefined; };
   if (has('-v') || has('--version')) { console.log(PKG.version); return; }
-  if (has('-h') || has('--help')) { console.log('Usage: create-muten [name] [--template muten|react|svelte] [--css|--scss] [--tailwind] [--daisyui] [--vercel] [--tauri] [--pm npm|pnpm|yarn|bun] [--no-install]'); return; }
+  if (has('-h') || has('--help')) { console.log('Usage: create-muten [name] [--css|--scss] [--tailwind] [--daisyui] [--vercel] [--tauri] [--pm npm|pnpm|yarn|bun] [--no-install]'); return; }
 
-  let name = argv.filter((a, i) => !a.startsWith('-') && argv[i - 1] !== '--pm' && argv[i - 1] !== '--template')[0];
-  let template = val('--template') || (has('--react') ? 'react' : has('--svelte') ? 'svelte' : has('--muten') ? 'muten' : undefined); // flavor: muten | react | svelte
+  let name = argv.filter((a, i) => !a.startsWith('-') && argv[i - 1] !== '--pm')[0];
   let style = has('--scss') ? 'scss' : has('--css') ? 'css' : undefined;     // the base stylesheet
   let tailwind = has('--tailwind') ? true : undefined;                        // optional add-on (CSS only)
   let daisyui = has('--daisyui') ? true : undefined;                          // component classes on Tailwind
@@ -163,7 +144,6 @@ async function main() {
   let pm = val('--pm');
   let install = has('--no-install') ? false : undefined;
   if (name && !validName(name)) { console.error(`Invalid name: "${name}" (letters, digits, . _ -)`); process.exit(1); }
-  if (template && !TEMPLATES.includes(template)) { console.error(`Unknown template: "${template}" (${TEMPLATES.join(', ')})`); process.exit(1); }
   if (pm && !PMS.includes(pm)) { console.error(`Unknown package manager: "${pm}" (${PMS.join(', ')})`); process.exit(1); }
   const dpm = detectPM();
 
@@ -172,11 +152,6 @@ async function main() {
     logo();
     intro(color.dim(`create-muten v${PKG.version}`));
     if (!name) name = keep(await text({ message: 'Project name', placeholder: 'muten-app', defaultValue: 'muten-app', validate: (v) => (v && !validName(v)) ? 'Use letters, digits, . _ - (start alphanumeric).' : undefined }));
-    if (!template) template = keep(await select({ message: 'Template', options: [
-      { value: 'muten', label: 'muten', hint: 'pure — the AI-first DSL, zero framework runtime' },
-      { value: 'react', label: 'muten + React', hint: 'React islands: shadcn, Radix, any React lib' },
-      { value: 'svelte', label: 'muten + Svelte', hint: 'Svelte islands: a lighter runtime' },
-    ] }));
     if (!style && tailwind === undefined) { // ONE explicit styling choice — each is opt-in, "CSS" = nothing extra
       const styling = keep(await select({ message: 'Styling', options: [
         { value: 'css', label: 'CSS', hint: 'plain — no framework, zero deps' },
@@ -192,7 +167,6 @@ async function main() {
     if (tauri === undefined) tauri = keep(await confirm({ message: 'Desktop app? (Tauri — native window, ships the OS webview, needs Rust)', initialValue: false }));
   }
   name = name || 'muten-app';
-  template = template || 'muten';
   style = style || 'css';
   if (daisyui) tailwind = true;                 // DaisyUI is a Tailwind plugin
   if (tailwind === undefined) tailwind = false;
@@ -200,16 +174,13 @@ async function main() {
   if (vercel === undefined) vercel = false;
   if (tauri === undefined) tauri = false;
   if (tailwind) style = 'css';                  // Tailwind v4 is CSS-native (not SCSS)
-  const svelte = template === 'svelte';         // the flavor IS the islands choice
-  const react = template === 'react';
   pm = pm || dpm;
   if (install === undefined) install = false;
 
   const target = resolve(name);
   if (existsSync(target)) { (process.stdin.isTTY ? cancel : console.error)(`"${name}" already exists.`); process.exit(1); }
 
-  // EVERY flavor scaffolds the SAME base template (identical welcome page); react/svelte only add the
-  // island plugin + deps below, and tailwind/daisyui only swap the stylesheet.
+  // The base template is the pure "muten" app (the welcome page); tailwind/daisyui only swap the stylesheet.
   cpSync(TEMPLATE, target, { recursive: true });
   const ignore = join(target, '_gitignore');
   if (existsSync(ignore)) renameSync(ignore, join(target, '.gitignore'));
@@ -232,9 +203,6 @@ async function main() {
     writeFileSync(join(target, 'src', style === 'scss' ? 'styles.scss' : 'styles.css'), RESET + WELCOME_CSS);
   }
   if (style === 'scss') addDev({ sass: '^1.101.0' });
-  if (svelte) { addDep({ svelte: '^5.0.0' }); addDev({ '@sveltejs/vite-plugin-svelte': '^7.0.0' }); }
-  if (react) { addDep({ react: '^19.0.0', 'react-dom': '^19.0.0' }); addDev({ '@vitejs/plugin-react': '^6.0.0' }); }
-  if (svelte || react) appendAgents(ISLANDS_NOTE({ svelte, react }));
   if (tauri) {                                  // native desktop wrapper around the same web build (dist)
     cpSync(join(TAURI_TEMPLATE, 'src-tauri'), join(target, 'src-tauri'), { recursive: true });
     writeFileSync(join(target, 'src-tauri', '.gitignore'), '/target\n/gen/schemas\n'); // npm strips real .gitignore from packages
@@ -251,10 +219,10 @@ async function main() {
     pkg.scripts = { ...pkg.scripts, tauri: 'tauri', 'tauri:dev': 'tauri dev', 'tauri:build': 'tauri build' };
     appendAgents(TAURI_NOTE(pm));
   }
-  writeFileSync(join(target, 'vite.config.mjs'), viteConfig({ tailwind, svelte, react })); // composed: muten + chosen plugins
+  writeFileSync(join(target, 'vite.config.mjs'), viteConfig({ tailwind })); // composed: muten + chosen plugins
   writeFileSync(pkgPath, JSON.stringify(pkg, null, 2) + '\n');
 
-  const desc = `${template}, ${style}${tailwind ? ' + Tailwind' : ''}${daisyui ? ' + DaisyUI' : ''}${vercel ? ' + Vercel' : ''}${tauri ? ' + Tauri' : ''}`;
+  const desc = `muten, ${style}${tailwind ? ' + Tailwind' : ''}${daisyui ? ' + DaisyUI' : ''}${vercel ? ' + Vercel' : ''}${tauri ? ' + Tauri' : ''}`;
   if (!install) {
     if (process.stdin.isTTY) { note(`cd ${name}\n${pm} install\n${pm} run dev`, 'Next steps'); outro(color.green(`Created ${name}  (${desc})`)); }
     else console.log(`\n  Created ${name} (${desc}, ${pm})\n  cd ${name} && ${pm} install && ${pm} run dev\n`);

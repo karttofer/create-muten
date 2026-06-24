@@ -6,7 +6,7 @@ Page class("welcome") {
   Stack class("wrap") {
 
     Stack class("hero") {
-      Image "/muten.svg" alt "muten logo" class("logo")
+      Image "/muten.svg" alt("muten logo") class("logo")
       Title "muten" class("brand")
       Text "An AI-first frontend framework." class("tagline")
       Text "You write small .muten files. muten compiles them to vanilla JS plus fine-grained signals — no virtual DOM, no runtime to ship. The language stays small and analyzable, so an AI can locate and mutate your app cheaply." class("lead")

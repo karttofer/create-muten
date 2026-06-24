@@ -3,7 +3,7 @@
 This project uses **Muten**, an AI-first frontend framework. The UI is written in **`.muten` files**
 (a small declarative DSL) — **not** React, JSX, Vue, Svelte or hand-written HTML/JS. No model is
 trained on Muten yet, so **follow this guide instead of guessing**. Foreign code enters ONLY through explicit
-escapes — `use` for JS functions, **islands** for a Svelte/React widget — never as the page UI itself; never add a JS bootstrap.
+escapes — `use` for JS functions, `Custom` for a vanilla-JS widget — never as the page UI itself; never add a JS bootstrap.
 
 > Full language reference (every primitive, prop, token, pattern): the **`muten` skill** at
 > [`skills/muten/SKILL.md`](skills/muten/SKILL.md).
@@ -14,7 +14,7 @@ escapes — `use` for JS functions, **islands** for a Svelte/React widget — ne
 - Primitives are **PascalCase** (`Stack`, `Text`, `Button`); control flow is lowercase (`when`, `each`).
 - **`style(...)`** = layout/typography tokens (Muten builds STRUCTURE). **`class("...")`** = your look
   (your CSS / Tailwind). Muten ships no skin — appearance is yours.
-- State references use `@name`; interpolate in any string with `{expr}`: `Text "Hi, {user.name}"`.
+- A state reference is a **bare name** (no sigil); interpolate in any string with `{expr}`: `Text "Hi, {user.name}"`.
 
 ## File map
 ```
@@ -40,8 +40,8 @@ Page style(padding.lg, gap.md) {
 
 ## Cheat-sheet
 - **Layout:** `Stack` (vertical), `Page` (`<main>`), `Header`/`Nav`/`Sidebar`/`Footer` (landmarks). Horizontal = `style(row)`.
-- **Content:** `Text`, `Title "x" h2`, `Span`, `Image "{src}" alt "…"` (alt required), `Link "x" -> /route`, `Button "x" -> action(arg)`.
-- **Data:** `DataTable @list columns(a, b)`, `Form bind @draft submit create`, `SearchField bind @q`.
+- **Content:** `Text`, `Title "x" h2`, `Span`, `Image "{src}" alt("…")` (alt required), `Link "x" -> /route`, `Button "x" -> action(arg)`.
+- **Data:** `DataTable list columns(a, b)`, `Form bind(draft) submit(create)`, `SearchField bind(q)`.
 - **Control:** `when <expr> { … }`, `each <list> as item { … }`.
 - **Interactivity:** reactive class `class(active when isOpen)`; events on any element `on(keydown: act, mouseenter: act)`; a `/404` route catches unmatched paths.
 - **State:** `state { q = "" : text  users = query listUsers : list<User> }` — query states expose `.loading/.error/.data`.
@@ -49,17 +49,17 @@ Page style(padding.lg, gap.md) {
 - **Writes:** a source-backed list gets `create`/`update`/`delete` in an action (`orders.create(draft)` → POST/PUT/DELETE the resource, optimistic + updates the list). The action is async with reactive `name.pending`/`name.error` for UX. Local-only mutations stay `push`/`set`/`reset`/`remove`.
 - **Refetch:** re-run a query with N params (search / paginate / filter): `products.refetch(q: term, page: n)` in an action → builds `?q=&page=` and reloads the list.
 - **Escape hatch:** non-RESTful API? `post`/`put`/`delete` a `"client:/path"` (interpolated) with optional `body` in an action: `post "shop:/orders" body item`. Uses the client's base+headers; `mutates` is optional for pure commands.
-- **JS & framework escapes (`use`):** call JS functions — `use fmt from "./lib.ts"` → `Text "{fmt(x)}"`. Mount a Svelte/React widget as an **island** — `use Box from "react:./Box.jsx"` → `Box(value: @s, onPick: act) client:visible` (props↓ + events↑, lazy, code-split). Add the framework's Vite plugin. Full details: SKILL §14.
-- **Actions:** `action add mutates users <- item { users.push(item) }` — ops: `push/set/reset/remove`; branch with `if/else`.
+- **JS escape (`use`):** call named JS functions behind a typed, synchronous border — `use fmt from "./lib.ts"` → `Text "{fmt(x)}"`. A visual widget Muten can't express → vanilla-JS `Custom` (no framework-component escape). Full details: SKILL §14.
+- **Actions:** `action add(item: User) mutates users { users.push(item) }` — typed params in `(…)`; ops: `push/set/reset/remove/toggle/patch`; branch with `if/else`.
 - **Tokens:** `gap.md padding.lg cols.3 text.lg row center between` — responsive prefix: `md:cols.2`.
 
 ## Dependencies & limits
 - **CSS / Tailwind / SCSS: YES** — it's a Vite app; install them and use `class("…")` + your CSS.
-- **React / Vue / Svelte as the page UI: NO** — pages are `.muten` (vanilla DOM, no framework runtime). But a
-  single interactive widget or framework lib CAN enter as an **island** (`use X from "react:…"`, SKILL §14) or a
-  vanilla `Custom` component — for the foreign piece, not the whole UI.
+- **React / Vue / Svelte: NO — at all.** Muten ships ZERO framework runtime; pages are `.muten` (vanilla DOM).
+  A widget Muten can't express enters as a vanilla `Custom` component (SKILL §13); JS logic via `use` (§14) —
+  for the foreign piece, never the whole UI.
 - Routing uses **real paths** (`/path`, History API; deploy serves `index.html` for any path); route params work (`/product/:id` → `param id`). SEO: `meta { title "…" description "…" }` per page → `<head>` tags (og auto-derived). Shell has no local state → use a
-  `.store`. No `toggle` op → `set(not x)`. `style()` is layout tokens only; visuals go in `class()`.
+  `.store`. Flip a bool with `x.toggle()`. `style()` is layout tokens only; visuals go in `class()`.
 - The full reference (stores, routing, theme, every primitive) is in [`skills/muten/SKILL.md`](skills/muten/SKILL.md).
 
 ## Commands
