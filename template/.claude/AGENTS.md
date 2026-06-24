@@ -19,7 +19,7 @@ escapes — `use` for JS functions, `Custom` for a vanilla-JS widget — never a
 ## File map
 ```
 src/
-  app.muten                    ROOT — routes { /url -> page }  (+ optional shell { … slot … })
+  app.muten                    ROOT — routes { "/url" -> page }  (+ optional shell { … slot … })
   pages/<route>/<route>.muten  a page; the folder name IS the route
   parts/<name>.muten           reusable component (composition, inlined at build)
   components/<Name>.js          escape hatch (host JS) used via the `Custom` primitive
@@ -40,8 +40,8 @@ Page style(padding.lg, gap.md) {
 
 ## Cheat-sheet
 - **Layout:** `Stack` (vertical), `Page` (`<main>`), `Header`/`Nav`/`Sidebar`/`Footer` (landmarks). Horizontal = `style(row)`.
-- **Content:** `Text`, `Title "x" h2`, `Span`, `Image "{src}" alt("…")` (alt required), `Link "x" -> /route`, `Button "x" -> action(arg)`.
-- **Data:** `DataTable list columns(a, b)`, `Form bind(draft) submit(create)`, `SearchField bind(q)`.
+- **Content:** `Text`, `Title "x" h2`, `Span`, `Image "{src}" alt("…")` (alt required), `Link "x" -> "/route"`, `Button "x" -> action(arg)`.
+- **Data:** `DataTable @list columns(a, b)`, `Form bind(draft) submit(create)`, `SearchField bind(q)`.
 - **Control:** `when <expr> { … }`, `each <list> as item { … }`.
 - **Interactivity:** reactive class `class(active when isOpen)`; events on any element `on(keydown: act, mouseenter: act)`; a `/404` route catches unmatched paths.
 - **State:** `state { q = "" : text  users = query listUsers : list<User> }` — query states expose `.loading/.error/.data`.

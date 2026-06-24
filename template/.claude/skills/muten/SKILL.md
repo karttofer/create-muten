@@ -41,7 +41,7 @@ This is a normal **Vite** project, so the whole Vite/npm ecosystem for **styling
   Visual styling (colors, borders, shadows) goes through `class("…")` + your CSS.
 
 ## 3. Limitations (current)
-- **Routing uses real paths** (`/path`, History API). Route params ARE supported: `/product/:id` → declare `param id`
+- **Routing uses quoted string paths** (`"/path"`, History API). Route params ARE supported: `"/product/:id"` → declare `param id`
   in the page (see §10). `muten build` pre-renders pages to real HTML (SSG) so content is crawlable —
   static pages ship zero JS; reactive pages get their content (lists, `each`, interpolation from mock data)
   baked into the HTML, then the runtime boots for interactivity. No special syntax needed.
@@ -76,6 +76,7 @@ entity User {                    # data shape + validation (implicit `id uuid`)
 state {                          # page-LOCAL reactive state
   q     = ""              : text
   users = query listUsers : list<User>   # query → async; exposes users.loading/.error/.data
+  # state types are scalar (text/number/bool/email/uuid) or list<Entity> — an enum lives in an entity field, NOT as a state type; hold its value as text
 }
 
 const TAX = 0.21                 # compile-time immutable scalar (inlined, never reactive)
@@ -192,17 +193,17 @@ A bare string is the node's main prop. `{ }` = children. Lay out with `style()`,
 | `Title` | heading; level keyword | `Title "Dashboard" h2` |
 | `Span` | inline text | `Span "{cart.total}"` |
 | `Image` | `<img>`, **alt required** | `Image "{p.image}" alt("{p.title}")` |
-| `Link` | client-side nav | `Link "Catalog" -> /catalog` |
+| `Link` | client-side nav | `Link "Catalog" -> "/catalog"` |
 | `Button` | runs an action | `Button "Save" -> save(draft)` |
 | `SearchField` | text input bound to state | `SearchField bind(q) "Search…"` |
 | `Form` | auto-form from an entity draft | `Form bind(draft) submit(create) "Save"` |
-| `DataTable` | reactive table over a list/query | `DataTable users columns(name, email)` |
+| `DataTable` | reactive table over a list/query | `DataTable @users columns(name, email)` |
 | `RowAction` | a button inside each table row | `RowAction "Delete" -> remove(row.id)` |
 | `slot` | outlet inside `shell` | `slot` |
 | `Custom` | host-JS escape hatch | `Custom Chart inputs(data: sales) on(pick: select)` |
 
 Horizontal layout = a region with `style(row)` (there is no `Row` primitive). Clickable card =
-`Button { … }` or `Link "" -> /x { … }` with children instead of a label.
+`Button { … }` or `Link "" -> "/x" { … }` with children instead of a label.
 
 Modifiers (after a primitive): `style(tokens)` · `class("css")` · `bind(state)` · `submit(action)` ·
 `where(clauses)` · `columns(a, b)` · `alt("…")` · `inputs(k: v)` · `on(event: action)`.
@@ -242,7 +243,6 @@ Responsive: prefix any token with a breakpoint → `md:cols.2`, `lg:cols.4` (`sm
   - **Inline object literal** (build a record without leaving Muten): `posts.push({ title: draft.title, body: draft.body })`, `draft.set({ name: c.name })`. Keys must be real fields of the entity.
   - **Edit / move / toggle an item in place**: `list.patch where id == c.id with { done: not done }` — position-preserving, list ONLY the changed fields. This is the right tool for toggle/update/move (NOT remove+push, which reorders the item to the end).
   - **Item fields are bare inside `where`/`with`** (item-implicit, like a `where`-filter). So a param must be named DIFFERENTLY from any field: `remove where id == id` is an error (both mean the field) — write `remove where id == itemId` with the param named `itemId`. The oracle flags the clash and tells you to rename.
-  - There is no `toggle`: `flag.set(not flag)`.
 - Control flow in the tree: `when <expr> { … }` (mount/unmount), `each <list> as item { … }` (item is a scope var). Filter a list with `where`: `each posts as p where p.published { … }` renders only matching items.
 - Expressions: `== != < > <= >=`, `and or not`, `contains` (case-insensitive substring / list membership),
   `+ - * /`, ternary `c ? a : b`, parentheses, refs (`user.name`, `cart.total`, `$item.x`).
@@ -268,26 +268,26 @@ plugin auto-detects every `.store` file. `get` = memoized; `effect` = reactive s
 store work AND local work in one handler (e.g. add to the store, then clear the form). Wire it with `Form submit(add)`.
 
 ## 10. Routing — how it works
-`src/app.muten` maps URLs to pages. It uses **real paths** (`/about`, History API — client-side nav, no
+`src/app.muten` maps URLs to pages. It uses **quoted string paths** (`"/about"`, History API — client-side nav, no
 reload); the **first route is the default**. The folder under `src/pages/` must match the page name.
 *(Deploy: the host must serve `index.html` for any path — standard SPA fallback.)*
 ```
 routes {
-  /         -> home               # src/pages/home/home.muten
-  /about    -> about              # static page → compiles to zero-runtime HTML
-  /cart     -> cart guard auth.loggedIn else /login    # guard: a store boolean; redirect if false
-  /login    -> login guard not auth.loggedIn else /     # guest-only page
+  "/"       -> home               # src/pages/home/home.muten
+  "/about"  -> about              # static page → compiles to zero-runtime HTML
+  "/cart"   -> cart guard auth.loggedIn else "/login"    # guard: a store boolean; redirect if false
+  "/login"  -> login guard not auth.loggedIn else "/"    # guest-only page
 }
 ```
 Guards read a **store boolean**; when it flips (login/logout) the active route re-renders automatically.
-A route named `/404` catches any unmatched path (otherwise the first route is shown).
-Navigate with `Link "x" -> /path` (client-side, no reload).
+A route named `"/404"` catches any unmatched path (otherwise the first route is shown).
+Navigate with `Link "x" -> "/path"` (client-side, no reload).
 
 **Route params:** a `:seg` in the route captures a URL value. The page declares it with `param <name>`,
 then uses it as a read-only string in interpolation / `when` / expressions (it can't be mutated):
 ```
 # app.muten
-routes { /product/:id -> product }
+routes { "/product/:id" -> product }
 # src/pages/product/product.muten
 screen product
 param id
@@ -304,14 +304,14 @@ page mounts. The shell has **no local state** → use a store for things like a 
 ```
 shell {
   Header style(row, between, center) class("nav") {
-    Link "Home" -> /
+    Link "Home" -> "/"
     Button "☰" -> ui.toggleMenu class("burger")
   }
-  when ui.menuOpen { Stack class("mobile-menu") { Link "About" -> /about } }
+  when ui.menuOpen { Stack class("mobile-menu") { Link "About" -> "/about" } }
   slot
   Footer { Span "© 2026" }
 }
-routes { / -> home }
+routes { "/" -> home }
 ```
 
 ## 11. Entities, forms & validation
@@ -326,7 +326,8 @@ action create(t: Task) mutates tasks, draft { tasks.push(t)  draft.reset() }
 
 ## 12. Parts — reusable composition
 `part` = a reusable fragment, **inlined at build** (not a runtime component). Pass OBJECTS (`$x.field`)
-and ACTION callbacks (`-> $onPick(...)`).
+and ACTION callbacks (`-> $onPick(...)`). A scalar param (`text`/`number`) also takes a **literal or a ref**:
+`Stat(label: "Users", value: userCount)` — quoted literals stay literals, bare names are refs.
 ```
 # src/parts/feature.muten
 part Feature(item: Feature, onPick: action) {
@@ -354,7 +355,7 @@ One escape that pulls in real JS/npm behind a typed, **synchronous** border. `us
 ```
 use fmt, slug from "./lib/format.ts"        # named exports ONLY (the .ts is a facade over any npm)
 Text "{fmt(order.total)}"                    # called like any expression
-Link "{slug(post.title)}" -> /blog/{post.id}
+Link "{slug(post.title)}" -> "/blog/{post.id}"
 ```
 Import zod/date-fns/nanoid/whatever *inside* `format.ts` and expose tidy named functions; Muten sees only the
 names, so the oracle still checks your calls. Keep the border **synchronous** (no async functions). For a
@@ -372,7 +373,7 @@ is no framework-component escape; Muten owns the whole UI.
 ## 16. Minimal full app
 ```
 # src/app.muten
-routes { / -> home }
+routes { "/" -> home }
 
 # src/pages/home/home.muten
 screen home
