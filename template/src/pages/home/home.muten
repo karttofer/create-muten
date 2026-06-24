@@ -24,7 +24,7 @@ Page class("welcome") {
         Stack class("card") { Title "Edit this page" h3 class("card-title")  Text "src/pages/home/home.muten" class("card-text") }
         Stack class("card") { Title "Add a route" h3 class("card-title")  Text "Map URLs to pages in src/app.muten" class("card-text") }
         Stack class("card") { Title "Style it" h3 class("card-title")  Text "class(…) plus your CSS in src/styles.css — Tailwind optional" class("card-text") }
-        Stack class("card") { Title "Need React or Svelte?" h3 class("card-title")  Text "Drop a real component in as an island, lazy and code-split" class("card-text") }
+        Stack class("card") { Title "Need a JS widget?" h3 class("card-title")  Text "Mount any vanilla-JS library with a Custom component" class("card-text") }
       }
     }
 

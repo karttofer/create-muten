@@ -61,7 +61,6 @@ In an interactive terminal it prompts for a few things (defaults in parentheses)
 | Prompt | Options | Default |
 |---|---|---|
 | **Project name** | any valid folder name | `muten-app` |
-| **Template** | `muten` / `muten + React` / `muten + Svelte` | `muten` |
 | **Styling** | `CSS` / `SCSS` / `Tailwind CSS` / `DaisyUI` (brings Tailwind) | `CSS` |
 | **Add Vercel deploy config?** | `Y` / `n` | `n` |
 | **Desktop app (Tauri)?** | `Y` / `n` | `n` |
@@ -77,25 +76,12 @@ component classes on top (and brings Tailwind). You always style via `class("…
 - **Tauri** adds `src-tauri/` (a native desktop app - ships the OS webview, *not* a browser) + a `tauri` script:
   `npm run tauri dev` / `tauri build`. Needs the [Rust toolchain](https://rustup.rs) installed (not auto-installed).
 
-## Templates (flavors)
-
-Every flavor scaffolds the **same** welcome page and the same `.muten` workflow, the only difference is
-whether a framework's island plugin is pre-wired:
-
-| Template | What you get |
-|---|---|
-| **muten** | pure muten - the AI-first DSL, zero framework runtime |
-| **muten + React** | same, plus `@vitejs/plugin-react` + React, so you can drop in a **React island** (shadcn/Radix, any React lib) |
-| **muten + Svelte** | same, plus `@sveltejs/vite-plugin-svelte` + Svelte, for **Svelte islands** (a lighter runtime) |
-
-An *island* is a real framework component used as a node - `use X from "react:./X.jsx"` →
-`X(value: s, onChange: act) client:visible` (props ↓ + events ↑, lazy + code-split). Default to `.muten`;
-reach for an island only for a widget muten can't express.
+## Styling
 
 When **Tailwind or DaisyUI** is added, `theme.muten` is centralized to **match Tailwind's scale** (so
 `style()` tokens and Tailwind utilities share one scale, e.g. `style(gap.md)` == `gap-4`); plain CSS/SCSS
 keeps the default scale. **DaisyUI** adds component classes (`btn`, `card`, `modal`) usable in `class("…")` -
-pure classes, no React; behavior is Muten state + `on()`.
+pure classes; behavior is Muten state + `on()`.
 
 If you accept the last prompt it runs `<pm> install` followed by `<pm> run dev`, your app is live in a
 single step. Choosing SCSS also adds `sass` and switches the stylesheet to `.scss` automatically.
@@ -113,7 +99,6 @@ create-muten my-app --css --no-install    # just scaffold, decide later
 | Flag | Effect |
 |---|---|
 | `<name>` | the project folder (positional argument) |
-| `--template <muten\|react\|svelte>` | flavor (default: `muten`); `--react` / `--svelte` are shortcuts |
 | `--css` / `--scss` | pick the stylesheet (default: `css`) |
 | `--tailwind` | add Tailwind CSS v4 on top of CSS (forces `--css`) |
 | `--daisyui` | add DaisyUI component classes (implies `--tailwind`) |
@@ -154,22 +139,22 @@ declarative 80% - CRUD, dashboards, catalogs, content, internal tools. For the r
 
 - **Pure muten**: CRUD / SaaS / catalog / dashboard / content: pages, routing, `state`/`store` (with page→store
   action composition), `query` over REST, `Form` (text/number/email/bool/enum + validation), `DataTable`,
-  `when`/`each`, SSG + SEO, and the bounded **list toolkit**: inline objects, `patch` in-place edit, `each…where`
-  filter, aggregates (`sum`/`count`/`avg`/`min`/`max`), `sort`/`sortDesc`. The declarative 80%, zero extra deps.
+  `when`/`each`, SSG + SEO, and the bounded **list toolkit**: inline objects, `patch where`/`remove where` edits,
+  `each…where` filter, aggregates (`sum`/`count`/`avg`/`min`/`max by`), `sort`/`sortDesc by`, `toggle`. The
+  declarative 80%, zero extra deps.
 - **muten + the platform** *(no framework runtime)* - native HTML (`<input type="date">`, `<dialog>`) + `class()`,
   CSS libs (Tailwind / DaisyUI), **vanilla JS via `Custom`** (charts, maps, date-pickers, rich-text, grids),
-  `use fmt from "./lib.ts"` for any JS logic. Almost every "hard widget" lands here, *without React*.
-- **Svelte / React island** (`--svelte` / `--react`) - only when the component *is* a framework component
-  (shadcn/ui, a React-only lib). Ships that runtime, lazy + code-split. The narrow last resort.
+  `use fmt from "./lib.ts"` for any JS logic. Almost every "hard widget" lands here - muten ships zero framework
+  runtime, so there is no React/Svelte escape; foreign UI comes in as a vanilla `Custom` component.
 
-**Deploy, honestly:** `npm run dev` runs every tier. For production, pure-muten static content can ship via
-`muten build` (zero-JS HTML); the moment you use `use`/islands/shared cross-page state, deploy with a normal
+**Deploy, honestly:** `npm run dev` runs both tiers. For production, pure-muten static content can ship via
+`muten build` (zero-JS HTML); the moment you use `use`/`Custom`/shared cross-page state, deploy with a normal
 `vite build` (it bundles them - the static build doesn't). Most real apps use `vite build`.
 
-Full reference (every primitive, the three tiers, the roadmap): [`@muten/core`](https://www.npmjs.com/package/@muten/core).
+Full reference (every primitive, the tiers, the roadmap): [`@muten/core`](https://www.npmjs.com/package/@muten/core).
 
-> **Status: pre-1.0.** The core (language, compiler, CLI, Vite plugin, extension, islands) is solid; the
-> ecosystem is young and full island SSR is experimental. Great for real apps, not yet for critical production.
+> **Status: pre-1.0.** The core (language, compiler, CLI, Vite plugin, extension) is solid; the
+> ecosystem is young. Great for real apps, not yet for critical production.
 
 ## Requirements
 
