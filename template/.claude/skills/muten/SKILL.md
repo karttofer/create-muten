@@ -40,16 +40,22 @@ This is a normal **Vite** project, so the whole Vite/npm ecosystem for **styling
 - **No arbitrary inline CSS via `style()`** — `style()` only takes the layout/typography tokens below.
   Visual styling (colors, borders, shadows) goes through `class("…")` + your CSS.
 
-## 3. Limitations (current)
-- **Routing uses quoted string paths** (`"/path"`, History API). Route params ARE supported: `"/product/:id"` → declare `param id`
-  in the page (see §10). `muten build` pre-renders pages to real HTML (SSG) so content is crawlable —
-  static pages ship zero JS; reactive pages get their content (lists, `each`, interpolation from mock data)
-  baked into the HTML, then the runtime boots for interactivity. No special syntax needed.
-- **Shell has no local state** — put shell/cross-page state in a `.store` (see the mobile-menu pattern).
-- **Flip a bool** with `x.toggle()` (or `x.set(not x)`).
-- **Forms**: `Form` (auto-generated from an entity) and `SearchField` (single text input) are the
-  built-ins; richer custom inputs need a `Custom` component for now.
-- **Pages are single-root** (one top node per page).
+## 3. Limitations & known gaps (current — these are real, plan around them)
+- **The real build is `vite build` / `npm run dev`, NOT `muten build`.** `muten build` is a STRUCTURE-only static
+  export (SSG for crawlability): it omits non-layout token CSS, your `src/styles.css`, and does NOT bundle `use`
+  functions (they throw at runtime). Use it only for zero-JS static pages; for any styled/interactive app, ship with Vite.
+- **Routing uses quoted string paths** (`"/path"`, History API). Params: `"/product/:id"` + `param id` (see §10).
+- **Forms** (`Form` auto-renders from an entity) render EVERY field — **no conditional fields** (gate the whole
+  `Form` with a `when`, or split into per-step entities). Input types are `text`/`email`/`number`/`bool`(checkbox)/
+  `enum`(select) only — **no password/date/textarea** (drop to `Custom`). An **enum field can't be `required`**.
+  `SearchField` is the single bound text input.
+- **No `match`/`switch`** — render an enum with N `when status == "x" { … }` blocks. **`DataTable`** shows raw cell
+  text (no per-column formatting — use `each` + `Stack` for formatted/badge cells). **No standalone `Select`** (Form
+  makes one for enum fields; elsewhere build a button group + `class(active when …)`). **`sort by` takes a literal
+  field**, not a state variable (duplicate the `each` per sort key, or sort in a `use` function).
+- **`query x live`** needs the server to send a stable `id` per row, or keyed diffing rebuilds every row each push.
+- **`Custom` inputs are a snapshot at mount** (not reactive — §13). **Shell has no local state** (use a `.store`).
+  **Pages are single-root** (one top node). **Flip a bool** with `x.toggle()`.
 
 ## 4. Files
 ```
@@ -76,7 +82,8 @@ entity User {                    # data shape + validation (implicit `id uuid`)
 state {                          # page-LOCAL reactive state
   q     = ""              : text
   users = query listUsers : list<User>   # query → async; exposes users.loading/.error/.data
-  # state types are scalar (text/number/bool/email/uuid) or list<Entity> — an enum lives in an entity field, NOT as a state type; hold its value as text
+  # state types: scalar (text/number/bool/email/uuid), list<Entity>, OR list<scalar> (list<text>/list<uuid>/…).
+  # an enum lives in an entity field, NOT as a state type; hold its value as text. A list of plain strings is list<text>.
 }
 
 const TAX = 0.21                 # compile-time immutable scalar (inlined, never reactive)
@@ -197,7 +204,7 @@ A bare string is the node's main prop. `{ }` = children. Lay out with `style()`,
 | `Button` | runs an action | `Button "Save" -> save(draft)` |
 | `SearchField` | text input bound to state | `SearchField bind(q) "Search…"` |
 | `Form` | auto-form from an entity draft | `Form bind(draft) submit(create) "Save"` |
-| `DataTable` | reactive table over a list/query | `DataTable @users columns(name, email)` |
+| `DataTable` | table over a list/query (`@` sigil; raw cells, no per-column format) | `DataTable @users columns(name, email)` |
 | `RowAction` | a button inside each table row | `RowAction "Delete" -> remove(row.id)` |
 | `slot` | outlet inside `shell` | `slot` |
 | `Custom` | host-JS escape hatch | `Custom Chart inputs(data: sales) on(pick: select)` |
@@ -207,8 +214,12 @@ Horizontal layout = a region with `style(row)` (there is no `Row` primitive). Cl
 
 Modifiers (after a primitive): `style(tokens)` · `class("css")` · `bind(state)` · `submit(action)` ·
 `where(clauses)` · `columns(a, b)` · `alt("…")` · `inputs(k: v)` · `on(event: action)`.
-`class()` also toggles reactively (`class(active when isOpen)`); `on(event: action)` works on **any** element
+`class()` also toggles reactively (`class(active when isOpen)`); a **hyphenated** class name must be QUOTED in a
+reactive toggle: `class("is-open" when x)` (bare `is-open` parses as a subtraction and errors). `on(event: action)` works on **any** element
 (keydown, mouseenter, change, blur, …) and calls the action — use `Button -> action(arg)` when you need an arg.
+**`on(enter: action)`** is a synthetic event for inputs: it fires only on the Enter key. So a chat/search box that
+submits on Enter is `SearchField bind(draft) on(enter: send)` (the action reads `draft` and `draft.reset()` clears
+it via the two-way bind) — no `Custom` needed for "Enter to send + clear".
 
 ## 7. Theme — how it works
 `theme.muten` supplies the **scale** (values); the engine owns only the **vocabulary** (token names).
@@ -223,6 +234,24 @@ theme {
 ```
 A token like `gap.md` resolves to `gap: 16px` via `space.md`; `text.lg` → `font.lg`; `md:cols.2` uses
 `breakpoints.md`. **No CSS/reset goes in `theme.muten`** — the reset and the look live in `src/styles.css`.
+
+### With a CSS framework (Tailwind / DaisyUI) — muten is AGNOSTIC
+`theme.muten` holds your theme VALUES; a **styling adapter** (data, in `vite.config` — the scaffolder wires it
+per library) tells muten how to emit them for your library. The **muten engine knows no library**; you bring
+the styling, muten emits your theme into its format. When you scaffold with Tailwind/DaisyUI you get a theme
+skeleton seeded for you; plain css/scss gets an empty `theme { }` (muten emits plain `:root` vars). **Hyphenated
+keys are QUOTED** (like hyphenated classes):
+```
+theme {
+  colors { primary "#6366f1"  "base-100" "#1a1d23" }   # "base-100"/"primary-content" quoted; primary bare
+  radius { box "0.75rem" }
+  scheme { mode "dark" }                                # color-scheme for libraries that use it (DaisyUI)
+}
+```
+Style with `class()` using your library's utilities (`class("bg-primary p-4 hover:bg-primary")`). **Validation of
+class names is your library's job** (its IntelliSense / build) — muten doesn't check them (it's agnostic; a future
+muten styling *plugin* could add per-library linting). With a framework, use `class()` for layout too; `style()`
+is for the no-framework base path + dynamic-value overrides.
 
 ### Style tokens (`style(...)`)
 ```
@@ -251,7 +280,10 @@ Responsive: prefix any token with a breakpoint → `md:cols.2`, `lg:cols.4` (`sm
   - `.length` is the count-all; `count where cond` is the filtered count. Works in interpolation, `when`, and a `get`.
   - **Embedding in a bigger expression needs grouping `()`** (the `by`/`where` body runs to the end): `when (todos.count where not done) > 0 { … }`. Standalone (in a `get`) needs none: `get openCount = todos.count where not done`.
 - **Sort a list** (`sort by` ascending / `sortDesc by` descending; returns a sorted COPY): `each contacts.sort by name as c { … }` ·
-  `each scores.sortDesc by points as s { … }`. Use in `each` or a `get`.
+  `each scores.sortDesc by points as s { … }`. Use in `each` or a `get`. The key is a **literal field**, not a state
+  variable (no `sort by sortKey` — duplicate the `each` per key, or sort in a `use` fn).
+- **No `match`/`switch`**: render an enum with N `when status == "x" { … }` blocks (one per value). A reactive class
+  per value works too: `class("badge-high" when item.priority == "high")` (quote hyphenated names).
 
 ## 9. Stores — app-global state
 A `.store` file = state shared across pages, **no prop drilling**. The file name is the domain.
@@ -323,6 +355,9 @@ state  { draft = {} : Task  tasks = [] : list<Task> }
 action create(t: Task) mutates tasks, draft { tasks.push(t)  draft.reset() }
 # in the page:  Form bind(draft) submit(create) "Add task"
 ```
+`Form` renders EVERY field, no `when` inside it (gate the whole Form with a `when`, or split entities for a wizard).
+Input types: `text`/`email`/`number`/`bool`(checkbox)/`enum`(select) only — password/date/textarea need a `Custom`.
+An enum field **cannot be `required`**. See §3.
 
 ## 12. Parts — reusable composition
 `part` = a reusable fragment, **inlined at build** (not a runtime component). Pass OBJECTS (`$x.field`)
@@ -345,9 +380,17 @@ For anything Muten can't express (a chart, a 3rd-party widget), write vanilla JS
 `src/components/<Name>.js` and mount it with `Custom`. It receives `inputs` (values/state) and wires
 DOM events to your actions via `on`. This is the ONLY way to use non-Muten UI code.
 ```
-Custom Chart inputs(data: sales) on(pointSelect: select)
-# → src/components/Chart.js exports a mount(el, { inputs, on }) that builds vanilla DOM.
+Custom Chart inputs(data: @sales) on(pointSelect: select)
+# → src/components/Chart.js defines `function mount(el, inputs, on) { ... }` (NOT `export` — see below).
+#   THREE positional args: el = the host <div>, inputs = { data }, on = { pointSelect }.
+#   Call a handler with `on.pointSelect(payload)`; read a value with `inputs.data`.
 ```
+- Signature is **`mount(el, inputs, on)`** (three positional args), NOT `mount(el, { inputs, on })`.
+- Define it as a plain `function mount(...)`, **not** `export function mount` — the file is inlined, so an
+  `export` is a syntax error and leaves the screen blank.
+- **An input value needs `@` to pass STATE: `inputs(data: @sales)` passes the array; bare `inputs(data: sales)`
+  passes the literal string "sales".** The value is a **snapshot** at mount time (not reactive) — to feed a
+  query's rows, make a `get` first: `get rows = orders.data` then `inputs(data: @rows)`.
 
 ## 14. `use` — JS logic functions
 One escape that pulls in real JS/npm behind a typed, **synchronous** border. `use` named exports from a
@@ -357,10 +400,23 @@ use fmt, slug from "./lib/format.ts"        # named exports ONLY (the .ts is a f
 Text "{fmt(order.total)}"                    # called like any expression
 Link "{slug(post.title)}" -> "/blog/{post.id}"
 ```
+A `use` function can ALSO be **called as a statement inside an action or `effect`** — a side effect (persist to
+localStorage, scroll, analytics) that Muten can't express:
+```
+use persist, scrollBottom from "./fx.ts"
+action send(text: text) mutates messages {
+  messages.push({ role: "user", content: text })
+  persist(messages)      # use fn as a statement: a side effect, NO muten state mutated (so no `mutates` entry)
+  scrollBottom()
+}
+```
+The call is checked like any other (undeclared → `unknown-function`). This replaces the old "every side effect
+needs a `Custom` component" pattern. Keep the border **synchronous** (no async/`await`); for async I/O use a
+`query` / `create` / `update` / `delete` (those are async with `.pending`/`.error`).
+
 Import zod/date-fns/nanoid/whatever *inside* `format.ts` and expose tidy named functions; Muten sees only the
-names, so the oracle still checks your calls. Keep the border **synchronous** (no async functions). For a
-visual widget Muten can't express (a chart, a map, a date-picker), drop to a vanilla-JS `Custom` (§13) — there
-is no framework-component escape; Muten owns the whole UI.
+names, so the oracle still checks your calls. For a visual widget Muten can't express (a chart, a map, a
+date-picker), drop to a vanilla-JS `Custom` (§13) — there is no framework-component escape; Muten owns the whole UI.
 
 ## 15. Gotchas
 - It is NOT JSX — PascalCase primitives + `{ }` children; no JSX/hooks/`className` anywhere.
@@ -368,7 +424,10 @@ is no framework-component escape; Muten owns the whole UI.
 - `style()` (layout tokens) ≠ `class()` (look). No colors/borders in `style()`.
 - `Image` without `alt` fails validation (`alt("")` for decorative).
 - Actions may only touch their declared `mutates`.
-- Want a library? CSS → `class()`. JS function → `use` (§14). A widget → `Custom` (§13). There is no framework-component escape.
+- **The runnable build is `vite build` / `npm run dev`, not `muten build`** (which is structure-only SSG — §3).
+- **Paths are quoted strings** (`-> "/x"`, `routes { "/x" -> p }`); a hyphenated reactive class must be quoted (`class("is-open" when x)`).
+- **`Custom` inputs need `@` to pass state** (`inputs(data: @items)`) and are a snapshot, not reactive (§13).
+- Want a library? CSS → `class()`. JS function → `use` (§14, also callable in actions). A widget → `Custom` (§13). There is no framework-component escape.
 
 ## 16. Minimal full app
 ```

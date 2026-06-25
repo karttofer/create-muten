@@ -25,60 +25,111 @@ const RESET = `/* Your look. Muten ships STRUCTURE + LAYOUT (style() tokens); th
 body { margin: 0; font: 15px/1.55 system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif; color: #111; }
 h1, h2, h3, h4, h5, h6, p { margin: 0; }
 h1 { font-size: 32px; font-weight: 700; letter-spacing: -.02em; }
-.stack { display: flex; flex-direction: column; }
+.mu-stack { display: flex; flex-direction: column; }
 img { max-width: 100%; display: block; }
 a { color: inherit; text-decoration: none; }
 `;
 // CSS + Tailwind v4: one @import + the @tailwindcss/vite plugin. Preflight does the reset, so this stays
-// minimal — only `.stack` (a Muten layout primitive Tailwind doesn't know). You style via class("…").
+// minimal — only `.mu-stack` (Muten's Stack primitive; `mu-` so it never collides with DaisyUI's own
+// `.stack`). You style via class("…").
 const tailwindStyles = (daisyui) => `@import "tailwindcss";${daisyui ? '\n@plugin "daisyui";' : ''}
 
-/* Muten layout primitive Tailwind doesn't define */
-.stack { display: flex; flex-direction: column; }
+/* Muten's Stack primitive. In @layer base so Tailwind utilities ALWAYS win the cascade: a
+   class("flex-row")/class("grid") on a Stack overrides this deterministically (no cascade race). */
+@layer base {
+  .mu-stack { display: flex; flex-direction: column; }
+}
 `;
 // Starter welcome page styles (used by the scaffolded home.muten). Self-contained plain CSS — looks good
 // with or without Tailwind; delete it (and the page) when you build your own.
 const WELCOME_CSS = `
-/* — starter welcome page (src/pages/home/home.muten) — delete when you build your own — */
-.welcome { background: #fafafa; color: #18181b; padding: 64px 24px; }
-.wrap { max-width: 720px; margin: 0 auto; display: flex; flex-direction: column; gap: 52px; }
-.hero { text-align: center; }
-.logo { width: 64px; height: 64px; border-radius: 16px; margin: 0 auto; box-shadow: 0 6px 20px rgba(255,94,0,.28); }
-.brand { font-size: clamp(40px, 8vw, 58px); font-weight: 800; letter-spacing: -.04em; line-height: 1; margin-top: 22px; background: linear-gradient(135deg, #ff5e00, #ff9a00); -webkit-background-clip: text; background-clip: text; color: transparent; }
-.tagline { font-size: 18px; font-weight: 600; color: #27272a; margin-top: 10px; }
-.lead { max-width: 580px; margin: 14px auto 0; color: #52525b; font-size: 16px; line-height: 1.65; }
-.stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
-.stat { border: 1px solid #e4e4e7; border-radius: 14px; padding: 22px 16px; text-align: center; background: #fff; }
-.stat-n { font-size: 26px; font-weight: 800; letter-spacing: -.02em; color: #ff5e00; }
-.stat-l { color: #71717a; font-size: 12px; line-height: 1.45; margin-top: 6px; }
-.section { display: flex; flex-direction: column; gap: 14px; }
-.h2 { font-size: 22px; font-weight: 700; letter-spacing: -.02em; }
-.note { color: #71717a; font-size: 13px; line-height: 1.55; }
-.cards { display: grid; grid-template-columns: repeat(2, 1fr); gap: 14px; }
-.card { border: 1px solid #e4e4e7; border-radius: 14px; padding: 18px; background: #fff; }
-.card-title { font-size: 14px; font-weight: 600; margin-bottom: 5px; }
-.card-text { color: #71717a; font-size: 13px; line-height: 1.5; }
-@media (max-width: 560px) { .stats, .cards { grid-template-columns: 1fr; } }
+/* — starter welcome page (src/pages/home/home.muten) — delete when you build your own. Classes are
+   mw-* prefixed so the starter never collides with a CSS framework's components (e.g. DaisyUI .hero/.card). */
+.mw-welcome { background: #fafafa; color: #18181b; padding: 64px 24px; }
+.mw-wrap { max-width: 720px; margin: 0 auto; display: flex; flex-direction: column; gap: 52px; }
+.mw-hero { text-align: center; }
+.mw-logo { width: 64px; height: 64px; border-radius: 16px; margin: 0 auto; box-shadow: 0 6px 20px rgba(255,94,0,.28); }
+.mw-brand { font-size: clamp(40px, 8vw, 58px); font-weight: 800; letter-spacing: -.04em; line-height: 1; margin-top: 22px; background: linear-gradient(135deg, #ff5e00, #ff9a00); -webkit-background-clip: text; background-clip: text; color: transparent; }
+.mw-tagline { font-size: 18px; font-weight: 600; color: #27272a; margin-top: 10px; }
+.mw-lead { max-width: 580px; margin: 14px auto 0; color: #52525b; font-size: 16px; line-height: 1.65; }
+.mw-stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
+.mw-stat { border: 1px solid #e4e4e7; border-radius: 14px; padding: 22px 16px; text-align: center; background: #fff; }
+.mw-stat-n { font-size: 26px; font-weight: 800; letter-spacing: -.02em; color: #ff5e00; }
+.mw-stat-l { color: #71717a; font-size: 12px; line-height: 1.45; margin-top: 6px; }
+.mw-section { display: flex; flex-direction: column; gap: 14px; }
+.mw-h2 { font-size: 22px; font-weight: 700; letter-spacing: -.02em; }
+.mw-note { color: #71717a; font-size: 13px; line-height: 1.55; }
+.mw-cards { display: grid; grid-template-columns: repeat(2, 1fr); gap: 14px; }
+.mw-card { border: 1px solid #e4e4e7; border-radius: 14px; padding: 18px; background: #fff; }
+.mw-card-title { font-size: 14px; font-weight: 600; margin-bottom: 5px; }
+.mw-card-text { color: #71717a; font-size: 13px; line-height: 1.5; }
+@media (max-width: 560px) { .mw-stats, .mw-cards { grid-template-columns: 1fr; } }
 `;
-// vite.config composed from the chosen options — muten always; tailwind last.
-const viteConfig = ({ tailwind }) => {
+// vite.config composed from the chosen options — muten always; tailwind last. `styling` is the theme
+// ADAPTER (data) for the chosen library, passed to muten() so it emits theme.muten in that format.
+const viteConfig = ({ tailwind, styling }) => {
   const imports = [`import muten from '@muten/core/vite-plugin-muten.js';`];
-  const plugins = ['muten()'];
-  if (tailwind) { imports.push(`import tailwindcss from '@tailwindcss/vite';`); plugins.push('tailwindcss()'); }
+  if (tailwind) imports.push(`import tailwindcss from '@tailwindcss/vite';`);
+  const mutenCall = styling ? `muten({\n    styling: { theme: ${JSON.stringify(styling, null, 2).replace(/\n/g, '\n    ')} },\n  })` : 'muten()';
+  const plugins = [mutenCall, ...(tailwind ? ['tailwindcss()'] : [])];
   return `${imports.join('\n')}\n\nexport default {\n  plugins: [${plugins.join(', ')}],\n};\n`;
 };
-// When Tailwind/DaisyUI is chosen, the Muten token scale is centralized to MATCH Tailwind's defaults, so
-// style() tokens and Tailwind utilities share one scale (e.g. style(gap.md) == gap-4 == 1rem). Plain
-// css/scss keeps the default theme.muten. (DaisyUI builds on Tailwind's scale; its colors come via @plugin.)
-const TAILWIND_THEME = `# Token SCALE aligned with Tailwind's defaults — style() tokens + Tailwind utilities share one scale.
+// theme.muten is AGNOSTIC values; a `styling` ADAPTER (data, in vite.config) tells muten how to emit them
+// for the chosen library. The scaffolder seeds a skeleton + the matching adapter per backend (the ENGINE
+// itself knows no library). Plain css/scss gets an EMPTY theme.muten (just the object) — fill it and muten
+// emits :root vars.
+
+// DaisyUI skeleton: DaisyUI's theme slots, pre-filled with a clean light starter. Edit freely; Daisy
+// inherits any slot you omit. Emitted via the daisy adapter as `@plugin "daisyui/theme" { … }`.
+const DAISY_THEME = `# Your theme (DaisyUI slots). muten emits these via the styling adapter in vite.config.
 theme {
-  space       { xs "0.25rem"  sm "0.5rem"  md "1rem"  lg "1.5rem"  xl "2rem" }
-  font        { sm "0.875rem"  md "1rem"  lg "1.125rem"  xl "1.25rem" }
-  weight      { medium "500"  semibold "600"  bold "700" }
-  leading     { tight "1.25"  normal "1.5"  loose "2" }
-  breakpoints { sm "640px"  md "768px"  lg "1024px"  xl "1280px" }
+  colors {
+    primary             "#4f46e5"
+    "primary-content"   "#ffffff"
+    secondary           "#0ea5e9"
+    "secondary-content" "#ffffff"
+    accent              "#14b8a6"
+    "accent-content"    "#ffffff"
+    neutral             "#1f2937"
+    "neutral-content"   "#e5e7eb"
+    "base-100"          "#ffffff"
+    "base-200"          "#f3f4f6"
+    "base-300"          "#e5e7eb"
+    "base-content"      "#1f2937"
+    info                "#0ea5e9"
+    success             "#16a34a"
+    warning             "#f59e0b"
+    error               "#dc2626"
+  }
+  radius { box "0.5rem"  field "0.375rem"  selector "0.5rem" }
+  scheme { mode "light" }
 }
 `;
+// Tailwind skeleton: brand colors + the token scale. Emitted via the tailwind adapter into `@theme { … }`.
+const TAILWIND_THEME = `# Your theme. muten emits these into Tailwind's @theme via the styling adapter in vite.config.
+theme {
+  colors      { primary "#4f46e5"  secondary "#0ea5e9"  accent "#14b8a6" }
+  space       { xs "0.25rem"  sm "0.5rem"  md "1rem"  lg "1.5rem"  xl "2rem" }
+  font        { sm "0.875rem"  md "1rem"  lg "1.125rem"  xl "1.25rem" }
+  radius      { sm "0.25rem"  md "0.5rem"  lg "0.75rem" }
+}
+`;
+// Base (no framework): empty theme.muten — the bare object. Fill it and muten emits :root CSS vars.
+const EMPTY_THEME = `# Your theme. Empty for now. Add sections (e.g. \`colors { primary "#4f46e5" }\`) and muten
+# emits them as :root CSS custom properties your stylesheet uses via var(--color-primary).
+theme {
+}
+`;
+// Styling ADAPTERS (pure data): how muten renders theme.muten for each library. Live in YOUR vite.config
+// (editable) — the engine ships none. A new library = a new adapter here, no muten change.
+const DAISY_ADAPTER = {
+  prefix: { colors: '--color-', radius: '--radius-' },
+  blocks: [{ open: '@plugin "daisyui/theme" {', close: '}', attrs: { name: 'app', default: 'true', 'color-scheme': '$scheme' }, sections: ['colors', 'radius'] }],
+};
+const TAILWIND_ADAPTER = {
+  prefix: { colors: '--color-', space: '--spacing-', font: '--font-', radius: '--radius-' },
+  blocks: [{ open: '@theme {', close: '}', sections: ['colors', 'space', 'font', 'radius'] }],
+};
 const TAILWIND_NOTE = `
 ## Styling: Tailwind CSS v4 (installed)
 This app has Tailwind ON TOP of CSS. Write the LOOK with \`class("…")\` using Tailwind utilities, e.g.
@@ -195,13 +246,15 @@ async function main() {
 
   if (tailwind) {
     writeFileSync(join(target, 'src', 'styles.css'), tailwindStyles(daisyui) + WELCOME_CSS);
-    writeFileSync(join(target, 'theme.muten'), TAILWIND_THEME);          // scale centralized to Tailwind's
+    writeFileSync(join(target, 'theme.muten'), daisyui ? DAISY_THEME : TAILWIND_THEME); // seed the theme skeleton for the chosen library
     addDev({ tailwindcss: '^4.0.0', '@tailwindcss/vite': '^4.0.0' });
     if (daisyui) addDev({ daisyui: '^5.0.0' });
     appendAgents(TAILWIND_NOTE + (daisyui ? DAISY_NOTE : ''));           // tell the AI what styling is available
   } else {
     writeFileSync(join(target, 'src', style === 'scss' ? 'styles.scss' : 'styles.css'), RESET + WELCOME_CSS);
+    writeFileSync(join(target, 'theme.muten'), EMPTY_THEME);             // no framework -> empty theme.muten (you fill it; muten emits :root vars)
   }
+  const styling = daisyui ? DAISY_ADAPTER : tailwind ? TAILWIND_ADAPTER : null; // the theme adapter wired into vite.config
   if (style === 'scss') addDev({ sass: '^1.101.0' });
   if (tauri) {                                  // native desktop wrapper around the same web build (dist)
     cpSync(join(TAURI_TEMPLATE, 'src-tauri'), join(target, 'src-tauri'), { recursive: true });
@@ -219,7 +272,7 @@ async function main() {
     pkg.scripts = { ...pkg.scripts, tauri: 'tauri', 'tauri:dev': 'tauri dev', 'tauri:build': 'tauri build' };
     appendAgents(TAURI_NOTE(pm));
   }
-  writeFileSync(join(target, 'vite.config.mjs'), viteConfig({ tailwind })); // composed: muten + chosen plugins
+  writeFileSync(join(target, 'vite.config.mjs'), viteConfig({ tailwind, styling })); // composed: muten (+ theme adapter) + chosen plugins
   writeFileSync(pkgPath, JSON.stringify(pkg, null, 2) + '\n');
 
   const desc = `muten, ${style}${tailwind ? ' + Tailwind' : ''}${daisyui ? ' + DaisyUI' : ''}${vercel ? ' + Vercel' : ''}${tauri ? ' + Tauri' : ''}`;

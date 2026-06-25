@@ -137,24 +137,36 @@ check`) catches mistakes in milliseconds without a browser, edits stay tiny, and
 declarative 80% - CRUD, dashboards, catalogs, content, internal tools. For the rest, you don't fight it - you
 **couple in other tech** through bounded escapes. Reach for the **lowest tier that works**:
 
-- **Pure muten**: CRUD / SaaS / catalog / dashboard / content: pages, routing, `state`/`store` (with page→store
-  action composition), `query` over REST, `Form` (text/number/email/bool/enum + validation), `DataTable`,
-  `when`/`each`, SSG + SEO, and the bounded **list toolkit**: inline objects, `patch where`/`remove where` edits,
-  `each…where` filter, aggregates (`sum`/`count`/`avg`/`min`/`max by`), `sort`/`sortDesc by`, `toggle`. The
-  declarative 80%, zero extra deps.
+- **Pure muten**: CRUD / SaaS / catalog / dashboard / content: pages, routing (paths are **quoted strings**: `routes { "/" -> home  "/404" -> notfound }`; `Link "label" -> "/path"`; guard redirects `else "/login"`), `state`/`store` (with page->store action composition), `query` over REST, `Form` (text/number/email/bool/enum + validation), `DataTable`, `when`/`each`, SSG + SEO, and the bounded **list toolkit**: inline objects, `patch where`/`remove where` edits, `each...where` filter, aggregates (`sum`/`count`/`avg`/`min`/`max by`), `sort`/`sortDesc by`, `toggle`. `use` functions callable as **statements** inside `action`/`effect` (side effects: persist, scroll, analytics). `on(enter: action)` on inputs for Enter-to-submit without `Custom`. The declarative 80%, zero extra deps.
 - **muten + the platform** *(no framework runtime)* - native HTML (`<input type="date">`, `<dialog>`) + `class()`,
   CSS libs (Tailwind / DaisyUI), **vanilla JS via `Custom`** (charts, maps, date-pickers, rich-text, grids),
   `use fmt from "./lib.ts"` for any JS logic. Almost every "hard widget" lands here - muten ships zero framework
   runtime, so there is no React/Svelte escape; foreign UI comes in as a vanilla `Custom` component.
 
-**Deploy, honestly:** `npm run dev` runs both tiers. For production, pure-muten static content can ship via
-`muten build` (zero-JS HTML); the moment you use `use`/`Custom`/shared cross-page state, deploy with a normal
-`vite build` (it bundles them - the static build doesn't). Most real apps use `vite build`.
+**Deploy, honestly:** `npm run dev` runs both tiers. For production:
+
+- `muten build` (CLI SSG) is **structure-only**: it emits HTML per route but omits non-layout token CSS, the project `styles.css`, and does not bundle `use` functions (they throw if served from the static output). Use it only for genuinely static, style-free content pages.
+- **`vite build`** is the real path for any styled or interactive app. It bundles everything - `use` functions, `Custom` components, shared cross-page state - and is what most Muten apps ship with.
+
+Most real apps use `vite build`.
 
 Full reference (every primitive, the tiers, the roadmap): [`@muten/core`](https://www.npmjs.com/package/@muten/core).
 
 > **Status: pre-1.0.** The core (language, compiler, CLI, Vite plugin, extension) is solid; the
 > ecosystem is young. Great for real apps, not yet for critical production.
+
+## Known limitations
+
+These are honest gaps found during stress-testing. They are tracked; none are design mistakes.
+
+- **`muten build` is structure-only** (see Deploy above). Use `vite build` for real apps.
+- No `match`/`switch`: use N separate `when` blocks per enum value.
+- `DataTable` renders raw cell values; no per-column formatting yet.
+- No standalone `Select`: a `Form` auto-generates one for enum fields; outside a `Form`, build a button group.
+- `sort by` takes a literal field name, not a variable.
+- `Form` renders all entity fields (no conditional fields), enum fields cannot be `required`, and field types are limited to `text`/`number`/`email`/`bool`/`enum` - no `password`, `date`, or `textarea` (drop to `Custom`).
+- `query x live` (WebSocket) requires the server to send an `id` per row for keyed diffing.
+- `Custom` inputs receive a snapshot of state at mount; pass state via `@` props for reactivity.
 
 ## Requirements
 
