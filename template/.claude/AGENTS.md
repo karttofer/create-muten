@@ -5,8 +5,12 @@ This project uses **Muten**, an AI-first frontend framework. The UI is written i
 trained on Muten yet, so **follow this guide instead of guessing**. Foreign code enters ONLY through explicit
 escapes — `use` for JS functions, `Custom` for a vanilla-JS widget — never as the page UI itself; never add a JS bootstrap.
 
-> Full language reference (every primitive, prop, token, pattern): the **`muten` skill** at
-> [`skills/muten/SKILL.md`](skills/muten/SKILL.md).
+> The **`muten` skill** holds everything — read it before writing `.muten`:
+> - [`skills/muten/SKILL.md`](skills/muten/SKILL.md) — the language (every primitive, prop, token, escape).
+> - [`skills/muten/design.md`](skills/muten/design.md) — making pages look great: styling routes, skinning the
+>   auto-`Form`, modern building blocks (glass pill navbar, hero, KPI), and cloning a reference design.
+> - [`skills/muten/patterns.md`](skills/muten/patterns.md) — copy-paste recipes (store-centric CRUD, dashboard
+>   KPIs, kanban, calendar via a `use` date facade, async queries).
 
 ## Golden rules
 - UI → `.muten` files. App-global state → `.store` files. Both compile via the `@muten/core` Vite plugin.

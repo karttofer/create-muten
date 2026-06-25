@@ -11,6 +11,11 @@ Muten ships ZERO framework runtime; foreign code comes in only through explicit 
 functions — §14, `Custom` for a vanilla-JS widget — §13). A page with no reactivity compiles to plain
 zero-runtime HTML; a reactive one ships ~1KB of signals.
 
+> **Companion docs (same folder):** [`design.md`](design.md) — how to make pages look great (styling routes,
+> the auto-Form skin, modern building blocks like a glass pill navbar, the clone-a-reference loop).
+> [`patterns.md`](patterns.md) — copy-paste app recipes (store-centric CRUD, dashboard KPIs, kanban, calendar,
+> `use` facades). Read those when you're building UI or want a proven structure; this file is the language itself.
+
 ## Mental model & golden rules
 - **UI** → `.muten` files (pages, parts, the app root, the theme). **App-global state** → `.store` files.
 - **`src/app.muten` is the entry.** `index.html` loads it; the plugin boots it. **Never create `main.js`** or a `<script>` bootstrap.
@@ -214,8 +219,9 @@ Horizontal layout = a region with `style(row)` (there is no `Row` primitive). Cl
 
 Modifiers (after a primitive): `style(tokens)` · `class("css")` · `bind(state)` · `submit(action)` ·
 `where(clauses)` · `columns(a, b)` · `alt("…")` · `inputs(k: v)` · `on(event: action)`.
-`class()` also toggles reactively (`class(active when isOpen)`); a **hyphenated** class name must be QUOTED in a
-reactive toggle: `class("is-open" when x)` (bare `is-open` parses as a subtraction and errors). `on(event: action)` works on **any** element
+`class()` also toggles reactively (`class(active when isOpen)`); a **hyphenated OR multi-class** name must be QUOTED
+in a reactive toggle: `class("is-open" when x)`, `class("ring-2 ring-primary" when x)` (each token toggles
+independently; bare `is-open` parses as a subtraction and errors). Stack several toggles on one node freely. `on(event: action)` works on **any** element
 (keydown, mouseenter, change, blur, …) and calls the action — use `Button -> action(arg)` when you need an arg.
 **`on(enter: action)`** is a synthetic event for inputs: it fires only on the Enter key. So a chat/search box that
 submits on Enter is `SearchField bind(draft) on(enter: send)` (the action reads `draft` and `draft.reset()` clears
