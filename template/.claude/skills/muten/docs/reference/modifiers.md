@@ -17,16 +17,18 @@ Modifiers come **after** a primitive's positional args and attach a prop. They c
 
 ## `class(...)`
 
-The single styling path. Static classes plus reactive toggles:
+The single styling path. Static classes, reactive toggles, and a class interpolated from a value:
 
 ```muten
 Stack class("flex flex-col gap-4")
 Button class("btn" active when isOpen)                 # toggles `active`
 Stack class("ring-2 ring-primary" when invalid)        # multi-class: quote it
+Stack class("status-{m.status}")                       # class FROM a value → status-online / status-idle / …
 ```
 
-A hyphenated or multi-class name in a reactive toggle **must be quoted** (`class("is-open" when x)`). See
-[Styling](../styling.md).
+A hyphenated or multi-class name in a reactive toggle **must be quoted** (`class("is-open" when x)`).
+`class("prefix-{x}")` interpolates a state/enum value into a reactive class token (DRY: one token instead of a
+`when` per value). See [Styling](../styling.md).
 
 ## `on(...)`
 

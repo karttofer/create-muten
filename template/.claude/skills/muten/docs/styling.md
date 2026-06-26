@@ -33,10 +33,31 @@ Button class("ring-2 ring-primary" when invalid)     # multi-class: each token t
 A **hyphenated or multi-class** name must be **quoted** in a reactive toggle (`class("is-open" when x)`) — a
 bare `is-open` parses as a subtraction and errors. Stack several toggles on one node freely.
 
+### A class from a value — `class("prefix-{x}")`
+
+To pick a class **from a state/enum value**, interpolate it into the token — it's applied reactively (the old
+token is swapped for the new when the value changes):
+
+```muten
+each members as m {
+  Stack class("status-dot") class("status-{m.status}")   # → status-online / status-idle / status-dnd / …
+}
+```
+```css
+.status-online { background: var(--success); }
+.status-idle   { background: #f0b232; }
+```
+
+Use this for an **enum-driven class** instead of one toggle per value — `class("online" when m.status == "online")
+class("idle" when m.status == "idle") …` is the verbose anti-pattern (DRY: one interpolated token replaces N
+toggles). The interpolated reference is **oracle-checked** (a typo'd/renamed state is caught). The *class names*
+themselves are still your CSS (muten can't know `.status-online` exists — that's your stylesheet's job).
+
 ## Dynamic values — `style()`
 
-`class()` can't interpolate state (`class("w-{pct}")` is rejected) and there's no arbitrary inline style. For a
-CSS value **driven by state** — a progress bar's width, a data-driven size, a transform — use `style()`:
+`class("prefix-{x}")` interpolates a value into a class **name** (great for an enum → `status-online`), but it
+can't produce a **continuous** value like `width: 40%` (you'd need a class per percent). For a CSS value
+**driven by state** — a progress bar's width, a data-driven size, a transform — use `style()`:
 
 ```muten
 state { pct = 40 : number }

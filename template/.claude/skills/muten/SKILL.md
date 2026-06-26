@@ -22,7 +22,7 @@ zero-runtime HTML; a reactive one ships ~1KB of signals.
 - **`src/app.muten` is the entry.** `index.html` loads it; the plugin boots it. **Never create `main.js`** or a `<script>` bootstrap.
 - Primitives are **PascalCase** (`Stack`, `Text`); keywords/control flow are **lowercase** (`when`, `each`, `state`).
 - `class("...")` is the **single way to style** — layout AND look (your CSS / Tailwind utilities); toggle reactively with `class(active when isOpen)`. Muten builds the STRUCTURE (primitives) and ships no skin.
-- A reference is a **bare name** (no sigil) everywhere — `count`, `user.name`, `cart.total`. `{expr}` = interpolation inside a Text/label/path string: `Text "Hi, {user.name}"`. (NOT inside `class("…")` — for a dynamic class use `class(name when cond)`.)
+- A reference is a **bare name** (no sigil) everywhere — `count`, `user.name`, `cart.total`. `{expr}` = interpolation inside a Text/label/path string: `Text "Hi, {user.name}"`. It also works inside `class("…")` to build a **dynamic class token** — `class("status-{user.status}")` → a reactive `status-online`/`status-idle`/… (don't write one toggle per enum value; see §2).
 - Each page has **one root node**. Reactivity is automatic: reading a state in interpolation / `when` / `each` re-renders just that spot.
 
 ### Where each piece goes (the #1 thing to get right)
@@ -55,6 +55,13 @@ This is a normal **Vite** project, so the whole Vite/npm ecosystem for **styling
   **`use` logic imports** (date libs, fetch wrappers, zod, etc.).
 - **JS logic via `use … from "./lib.ts"` — YES.** Import named functions and call them in any expression
   (`use fmt from "./lib.ts"` → `Text "{fmt(x)}"`). The `.ts` is a facade over any npm. See §14.
+- **Built-in formatting — NO `use`, NO hand-rolled JS.** Dates / initials / currency / case have **built-in
+  functions, always available**: `upper` · `lower` · `initial` (first letter, for avatars) · `truncate(s, n)` ·
+  `money(n)` · `ago` (relative time) · `date` · `time`. Call them directly in any expression — **do NOT write
+  your own `formatTime`/`getInitials`/`Date` logic** (that ships an un-checked, often buggy escape):
+  `Text "{ago(msg.time)}"`, `Text "{initial(user.name)}"`, `Text "{money(order.total)}"`,
+  `Text "{date(msg.time)} at {time(msg.time)}"`. Timestamps are `text` (ISO strings); `ago`/`date`/`time` parse
+  them. Only reach for `use` for logic a built-in does NOT cover (grouping, joins, custom parsing).
 - **Host UI via the `Custom` primitive** — write vanilla JS in `src/components/<Name>.js` (charts,
   maps, a third-party widget) and mount it with `Custom`. See §Custom.
 
@@ -251,7 +258,11 @@ Modifiers (after a primitive): `class("css")` · `bind(state)` · `submit(action
 `where(clauses)` · `columns(a, b)` · `alt("…")` · `inputs(k: v)` · `on(event: action)` · `aria(k: expr)`.
 `class()` also toggles reactively (`class(active when isOpen)`); a **hyphenated OR multi-class** name must be QUOTED
 in a reactive toggle: `class("is-open" when x)`, `class("ring-2 ring-primary" when x)` (each token toggles
-independently; bare `is-open` parses as a subtraction and errors). Stack several toggles on one node freely. `on(event: action)` works on **any** element
+independently; bare `is-open` parses as a subtraction and errors). Stack several toggles on one node freely.
+**Class from a value — `class("prefix-{x}")`** interpolates a state/enum value into a reactive class token
+(swapped on change): `class("status-{member.status}")` → `status-online` / `status-idle` / …. Use THIS for an
+enum-driven class — **don't write one `when` toggle per value** (`class("online" when s=="online") class("idle" when …)`
+is the verbose anti-pattern). The reference is oracle-checked. `on(event: action)` works on **any** element
 (keydown, mouseenter, change, blur, …) and calls the action — use `Button -> action(arg)` when you need an arg.
 **`on(enter: action)`** is a synthetic event for inputs: it fires only on the Enter key. So a chat/search box that
 submits on Enter is `SearchField bind(draft) on(enter: send)` (the action reads `draft` and `draft.reset()` clears
