@@ -12,7 +12,7 @@ routes {
 }
 shell {
   Stack {
-    Nav style(row gap.md padding.md) class("divider") {
+    Nav class("row gap-md pad-md divider") {
       Link "Dashboard" -> "/"          class("nav-link")
       Link "Customers" -> "/customers" class("nav-link")
     }
@@ -48,16 +48,16 @@ action setStatus(cid: text, s: text) mutates items { items.patch where id == cid
 ## Dashboard with KPIs (aggregates — no JS)
 ```
 screen dashboard
-use money from "../../lib/money.ts"
-Page style(padding.lg gap.lg) {
-  Stack style(grid cols.2 lg:cols.4 gap.md) {
-    Stack style(padding.lg gap.xs) class("card") {
-      Text "Customers" class("muted") style(text.sm weight.semibold)
-      Text "{customers.count}" style(text.xl weight.bold)
+use money from "~/lib/money.ts"
+Page class("pad-lg gap-lg") {
+  Stack class("grid grid-cols-2 lg:grid-cols-4 gap-md") {
+    Stack class("pad-lg gap-xs card") {
+      Text "Customers" class("muted t-sm semibold")
+      Text "{customers.count}" class("t-xl bold")
     }
-    Stack style(padding.lg gap.xs) class("card") {
-      Text "Pipeline" class("muted") style(text.sm weight.semibold)
-      Text "{money(deals.pipeline)}" style(text.xl weight.bold)
+    Stack class("pad-lg gap-xs card") {
+      Text "Pipeline" class("muted t-sm semibold")
+      Text "{money(deals.pipeline)}" class("t-xl bold")
     }
   }
 }
@@ -72,14 +72,14 @@ entity Customer { name text required  company text  email email required  status
 state { draft = {} : Customer  q = "" : text }
 action create(c: Customer) mutates draft { customers.add(c)  draft.reset() }   # page action CALLS the store action
 
-Page style(padding.lg gap.lg) {
+Page class("pad-lg gap-lg") {
   SearchField bind(q) "Search…" class("mu-field")
   Form bind(draft) submit(create) "Add customer"          # auto-renders one input per field; skin .mu-field (see design.md)
 
   each customers.items as c where c.name contains q or c.company contains q {
-    Stack style(row justify.between items.center padding.lg) class("card") {
-      Stack style(gap.xs) { Text "{c.name}" style(weight.semibold)  Text "{c.company}" class("muted") style(text.sm) }
-      Stack style(row items.center gap.sm) {
+    Stack class("row between center pad-lg card") {
+      Stack class("gap-xs") { Text "{c.name}" class("semibold")  Text "{c.company}" class("muted t-sm") }
+      Stack class("row center gap-sm") {
         when c.status == "active" { Text "active" class("badge badge-active") }
         when c.status == "lead"   { Text "lead"   class("badge badge-lead") }
         when c.status == "lead"   { Button "Activate" -> customers.setStatus(c.id, "active") class("btn") }
@@ -96,22 +96,22 @@ No `match`/`switch` — render one `each … where` per stage. Advance with `pat
 state { draft = {} : Deal }
 action create(d: Deal) mutates draft { deals.add(d)  draft.reset() }
 
-Stack style(grid cols.1 md:cols.2 lg:cols.4 gap.md) {
-  Stack style(padding.md gap.sm) class("panel") {
-    Text "New" class("muted") style(text.sm weight.bold)
+Stack class("grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-md") {
+  Stack class("pad-md gap-sm panel") {
+    Text "New" class("muted t-sm bold")
     each deals.items as d where d.stage == "new" { DealCard(item: d) }
   }
-  Stack style(padding.md gap.sm) class("panel") {
-    Text "Qualified" class("accent") style(text.sm weight.bold)
+  Stack class("pad-md gap-sm panel") {
+    Text "Qualified" class("accent t-sm bold")
     each deals.items as d where d.stage == "qualified" { DealCard(item: d) }
   }
 }
 # src/parts/dealcard.muten — a part can reference stores + use + when inside
-# use money from "../lib/money.ts"
+# use money from "~/lib/money.ts"
 # part DealCard(item: Deal) {
-#   Stack style(padding.md gap.xs) class("panel") {
-#     Text "{$item.title}" style(weight.semibold)
-#     Text "{money($item.amount)}" style(weight.bold)
+#   Stack class("pad-md gap-xs panel") {
+#     Text "{$item.title}" class("semibold")
+#     Text "{money($item.amount)}" class("bold")
 #     when $item.stage == "new"       { Button "Qualify" -> deals.advance($item.id, "qualified") class("btn") }
 #     when $item.stage == "qualified" { Button "Win"     -> deals.advance($item.id, "won") class("btn") }
 #   }
@@ -127,20 +127,20 @@ that `each` iterates, with field access on the items.
 #   export function monthLabel(anchor) {...}           // "June 2026"
 #   export function monthCells(anchor) {...}           // [{ day, iso, inMonth, today }, ...] (42 cells)
 screen calendar
-use addMonths, monthLabel, monthCells from "../../lib/cal.ts"
+use addMonths, monthLabel, monthCells from "~/lib/cal.ts"
 state { anchor = "2026-06-01" : text }
 get cells = monthCells(anchor)
 action prev mutates anchor { anchor.set(addMonths(anchor, -1)) }
 action next mutates anchor { anchor.set(addMonths(anchor, 1)) }
 
 Page {
-  Stack style(row items.center gap.md) {
+  Stack class("row center gap-md") {
     Button "‹" -> prev   Text "{monthLabel(anchor)}"   Button "›" -> next
   }
-  Stack style(grid cols.7 gap.xs) {
+  Stack class("grid grid-cols-7 gap-xs") {
     each cells as c {
-      Stack style(padding.sm gap.xs) class("card") class("is-dim" when not c.inMonth) class("is-today" when c.today) {
-        Text "{c.day}" style(text.sm)
+      Stack class("pad-sm gap-xs card") class("is-dim" when not c.inMonth) class("is-today" when c.today) {
+        Text "{c.day}" class("t-sm")
         each events.items as e where e.date == c.iso { Text "{e.title}" class("badge") }
       }
     }
@@ -155,7 +155,7 @@ Note: nested `each` works; a reactive class can be multi-token (`class("ring-2 r
 export function money(n: number): string { return "$" + (n || 0).toLocaleString("en-US"); }
 ```
 ```
-use money from "../../lib/money.ts"
+use money from "~/lib/money.ts"
 Text "{money(deal.amount)}"          # → $48,000
 ```
 Keep `use` SYNCHRONOUS. For async I/O use a `query` / `create` / `update` / `delete` (those expose `.pending`/`.error`).

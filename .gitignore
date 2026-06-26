@@ -1,4 +1,4 @@
-# dependencies (create-muten itself has none, but a clone might add tooling)
+# dependencies (create-muten itself has none)
 node_modules/
 
 # OS / editor junk

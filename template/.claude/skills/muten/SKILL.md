@@ -12,7 +12,7 @@ functions — §14, `Custom` for a vanilla-JS widget — §13). A page with no r
 zero-runtime HTML; a reactive one ships ~1KB of signals.
 
 > **Companion docs (same folder):** [`design.md`](design.md) — how to make pages look great (styling routes,
-> the auto-Form skin, modern building blocks like a glass pill navbar, the clone-a-reference loop).
+> the auto-Form skin, modern building blocks like a glass pill navbar).
 > [`patterns.md`](patterns.md) — copy-paste app recipes (store-centric CRUD, dashboard KPIs, kanban, calendar,
 > `use` facades). Read those when you're building UI or want a proven structure; this file is the language itself.
 
@@ -20,7 +20,7 @@ zero-runtime HTML; a reactive one ships ~1KB of signals.
 - **UI** → `.muten` files (pages, parts, the app root, the theme). **App-global state** → `.store` files.
 - **`src/app.muten` is the entry.** `index.html` loads it; the plugin boots it. **Never create `main.js`** or a `<script>` bootstrap.
 - Primitives are **PascalCase** (`Stack`, `Text`); keywords/control flow are **lowercase** (`when`, `each`, `state`).
-- `style(...)` = layout/typography **tokens** (Muten builds STRUCTURE). `class("...")` = **look** (your CSS / Tailwind); toggle reactively with `class(active when isOpen)`. Muten ships no skin.
+- `class("...")` is the **single way to style** — layout AND look (your CSS / Tailwind utilities); toggle reactively with `class(active when isOpen)`. Muten builds the STRUCTURE (primitives) and ships no skin.
 - A reference is a **bare name** (no sigil) everywhere — `count`, `user.name`, `cart.total`. `{expr}` = interpolation inside a Text/label/path string: `Text "Hi, {user.name}"`. (NOT inside `class("…")` — for a dynamic class use `class(name when cond)`.)
 - Each page has **one root node**. Reactivity is automatic: reading a state in interpolation / `when` / `each` re-renders just that spot.
 
@@ -42,19 +42,20 @@ This is a normal **Vite** project, so the whole Vite/npm ecosystem for **styling
 - **No React / Vue / Svelte — at all.** Muten ships ZERO framework runtime. Pages are `.muten` → vanilla DOM;
   you don't compose the app from MUI/Chakra/shadcn. For a widget Muten can't express, drop to a vanilla-JS
   `Custom` (§13); for JS logic, `use` a function (§14). There is no JSX/hooks/`className` anywhere.
-- **No arbitrary inline CSS via `style()`** — `style()` only takes the layout/typography tokens below.
-  Visual styling (colors, borders, shadows) goes through `class("…")` + your CSS.
+- **No arbitrary inline CSS** — there's no inline-style hatch. ALL styling (layout, colors, borders, shadows)
+  goes through `class("…")` + your CSS (Tailwind utilities, or your own classes backed by `theme.muten` vars).
 
 ## 3. Limitations & known gaps (current — these are real, plan around them)
 - **The real build is `vite build` / `npm run dev`, NOT `muten build`.** `muten build` is a STRUCTURE-only static
-  export (SSG for crawlability): it omits non-layout token CSS, your `src/styles.css`, and does NOT bundle `use`
+  export (SSG for crawlability): it omits your `src/styles.css`, and does NOT bundle `use`
   functions (they throw at runtime). Use it only for zero-JS static pages; for any styled/interactive app, ship with Vite.
 - **Routing uses quoted string paths** (`"/path"`, History API). Params: `"/product/:id"` + `param id` (see §10).
 - **Forms** (`Form` auto-renders from an entity) render EVERY field — **no conditional fields** (gate the whole
   `Form` with a `when`, or split into per-step entities). Input types are `text`/`email`/`number`/`bool`(checkbox)/
   `enum`(select) only — **no password/date/textarea** (drop to `Custom`). An **enum field can't be `required`**.
   `SearchField` is the single bound text input.
-- **No `match`/`switch`** — render an enum with N `when status == "x" { … }` blocks. **`DataTable`** shows raw cell
+- **`match` for enums** — `match status { active -> Text "Active"  lead -> Badge … }` renders the matching arm
+  (sugar for N `when status == "x"`). **`DataTable`** shows raw cell
   text (no per-column formatting — use `each` + `Stack` for formatted/badge cells). **No standalone `Select`** (Form
   makes one for enum fields; elsewhere build a button group + `class(active when …)`). **`sort by` takes a literal
   field**, not a state variable (duplicate the `each` per sort key, or sort in a `use` function).
@@ -183,7 +184,7 @@ state   { prices = query prices live : list<Price> }
 sources { prices: { url: "ws://feed.example.com/prices", at: "data" } }
 # each prices.data as p { Text "{p.symbol}  {p.value}" }   — only changed rows touch the DOM
 ```
-Plain `WebSocket` under the hood, exposed as one keyword; the socket closes automatically when the page unmounts. Client-side only (deploy via `vite build`). Use `refetch` for user-driven refresh, `live` for server-pushed real-time. (Polling via a timer was intentionally NOT added — it isn't reactive. For *huge* live lists you still virtualize + send server-side deltas, as in any framework.)
+Plain `WebSocket` under the hood, exposed as one keyword; it **auto-reconnects with backoff** if the socket drops and closes automatically when the page unmounts (a malformed frame is ignored, not fatal). To SEND (e.g. a chat message) the socket is receive-only — write through an action: a `create`/`post` to the backend, or a `use`'d function that POSTs; the server then pushes the updated list back over the socket. Client-side only (deploy via `vite build`). Use `refetch` for user-driven refresh, `live` for server-pushed real-time. (Polling via a timer was intentionally NOT added — it isn't reactive. For *huge* live lists you still virtualize + send server-side deltas, as in any framework.)
 
 **Escape hatch — explicit request** (when the API isn't RESTful): `post`/`put`/`delete` a `"client:/path"` (interpolated) with an optional `body`, in an action:
 ```
@@ -194,17 +195,19 @@ action ping           { post "shop:/health" }                   # no body, no `m
 It uses the named client's base + headers; the action is async with `.pending`/`.error`. Prefer `create`/`update`/`delete` when the API is RESTful (those also update the list); reach for `post`/`put`/`delete` only when the convention doesn't fit.
 
 ## 6. Primitives
-A bare string is the node's main prop. `{ }` = children. Lay out with `style()`, skin with `class()`.
+A bare string is the node's main prop. `{ }` = children. Style everything (layout + look) with `class()`.
 
 | Primitive | Use | Example |
 |---|---|---|
-| `Stack` | vertical stack (flex column) | `Stack style(gap.md) { … }` |
-| `Page` | page root `<main>` (one per route) | `Page style(padding.lg) { … }` |
-| `Header`/`Nav`/`Sidebar`/`Footer` | landmarks | `Header style(row, between, center) { … }` |
+| `Stack` | vertical stack (flex column) | `Stack class("gap-4") { … }` |
+| `Page` | page root `<main>` (one per route) | `Page class("p-6") { … }` |
+| `Header`/`Nav`/`Sidebar`/`Footer` | landmarks | `Header class("flex flex-row justify-between items-center") { … }` |
 | `Text` | paragraph, interpolates | `Text "Hi, {user.name}"` |
 | `Title` | heading; level keyword | `Title "Dashboard" h2` |
 | `Span` | inline text | `Span "{cart.total}"` |
 | `Image` | `<img>`, **alt required** | `Image "{p.image}" alt("{p.title}")` |
+| `Icon` | icon via Iconify `set:name`, inlined SVG at build (tree-shaken) | `Icon "lucide:settings" class("text-xl")` |
+| `Video` | `<video>`; bare-keyword flags `controls autoplay loop muted playsinline` | `Video "clip.mp4" controls` |
 | `Link` | client-side nav | `Link "Catalog" -> "/catalog"` |
 | `Button` | runs an action | `Button "Save" -> save(draft)` |
 | `SearchField` | text input bound to state | `SearchField bind(q) "Search…"` |
@@ -214,10 +217,10 @@ A bare string is the node's main prop. `{ }` = children. Lay out with `style()`,
 | `slot` | outlet inside `shell` | `slot` |
 | `Custom` | host-JS escape hatch | `Custom Chart inputs(data: sales) on(pick: select)` |
 
-Horizontal layout = a region with `style(row)` (there is no `Row` primitive). Clickable card =
-`Button { … }` or `Link "" -> "/x" { … }` with children instead of a label.
+Horizontal layout = a region with `class("flex flex-row")` (a `Stack` is flex-column by default; there is no
+`Row` primitive). Clickable card = `Button { … }` or `Link "" -> "/x" { … }` with children instead of a label.
 
-Modifiers (after a primitive): `style(tokens)` · `class("css")` · `bind(state)` · `submit(action)` ·
+Modifiers (after a primitive): `class("css")` · `bind(state)` · `submit(action)` ·
 `where(clauses)` · `columns(a, b)` · `alt("…")` · `inputs(k: v)` · `on(event: action)`.
 `class()` also toggles reactively (`class(active when isOpen)`); a **hyphenated OR multi-class** name must be QUOTED
 in a reactive toggle: `class("is-open" when x)`, `class("ring-2 ring-primary" when x)` (each token toggles
@@ -228,7 +231,9 @@ submits on Enter is `SearchField bind(draft) on(enter: send)` (the action reads 
 it via the two-way bind) — no `Custom` needed for "Enter to send + clear".
 
 ## 7. Theme — how it works
-`theme.muten` supplies the **scale** (values); the engine owns only the **vocabulary** (token names).
+`theme.muten` is the agnostic **source of design values**. muten emits each entry as a `:root` CSS custom
+property your CSS / `class()` consumes — `space.md "16px"` → `--space-md: 16px`, `font.lg` → `--font-lg`,
+`colors.primary` → `--color-primary`.
 ```
 theme {
   space       { xs "4px"  sm "8px"  md "16px"  lg "24px"  xl "32px" }
@@ -238,8 +243,8 @@ theme {
   breakpoints { sm "640px"  md "768px"  lg "1024px" }
 }
 ```
-A token like `gap.md` resolves to `gap: 16px` via `space.md`; `text.lg` → `font.lg`; `md:cols.2` uses
-`breakpoints.md`. **No CSS/reset goes in `theme.muten`** — the reset and the look live in `src/styles.css`.
+Consume the vars from `src/styles.css`: `.card { padding: var(--space-lg); font-size: var(--font-lg) }`, then
+apply with `class("card")`. **No CSS/reset goes in `theme.muten`** — the reset and the look live in `src/styles.css`.
 
 ### With a CSS framework (Tailwind / DaisyUI) — muten is AGNOSTIC
 `theme.muten` holds your theme VALUES; a **styling adapter** (data, in `vite.config` — the scaffolder wires it
@@ -256,19 +261,30 @@ theme {
 ```
 Style with `class()` using your library's utilities (`class("bg-primary p-4 hover:bg-primary")`). **Validation of
 class names is your library's job** (its IntelliSense / build) — muten doesn't check them (it's agnostic; a future
-muten styling *plugin* could add per-library linting). With a framework, use `class()` for layout too; `style()`
-is for the no-framework base path + dynamic-value overrides.
+muten styling *plugin* could add per-library linting).
 
-### Style tokens (`style(...)`)
-```
-row column wrap grid grow center between
-gap.sm|md|lg   padding.md|lg   padding.x.md   padding.y.md   margin.md
-cols.2|3|auto  rows.2
-text.sm|md|lg|xl   weight.medium|bold   leading.normal   italic   bold
-align.left|center|right   justify.center|between   items.center|start
-width.full   height.full
-```
-Responsive: prefix any token with a breakpoint → `md:cols.2`, `lg:cols.4` (`sm/md/lg/xl`).
+### Styling: one path — `class("...")`
+Everything (layout AND look) is a `class("...")`. Two equivalent backings — pick ONE per app:
+- **Tailwind** (the default scaffold): write utilities directly. A `Stack` is flex-column by default;
+  a horizontal row is `class("flex flex-row")`.
+  ```
+  Stack class("flex flex-col gap-4 p-6")          # column with gap + padding
+  Header class("flex flex-row justify-between items-center")
+  Stack class("grid grid-cols-3 gap-4")           # 3-col grid
+  Text "Total" class("text-xl font-bold")
+  ```
+  Responsive: prefix with Tailwind's breakpoints → `class("grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4")`.
+- **Library-free** (theme-only): write real CSS in `src/styles.css` using the vars `theme.muten` emits, then
+  apply with a semantic class.
+  ```css
+  .row  { display: flex; flex-direction: row; gap: var(--space-md); }
+  .card { padding: var(--space-lg); border-radius: var(--radius-md); }
+  ```
+  ```
+  Stack class("row")            # → display:flex; flex-direction:row; gap:var(--space-md)
+  Stack class("card")
+  ```
+  The scaffold ships base classes like `.mu-stack` (the `Stack` primitive's flex-column).
 
 ## 8. State, actions & reactivity
 - `state` cells are signals; reading them in interpolation / `when` / `each` auto-updates that spot.
@@ -288,8 +304,16 @@ Responsive: prefix any token with a breakpoint → `md:cols.2`, `lg:cols.4` (`sm
 - **Sort a list** (`sort by` ascending / `sortDesc by` descending; returns a sorted COPY): `each contacts.sort by name as c { … }` ·
   `each scores.sortDesc by points as s { … }`. Use in `each` or a `get`. The key is a **literal field**, not a state
   variable (no `sort by sortKey` — duplicate the `each` per key, or sort in a `use` fn).
-- **No `match`/`switch`**: render an enum with N `when status == "x" { … }` blocks (one per value). A reactive class
-  per value works too: `class("badge-high" when item.priority == "high")` (quote hyphenated names).
+- **`match` for enums** (sugar over N `when`): renders the arm whose value the subject equals. Each arm is `value -> node`
+  or `value -> { … }`; the value is the enum literal (bare or quoted). Cleaner than repeating `when status == "x"`:
+  ```
+  match deal.stage {
+    new       -> Text "New"      class("badge")
+    qualified -> Text "Qualified" class("badge badge-info")
+    won       -> { Icon "lucide:check"  Text "Won" }
+  }
+  ```
+  A reactive class per value works too: `class("badge-high" when item.priority == "high")` (quote hyphenated names).
 
 ## 9. Stores — app-global state
 A `.store` file = state shared across pages, **no prop drilling**. The file name is the domain.
@@ -341,7 +365,7 @@ Wrap routes in a `shell { … slot … }` for a nav/footer around every page. `s
 page mounts. The shell has **no local state** → use a store for things like a mobile menu:
 ```
 shell {
-  Header style(row, between, center) class("nav") {
+  Header class("flex flex-row justify-between items-center nav") {
     Link "Home" -> "/"
     Button "☰" -> ui.toggleMenu class("burger")
   }
@@ -372,7 +396,7 @@ and ACTION callbacks (`-> $onPick(...)`). A scalar param (`text`/`number`) also 
 ```
 # src/parts/feature.muten
 part Feature(item: Feature, onPick: action) {
-  Stack style(column, gap.sm) class("card") {
+  Stack class("flex flex-col gap-2 card") {
     Title "{$item.title}" h3
     Text  "{$item.body}"
     Button "Choose" -> $onPick($item.id)
@@ -402,10 +426,13 @@ Custom Chart inputs(data: @sales) on(pointSelect: select)
 One escape that pulls in real JS/npm behind a typed, **synchronous** border. `use` named exports from a
 `.ts`/`.js` file and call them in any expression:
 ```
-use fmt, slug from "./lib/format.ts"        # named exports ONLY (the .ts is a facade over any npm)
+use fmt, slug from "~/lib/format.ts"        # named exports ONLY (the .ts is a facade over any npm)
 Text "{fmt(order.total)}"                    # called like any expression
 Link "{slug(post.title)}" -> "/blog/{post.id}"
 ```
+**Paths: prefer `~/` (absolute, from `src/`).** `~/lib/format.ts` resolves the SAME from EVERY file — no
+counting `../`. Write `use x from "~/lib/format.ts"` whether you're in `src/pages/a/b.muten` or a part; it's
+always `src/lib/format.ts`. (`./`/`../` relative still works, but `~/` is the canonical, location-independent form.)
 A `use` function can ALSO be **called as a statement inside an action or `effect`** — a side effect (persist to
 localStorage, scroll, analytics) that Muten can't express:
 ```
@@ -427,7 +454,7 @@ date-picker), drop to a vanilla-JS `Custom` (§13) — there is no framework-com
 ## 15. Gotchas
 - It is NOT JSX — PascalCase primitives + `{ }` children; no JSX/hooks/`className` anywhere.
 - No `main.js`/`<script>` — `app.muten` is the entry.
-- `style()` (layout tokens) ≠ `class()` (look). No colors/borders in `style()`.
+- `class()` is the ONLY way to style — layout AND look (Tailwind utilities, or your CSS backed by `theme.muten` vars).
 - `Image` without `alt` fails validation (`alt("")` for decorative).
 - Actions may only touch their declared `mutates`.
 - **The runnable build is `vite build` / `npm run dev`, not `muten build`** (which is structure-only SSG — §3).
@@ -445,7 +472,7 @@ screen home
 state  { name = "" : text }
 action greet(v: text) mutates name { name.set(v) }
 
-Page style(padding.lg, gap.md) {
+Page class("flex flex-col gap-4 p-6") {
   Title "Hello"
   SearchField bind(name) "Your name"
   when name { Text "Hi, {name}!" }

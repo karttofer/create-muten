@@ -1,5 +1,5 @@
-# The project's token SCALE — the values style() resolves against (the engine ships none).
-# Add/rename steps freely; the linter validates tokens against this.
+# The project's design SCALE — muten emits these as :root CSS custom properties (e.g. --space-md,
+# --font-lg) for your CSS / class("…") to consume. Add/rename steps freely.
 theme {
   space       { xs "4px"  sm "8px"  md "16px"  lg "24px"  xl "32px" }
   font        { sm "13px"  md "15px"  lg "20px"  xl "28px" }

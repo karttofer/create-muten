@@ -78,10 +78,10 @@ component classes on top (and brings Tailwind). You always style via `class("…
 
 ## Styling
 
-When **Tailwind or DaisyUI** is added, `theme.muten` is centralized to **match Tailwind's scale** (so
-`style()` tokens and Tailwind utilities share one scale, e.g. `style(gap.md)` == `gap-4`); plain CSS/SCSS
-keeps the default scale. **DaisyUI** adds component classes (`btn`, `card`, `modal`) usable in `class("…")` -
-pure classes; behavior is Muten state + `on()`.
+There is ONE way to style: `class("…")`. When **Tailwind or DaisyUI** is added, `theme.muten` is centralized
+to **match Tailwind's scale**, so its emitted CSS vars line up with the utilities you write in `class("…")`;
+plain CSS/SCSS keeps the default scale and you read the same vars from `src/styles.css`. **DaisyUI** adds
+component classes (`btn`, `card`, `modal`) usable in `class("…")` - pure classes; behavior is Muten state + `on()`.
 
 If you accept the last prompt it runs `<pm> install` followed by `<pm> run dev`, your app is live in a
 single step. Choosing SCSS also adds `sass` and switches the stylesheet to `.scss` automatically.

@@ -1,21 +1,22 @@
 # Designing muten pages — make it look great
 
-Muten ships **no skin** — `style()` builds STRUCTURE (layout/typography tokens), `class()` carries the LOOK.
-This doc is the craft: how to get a polished, modern result. Pair it with `SKILL.md` (the language) and
-`patterns.md` (full app recipes).
+Muten ships **no skin** — it builds the STRUCTURE (primitives) and you carry the LOOK with `class("…")`, the
+single styling path. This doc is the craft: how to get a polished, modern result. Pair it with `SKILL.md` (the
+language) and `patterns.md` (full app recipes).
 
 ## 1. Pick ONE styling route per app
-| Route | Layout | Look | When |
-|---|---|---|---|
-| **Pure muten** (theme-driven) | `style(...)` tokens | a few semantic classes in `styles.css` that read `theme.muten` vars | no framework; full control; smallest output |
-| **Tailwind** | `class("flex gap-4")` | Tailwind utilities | utility-first; fast |
-| **DaisyUI** | `class(...)` | daisy components (`btn`, `card`) on Tailwind | pre-styled components |
+Everything is `class("…")`; the difference is what backs those class names:
+| Route | How `class()` is backed | When |
+|---|---|---|
+| **Pure muten** (theme-driven) | semantic classes in `styles.css` that read `theme.muten`'s `:root` vars | no framework; full control; smallest output |
+| **Tailwind** | Tailwind utilities (`class("flex flex-row gap-4")`) | utility-first; fast |
+| **DaisyUI** | daisy components (`btn`, `card`) on Tailwind | pre-styled components |
 
-Don't mix layout routes (don't use `style(row)` AND `class("flex-row")` on the same tree) — pick one and be consistent.
+Don't mix routes (don't put a Tailwind `class("flex-row")` AND a hand-written `.row` on the same tree) — pick one and be consistent.
 
 ## 2. Pure-muten design system (the muten-native way)
-Put EVERY value in `theme.muten`; muten emits it as `:root` CSS vars. `style()` reads the scale; `styles.css`
-maps the color/radius vars onto a handful of semantic classes. Edit `theme.muten` → the whole app re-skins.
+Put EVERY value in `theme.muten`; muten emits it as `:root` CSS vars. `styles.css` maps those color/space/radius
+vars onto a handful of semantic classes you apply with `class("…")`. Edit `theme.muten` → the whole app re-skins.
 
 ```
 # theme.muten — a clean dark starter
@@ -37,6 +38,15 @@ theme {
 * { box-sizing: border-box; }
 body { margin: 0; background: var(--color-bg); color: var(--color-text); font: 15px/1.55 system-ui, sans-serif; }
 .mu-stack { display: flex; flex-direction: column; }
+/* layout + type helpers — every value reads a theme var, so a tweak in theme.muten moves the whole app */
+.row     { display: flex; flex-direction: row; }
+.between { justify-content: space-between; }
+.center  { align-items: center; }
+.gap-xs  { gap: var(--space-xs); }   .gap-sm { gap: var(--space-sm); }   .gap-md { gap: var(--space-md); }   .gap-lg { gap: var(--space-lg); }
+.pad-sm  { padding: var(--space-sm); }   .pad-md { padding: var(--space-md); }   .pad-lg { padding: var(--space-lg); }   .pad-xl { padding: var(--space-xl); }
+.t-sm    { font-size: var(--font-sm); }   .t-lg { font-size: var(--font-lg); }   .t-xl { font-size: var(--font-xl); }
+.semibold { font-weight: var(--weight-semibold); }   .bold { font-weight: var(--weight-bold); }
+.text-center { text-align: center; }
 .card    { background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius-md); }
 .muted   { color: var(--color-muted); }
 .accent  { color: var(--color-primary); }
@@ -46,11 +56,11 @@ body { margin: 0; background: var(--color-bg); color: var(--color-text); font: 1
 .btn-ghost { background: transparent; color: var(--color-text); border: 1px solid var(--color-border); }
 .badge   { font-size: 11px; font-weight: 600; padding: 3px 10px; border-radius: var(--radius-pill); display: inline-block; }
 ```
-Then write pages with `style()` for layout + these classes for look:
+Then write pages with these classes — `class("…")` carries both layout and look:
 ```
-Stack style(padding.lg gap.md) class("card") {
-  Text "Revenue" class("muted") style(text.sm weight.semibold)
-  Text "{money(total)}" style(text.xl weight.bold)
+Stack class("pad-lg gap-md card") {
+  Text "Revenue" class("muted t-sm semibold")
+  Text "{money(total)}" class("t-xl bold")
 }
 ```
 
@@ -74,10 +84,10 @@ directly — only the auto-`Form` needs this.
 ## 4. The craft — what makes it look "designed"
 - **One accent, restrained palette.** A neutral surface scale + ONE accent color. Resist rainbow.
 - **Contrast discipline.** Never light text on a light surface. On dark themes use a `muted` (~60% lum) for secondary text, full `text` for primary.
-- **Type hierarchy = size + weight, not color.** Title `text.xl weight.bold`, label `text.sm weight.semibold muted`, body default.
-- **Spacing rhythm.** Reuse the scale (`gap.md` between rows, `gap.lg` between sections, `padding.lg` in cards). Consistency reads as polish.
-- **Cards.** `border` (1px, subtle) + `radius.md` + a soft shadow. On light themes add `shadow-sm`; on dark, the border alone is enough.
-- **Numbers** get formatted via `use` (`use money from "./lib/money.ts"`) — raw `48000` looks unfinished; `$48,000` looks shipped.
+- **Type hierarchy = size + weight, not color.** Title large + bold, label small + semibold + muted, body default.
+- **Spacing rhythm.** Reuse ONE scale (the same step between rows, a larger one between sections, a card padding). Consistency reads as polish.
+- **Cards.** A subtle 1px border + medium radius + a soft shadow. On light themes add a soft shadow; on dark, the border alone is enough.
+- **Numbers** get formatted via `use` (`use money from "~/lib/money.ts"`) — raw `48000` looks unfinished; `$48,000` looks shipped.
 - **Empty states & loading.** `when list.length == 0 { … }` and `when q.loading { … }` — never a blank panel.
 
 ## 5. Modern building blocks (copy-paste)
@@ -102,7 +112,7 @@ Nav class("nav-pill") {
   Link "Features" -> "/features" class("nav-pill-link")
   Link "Pricing"  -> "/pricing"  class("nav-pill-link")
 }
-Stack style(padding.xl) { slot }
+Stack class("pad-xl") { slot }
 ```
 **Tailwind** equivalent:
 ```
@@ -113,18 +123,18 @@ Nav class("fixed top-4 left-1/2 -translate-x-1/2 z-50 flex items-center gap-1 p-
 
 ### Hero (centered, gradient accent)
 ```
-Stack style(padding.xl gap.md align.center) {
-  Title "Build faster" h1 style(text.xl weight.bold align.center)
-  Text "One clear sentence about the product." class("muted") style(text.lg align.center)
-  Stack style(row gap.sm) { Button "Start" class("btn")  Button "Docs" class("btn-ghost") }
+Stack class("pad-xl gap-md center text-center") {
+  Title "Build faster" h1 class("t-xl bold text-center")
+  Text "One clear sentence about the product." class("muted t-lg text-center")
+  Stack class("row gap-sm") { Button "Start" class("btn")  Button "Docs" class("btn-ghost") }
 }
 ```
 
 ### KPI stat card
 ```
-Stack style(padding.lg gap.xs) class("card") {
-  Text "Customers" class("muted") style(text.sm weight.semibold)
-  Text "{count}" style(text.xl weight.bold)
+Stack class("pad-lg gap-xs card") {
+  Text "Customers" class("muted t-sm semibold")
+  Text "{count}" class("t-xl bold")
 }
 ```
 
@@ -132,15 +142,39 @@ Stack style(padding.lg gap.xs) class("card") {
 A reactive toggle string may hold MULTIPLE classes — just quote it; each token toggles:
 `class("ring-2 ring-primary" when c.active)`. Hyphenated names also need the quotes.
 
-## 6. Reference-driven design (clone a look)
+### Icons — the `Icon "set:name"` primitive (first-class, agnostic, tree-shaken)
+muten has a first-class `Icon` backed by **Iconify** `set:name` — ANY icon library, no preference:
+```
+Icon "lucide:settings"          Icon "tabler:home"          Icon "mdi:account"
+Icon "lucide:search" class("text-xl text-zinc-400")     # size = font-size (1em); color = currentColor
+```
+- **Agnostic:** the prefix IS the library (lucide, tabler, mdi, …); mix sets freely. The core ships no icons.
+- **Tree-shaken, zero runtime:** each `Icon` is resolved to inline `<svg>` AT BUILD (Iconify). Only the icons you
+  reference ship — for ~15 icons that's ~1KB, not a 100KB+ icon CDN. Nothing of Iconify reaches the browser.
+- **Style it like text:** the SVG is `1em` and uses `currentColor`, so `class("text-xl")` sizes it and the parent's
+  `text-*` color flows in (hover included). Add `class("text-[#b5bac1]")` only to override the inherited color.
+- **The set must be installed:** `npm i -D @iconify-json/<set>` (the scaffold pre-installs **lucide**). Reference a
+  set you didn't install and the build errors with the exact `npm i` to run. Names are STATIC (resolved at build) —
+  use the icon's real kebab name (`lucide:more-vertical`, not camelCase). Browse names at icones.js.org.
+
+**Repeated icon rows → a `part`.** An icon name can be a part param: `part NavItem(icon: text, label: text) {
+Stack class("…") { Icon $icon  Text "{$label}" } }`, then `NavItem(icon: "lucide:users", label: "Friends")`. The
+part inlines with the literal, so the icon stays static + tree-shaken. Use this to DRY a navbar/toolbar (one
+template, N calls) instead of repeating the row — fewer tokens, same bundle.
+
+For a one-off brand mark / custom SVG that no set has, drop to a `Custom` component (§13 in SKILL.md). Whole image
+files (incl. `.svg`) go through `Image "…"`.
+
+## 6. Reference-driven design
 To match a reference (screenshot/URL), work the loop:
 1. Look at the reference; name the **layout** (vertical stacks? a grid? a sidebar? a floating navbar?).
-2. Map **layout → `Stack`/`style(grid cols.N)`**, **components → primitives + your styling route**.
+2. Map **layout → `Stack`/`class("grid grid-cols-N")`**, **components → primitives + your styling route**.
 3. Write the page, then **build + screenshot your result** and compare side by side.
 4. Fix the deltas (spacing, color, radius, weight) and repeat. Two or three passes gets you close.
 Keep the palette + radius + spacing in `theme.muten` so a tweak there moves the whole page toward the target.
 
 ## 7. Responsive
-Prefix any `style()` token with a breakpoint: `style(grid cols.1 md:cols.2 lg:cols.4)`, `style(column md:row)`.
-Breakpoint pixels live in `theme.muten`'s `breakpoints`. Mobile-first: the bare token is the small-screen
-default, the `md:`/`lg:` variant overrides up. Test at a narrow width — keep big numbers from overflowing 2-col grids.
+**Tailwind:** prefix utilities with a breakpoint — `class("grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4")`,
+`class("flex flex-col md:flex-row")`. **Library-free:** write `@media` queries in `styles.css` keyed on
+`theme.muten`'s `breakpoints` vars. Mobile-first: the base is the small-screen default, the `md:`/`lg:` variant
+overrides up. Test at a narrow width — keep big numbers from overflowing 2-col grids.

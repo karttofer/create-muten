@@ -16,8 +16,8 @@ escapes — `use` for JS functions, `Custom` for a vanilla-JS widget — never a
 - UI → `.muten` files. App-global state → `.store` files. Both compile via the `@muten/core` Vite plugin.
 - **No `main.js`.** `src/app.muten` IS the entry (loaded by `index.html`). Never add a JS entry/bootstrap.
 - Primitives are **PascalCase** (`Stack`, `Text`, `Button`); control flow is lowercase (`when`, `each`).
-- **`style(...)`** = layout/typography tokens (Muten builds STRUCTURE). **`class("...")`** = your look
-  (your CSS / Tailwind). Muten ships no skin — appearance is yours.
+- **`class("...")`** = the single way to style (your CSS / Tailwind utilities) — layout AND look. Muten
+  builds the STRUCTURE (primitives); the appearance is yours. Muten ships no skin.
 - A state reference is a **bare name** (no sigil); interpolate in any string with `{expr}`: `Text "Hi, {user.name}"`.
 
 ## File map
@@ -35,7 +35,7 @@ src/styles.css                 your look (.scss if you picked SCSS)
 ```
 screen home
 
-Page style(padding.lg, gap.md) {
+Page class("flex flex-col gap-4 p-6") {
   Title "Hello"
   Text "Body copy with reactive state: {user.name}"
   Button "Save" -> save
@@ -43,7 +43,7 @@ Page style(padding.lg, gap.md) {
 ```
 
 ## Cheat-sheet
-- **Layout:** `Stack` (vertical), `Page` (`<main>`), `Header`/`Nav`/`Sidebar`/`Footer` (landmarks). Horizontal = `style(row)`.
+- **Layout:** `Stack` (vertical), `Page` (`<main>`), `Header`/`Nav`/`Sidebar`/`Footer` (landmarks). Horizontal = `class("flex flex-row")`.
 - **Content:** `Text`, `Title "x" h2`, `Span`, `Image "{src}" alt("…")` (alt required), `Link "x" -> "/route"`, `Button "x" -> action(arg)`.
 - **Data:** `DataTable @list columns(a, b)`, `Form bind(draft) submit(create)`, `SearchField bind(q)`.
 - **Control:** `when <expr> { … }`, `each <list> as item { … }`.
@@ -55,7 +55,7 @@ Page style(padding.lg, gap.md) {
 - **Escape hatch:** non-RESTful API? `post`/`put`/`delete` a `"client:/path"` (interpolated) with optional `body` in an action: `post "shop:/orders" body item`. Uses the client's base+headers; `mutates` is optional for pure commands.
 - **JS escape (`use`):** call named JS functions behind a typed, synchronous border — `use fmt from "./lib.ts"` → `Text "{fmt(x)}"`. Also callable as a **statement in an action/effect** for a side effect (`persist(x)`, `scrollBottom()`). A visual widget Muten can't express → vanilla-JS `Custom`. Full details: SKILL §14.
 - **Actions:** `action add(item: User) mutates users { users.push(item) }` — typed params in `(…)`; ops: `push/set/reset/remove/toggle/patch` + a `use` fn call for side effects; branch with `if/else`.
-- **Tokens:** `gap.md padding.lg cols.3 text.lg row center between` — responsive prefix: `md:cols.2`.
+- **Styling:** ONE path — `class("…")`. Tailwind utilities (`class("flex flex-row gap-4 p-6")`) or your own CSS classes backed by `theme.muten`'s CSS vars (`class("card")` + `.card { padding: var(--space-lg) }`).
 
 ## Dependencies & limits
 - **CSS / Tailwind / SCSS: YES** — it's a Vite app; install them and use `class("…")` + your CSS.
@@ -63,8 +63,8 @@ Page style(padding.lg, gap.md) {
   A widget Muten can't express enters as a vanilla `Custom` component (SKILL §13); JS logic via `use` (§14) —
   for the foreign piece, never the whole UI.
 - Routing uses **quoted string paths** (`routes { "/path" -> page }`, `Link -> "/x"`, History API; deploy serves `index.html` for any path); params (`"/product/:id"` → `param id`). SEO: `meta { title "…" description "…" }` per page → `<head>` tags (og auto-derived). Shell has no local state → use a
-  `.store`. Flip a bool with `x.toggle()`. `style()` is layout tokens only; visuals go in `class()`.
-- **Known limits (plan around these):** the **runnable** build is `vite build` / `npm run dev`, NOT `muten build` (which is structure-only SSG: it drops `styles.css`, non-layout token CSS, and `use` functions). No `match`/`switch` (use N `when status == "x"` blocks). `Form` renders ALL entity fields (types text/email/number/bool/enum; **no** password/date/textarea/conditional fields; an enum can't be `required`). `DataTable` cells are raw (format with `each`). No standalone `Select`. `sort by` takes a literal field, not a variable. `Custom` inputs need `@` and are a snapshot. `query x live` needs the server to send a row `id`.
+  `.store`. Flip a bool with `x.toggle()`. All styling — layout and visuals — goes through `class()`.
+- **Known limits (plan around these):** the **runnable** build is `vite build` / `npm run dev`, NOT `muten build` (which is structure-only SSG: it drops `styles.css` and `use` functions). No `match`/`switch` (use N `when status == "x"` blocks). `Form` renders ALL entity fields (types text/email/number/bool/enum; **no** password/date/textarea/conditional fields; an enum can't be `required`). `DataTable` cells are raw (format with `each`). No standalone `Select`. `sort by` takes a literal field, not a variable. `Custom` inputs need `@` and are a snapshot. `query x live` needs the server to send a row `id`.
 - The full reference (stores, routing, theme, every primitive, the limits in §3) is in [`skills/muten/SKILL.md`](skills/muten/SKILL.md).
 
 ## Commands

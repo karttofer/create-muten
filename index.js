@@ -20,7 +20,7 @@ const PKG = JSON.parse(readFileSync(join(SELF, 'package.json'), 'utf8'));
 const PMS = ['npm', 'pnpm', 'yarn', 'bun'];
 
 // the starter reset — written by the CLI so the template stays pure .muten (no default styles file).
-const RESET = `/* Your look. Muten ships STRUCTURE + LAYOUT (style() tokens); the LOOK lives here, via class("…"). */
+const RESET = `/* Your look. Muten ships STRUCTURE (primitives); the LOOK lives here, applied with class("…"). */
 * { box-sizing: border-box; }
 body { margin: 0; font: 15px/1.55 system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif; color: #111; }
 h1, h2, h3, h4, h5, h6, p { margin: 0; }
@@ -64,6 +64,22 @@ const WELCOME_CSS = `
 .mw-card-title { font-size: 14px; font-weight: 600; margin-bottom: 5px; }
 .mw-card-text { color: #71717a; font-size: 13px; line-height: 1.5; }
 @media (max-width: 560px) { .mw-stats, .mw-cards { grid-template-columns: 1fr; } }
+`;
+// `Form` auto-renders its fields with mu-* classes (class() on a Form styles the <form>, not the inputs).
+// Ship a baseline skin so forms look right out of the box; override freely. Uses theme vars (with fallbacks)
+// so it adapts to theme.muten / your framework. (Removes the #1 styling friction: unstyled auto-forms.)
+const FORM_CSS = `
+/* — muten auto-Form baseline (override or delete) — */
+.mu-form { display: flex; flex-direction: column; gap: 12px; }
+.mu-form-title { display: none; }
+.mu-field { width: 100%; padding: 9px 12px; font-size: 14px; border-radius: var(--radius-md, 8px);
+  border: 1px solid var(--color-border, #d4d4d8); background: var(--color-bg, #ffffff); color: var(--color-text, #18181b); }
+.mu-field:focus { outline: 2px solid var(--color-primary, #4f46e5); outline-offset: -1px; }
+.mu-field-check { width: 16px; height: 16px; accent-color: var(--color-primary, #4f46e5); }
+.mu-field-error { color: var(--color-danger, #dc2626); font-size: 12px; }
+.mu-submit { padding: 9px 14px; border: none; border-radius: var(--radius-md, 8px); cursor: pointer; font-weight: 600; font-size: 14px;
+  background: var(--color-primary, #4f46e5); color: var(--color-onprimary, #ffffff); }
+.mu-submit:hover { filter: brightness(1.08); }
 `;
 // vite.config composed from the chosen options — muten always; tailwind last. `styling` is the theme
 // ADAPTER (data) for the chosen library, passed to muten() so it emits theme.muten in that format.
@@ -132,9 +148,9 @@ const TAILWIND_ADAPTER = {
 };
 const TAILWIND_NOTE = `
 ## Styling: Tailwind CSS v4 (installed)
-This app has Tailwind ON TOP of CSS. Write the LOOK with \`class("…")\` using Tailwind utilities, e.g.
-\`class("flex gap-4 rounded-lg bg-zinc-900 text-white")\`. \`style()\` still owns Muten's layout/
-typography tokens — don't put Tailwind classes in \`style()\`, and don't put layout in \`class()\`.
+This app has Tailwind ON TOP of CSS. There is ONE way to style: \`class("…")\`. Write everything — layout AND
+look — with Tailwind utilities, e.g. \`class("flex flex-row items-center gap-4 p-6 rounded-lg bg-zinc-900 text-white")\`.
+A \`Stack\` is a flex column by default; for a horizontal row use \`class("flex flex-row")\`.
 You can still add your own rules in \`src/styles.css\` below the \`@import "tailwindcss";\`.
 `;
 // DaisyUI = component CLASSES on top of Tailwind (no React). The "shadcn for Muten": pre-styled components
@@ -184,7 +200,7 @@ async function main() {
   const has = (f) => argv.includes(f);
   const val = (f) => { const i = argv.indexOf(f); return i >= 0 ? argv[i + 1] : undefined; };
   if (has('-v') || has('--version')) { console.log(PKG.version); return; }
-  if (has('-h') || has('--help')) { console.log('Usage: create-muten [name] [--css|--scss] [--tailwind] [--daisyui] [--vercel] [--tauri] [--pm npm|pnpm|yarn|bun] [--no-install]'); return; }
+  if (has('-h') || has('--help')) { console.log('Usage:\n  create-muten [name] [--css|--scss] [--tailwind] [--daisyui] [--vercel] [--tauri] [--pm npm|pnpm|yarn|bun] [--no-install]'); return; }
 
   let name = argv.filter((a, i) => !a.startsWith('-') && argv[i - 1] !== '--pm')[0];
   let style = has('--scss') ? 'scss' : has('--css') ? 'css' : undefined;     // the base stylesheet
@@ -245,16 +261,17 @@ async function main() {
   const appendAgents = (text) => { const f = join(target, '.claude', 'AGENTS.md'); if (existsSync(f)) writeFileSync(f, readFileSync(f, 'utf8') + text); };
 
   if (tailwind) {
-    writeFileSync(join(target, 'src', 'styles.css'), tailwindStyles(daisyui) + WELCOME_CSS);
+    writeFileSync(join(target, 'src', 'styles.css'), tailwindStyles(daisyui) + WELCOME_CSS + FORM_CSS);
     writeFileSync(join(target, 'theme.muten'), daisyui ? DAISY_THEME : TAILWIND_THEME); // seed the theme skeleton for the chosen library
     addDev({ tailwindcss: '^4.0.0', '@tailwindcss/vite': '^4.0.0' });
     if (daisyui) addDev({ daisyui: '^5.0.0' });
     appendAgents(TAILWIND_NOTE + (daisyui ? DAISY_NOTE : ''));           // tell the AI what styling is available
   } else {
-    writeFileSync(join(target, 'src', style === 'scss' ? 'styles.scss' : 'styles.css'), RESET + WELCOME_CSS);
+    writeFileSync(join(target, 'src', style === 'scss' ? 'styles.scss' : 'styles.css'), RESET + WELCOME_CSS + FORM_CSS);
     writeFileSync(join(target, 'theme.muten'), EMPTY_THEME);             // no framework -> empty theme.muten (you fill it; muten emits :root vars)
   }
   const styling = daisyui ? DAISY_ADAPTER : tailwind ? TAILWIND_ADAPTER : null; // the theme adapter wired into vite.config
+  addDev({ '@iconify-json/lucide': '^1.2.0' }); // default icon set for `Icon "lucide:…"` (build-inlined). Add more sets with `npm i -D @iconify-json/<set>`.
   if (style === 'scss') addDev({ sass: '^1.101.0' });
   if (tauri) {                                  // native desktop wrapper around the same web build (dist)
     cpSync(join(TAURI_TEMPLATE, 'src-tauri'), join(target, 'src-tauri'), { recursive: true });
