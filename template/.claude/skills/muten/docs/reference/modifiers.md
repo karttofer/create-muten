@@ -1,6 +1,9 @@
 # Reference — Modifiers
 
-Modifiers come **after** a primitive's positional args and attach a prop. They compose freely on one node.
+Modifiers come **after** a primitive's positional args and attach a prop. They compose freely on one node — as
+**siblings**, never nested inside each other's `()`. Write `Stack class("card") aria(live: "polite") { … }`, NOT
+`Stack class("card" aria(…))` (the JSX-props instinct — the oracle rejects it with a message that points you
+to the sibling form).
 
 | Modifier | Applies to | What it does |
 |---|---|---|
