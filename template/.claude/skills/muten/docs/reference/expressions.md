@@ -75,13 +75,23 @@ needs (dates, initials, currency, case) so you never hand-roll `Date`/string log
 | `money(number[, "USD"])` | localized currency (`$1,234.56`) |
 | `ago(isoText)` | relative time — `just now` / `5m ago` / `3h ago` / `2d ago` |
 | `date(isoText)` / `time(isoText)` | short date (`Jan 5`) / short time (`3:42 PM`) |
+| `datetime(isoText)` | full date + time (`Jan 5, 2024, 3:42 PM`) |
+| `calendar(isoText)` | chat-style smart timestamp — `Today at 3:42 PM` / `Yesterday at …` / `Jan 5 at …` |
+| `weekday(isoText)` | day name (`Monday`) |
+| `now()` | the **current** time as an ISO string — stamp a new record |
+| `isToday(isoText)` / `isPast(isoText)` / `isFuture(isoText)` | booleans for `when` — today? before/after now? |
+| `before(text, sep)` / `after(text, sep)` | the part before / after the first `sep` — `before(email, "@")` → username |
 
 ```muten
 Text "{initial(user.name)}"                       # avatar bubble
 Text "{ago(msg.time)}"                             # "5m ago"
 Text "{date(msg.time)} at {time(msg.time)}"        # "Jan 5 at 3:42 PM"
 Text "{money(order.total)}"                        # "$48.20"
+Text "Hi, {before(user.email, "@")}"              # the email username (no use fn)
+action send mutates msgs { msgs.push({ text: draft, time: now() }) }   # stamp with now()
 ```
+
+Don't hand-write `new Date().toISOString()` or an email-splitter in a `use` — these are the built-ins for it.
 
 A timestamp is a `text` field holding an ISO string (e.g. `created text`); `ago`/`date`/`time` parse it.
 Compose freely (`upper(truncate(name, 12))`). For anything NOT in this set (grouping, joins, custom parsing),
