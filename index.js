@@ -28,6 +28,9 @@ h1 { font-size: 32px; font-weight: 700; letter-spacing: -.02em; }
 .mu-stack { display: flex; flex-direction: column; }
 img { max-width: 100%; display: block; }
 a { color: inherit; text-decoration: none; }
+/* a11y: skip-link (muten emits it in the shell) — off-screen until keyboard-focused */
+.mu-skip-link { position: absolute; left: -9999px; top: 8px; padding: 8px 16px; background: #111; color: #fff; border-radius: 6px; z-index: 1000; }
+.mu-skip-link:focus { left: 8px; }
 `;
 // CSS + Tailwind v4: one @import + the @tailwindcss/vite plugin. Preflight does the reset, so this stays
 // minimal — only `.mu-stack` (Muten's Stack primitive; `mu-` so it never collides with DaisyUI's own
@@ -70,8 +73,10 @@ const WELCOME_CSS = `
 // so it adapts to theme.muten / your framework. (Removes the #1 styling friction: unstyled auto-forms.)
 const FORM_CSS = `
 /* — muten auto-Form baseline (override or delete) — */
-.mu-form { display: flex; flex-direction: column; gap: 12px; }
+.mu-form { display: flex; flex-direction: column; gap: 14px; }
 .mu-form-title { display: none; }
+.mu-field-group { display: flex; flex-direction: column; gap: 4px; }
+.mu-label { font-size: 13px; font-weight: 600; color: var(--color-text, #18181b); }
 .mu-field { width: 100%; padding: 9px 12px; font-size: 14px; border-radius: var(--radius-md, 8px);
   border: 1px solid var(--color-border, #d4d4d8); background: var(--color-bg, #ffffff); color: var(--color-text, #18181b); }
 .mu-field:focus { outline: 2px solid var(--color-primary, #4f46e5); outline-offset: -1px; }

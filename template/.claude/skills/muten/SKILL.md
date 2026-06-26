@@ -11,10 +11,11 @@ Muten ships ZERO framework runtime; foreign code comes in only through explicit 
 functions — §14, `Custom` for a vanilla-JS widget — §13). A page with no reactivity compiles to plain
 zero-runtime HTML; a reactive one ships ~1KB of signals.
 
-> **Companion docs (same folder):** [`design.md`](design.md) — how to make pages look great (styling routes,
-> the auto-Form skin, modern building blocks like a glass pill navbar).
-> [`patterns.md`](patterns.md) — copy-paste app recipes (store-centric CRUD, dashboard KPIs, kanban, calendar,
-> `use` facades). Read those when you're building UI or want a proven structure; this file is the language itself.
+> **Companion docs (same folder):** [`docs/`](docs/README.md) — the **complete reference** (every
+> primitive/modifier/keyword + full guides: forms, accessibility, SEO, data, stores, …). This SKILL.md is the
+> compressed always-on reference; open a `docs/<topic>.md` on demand when you need the full detail and the *why*.
+> [`design.md`](design.md) — how to make pages look great (styling routes, the auto-Form skin, building blocks).
+> [`patterns.md`](patterns.md) — copy-paste app recipes (store-centric CRUD, dashboard KPIs, kanban, `use` facades).
 
 ## Mental model & golden rules
 - **UI** → `.muten` files (pages, parts, the app root, the theme). **App-global state** → `.store` files.
@@ -80,7 +81,7 @@ index.html / vite.config.mjs     wired to @muten/core; don't hand-edit the boot
 screen <name>                    # page identity (first line of a page)
 
 entity User {                    # data shape + validation (implicit `id uuid`)
-  name  text  required           # constraints: required | min:N | max:N
+  name  text  required           # constraints: required | min:N | max:N | pattern:"<regex>"
   email email required
   role  admin | member           # `a | b | c` = enum
 }
@@ -90,6 +91,10 @@ state {                          # page-LOCAL reactive state
   users = query listUsers : list<User>   # query → async; exposes users.loading/.error/.data
   # state types: scalar (text/number/bool/email/uuid), list<Entity>, OR list<scalar> (list<text>/list<uuid>/…).
   # an enum lives in an entity field, NOT as a state type; hold its value as text. A list of plain strings is list<text>.
+  # PERSIST to localStorage — append `persist`: `dark = false : bool persist`, `favs = [] : list<number> persist`.
+  #   Auto-hydrates on load (falls back to the initial) + saves on every change → survives reload. It is THE
+  #   declarative localStorage. Works HERE (page-local) AND in a `.store` for app-GLOBAL persisted state
+  #   (favorites, cart, settings, theme). NEVER hand-roll load/save in a `use` fn — `persist` already does it.
 }
 
 const TAX = 0.21                 # compile-time immutable scalar (inlined, never reactive)
@@ -221,7 +226,7 @@ Horizontal layout = a region with `class("flex flex-row")` (a `Stack` is flex-co
 `Row` primitive). Clickable card = `Button { … }` or `Link "" -> "/x" { … }` with children instead of a label.
 
 Modifiers (after a primitive): `class("css")` · `bind(state)` · `submit(action)` ·
-`where(clauses)` · `columns(a, b)` · `alt("…")` · `inputs(k: v)` · `on(event: action)`.
+`where(clauses)` · `columns(a, b)` · `alt("…")` · `inputs(k: v)` · `on(event: action)` · `aria(k: expr)`.
 `class()` also toggles reactively (`class(active when isOpen)`); a **hyphenated OR multi-class** name must be QUOTED
 in a reactive toggle: `class("is-open" when x)`, `class("ring-2 ring-primary" when x)` (each token toggles
 independently; bare `is-open` parses as a subtraction and errors). Stack several toggles on one node freely. `on(event: action)` works on **any** element
@@ -229,6 +234,27 @@ independently; bare `is-open` parses as a subtraction and errors). Stack several
 **`on(enter: action)`** is a synthetic event for inputs: it fires only on the Enter key. So a chat/search box that
 submits on Enter is `SearchField bind(draft) on(enter: send)` (the action reads `draft` and `draft.reset()` clears
 it via the two-way bind) — no `Custom` needed for "Enter to send + clear".
+
+### Accessibility — `aria(...)` + what the compiler emits for free
+Muten is HTML + logic, so accessibility is **expressible in the code**, not a styling concern. Two layers:
+
+**1 · Free, by the compiler (you write nothing):** semantic tags (`Header`→`<header>`, `Nav`→`<nav>`, `Sidebar`→`<aside>`,
+`Footer`→`<footer>`, `Page`→`<main>`, `Title`→`<h1…h6>`, `Button`→`<button>`, `Link`→`<a href>`); `Image` **requires** `alt`;
+`Form` fields get a real `<label for/id>` + `aria-required` + the error linked via `aria-describedby`; `DataTable` headers get
+`scope="col"`; `Icon` is `aria-hidden` (decorative); the shell emits a keyboard **skip-link** and focus moves to `<main>` on navigation.
+
+**2 · `aria(key: value, …)` — write any `aria-*` / `role` on ANY node** (the bounded escape-free way to express a11y):
+```
+Button "✕" -> close aria(label: "Close dialog")             # icon-only button gets an accessible name
+Stack aria(role: "dialog", modal: true) { … }              # role → role; other keys → aria-<key>
+Button "Menu" -> ui.toggle aria(expanded: ui.open, controls: "main-nav")   # aria-expanded is REACTIVE
+Stack aria(live: "polite") { Text "{results.length} results" }             # YOU opt a region into live updates
+```
+- Each `key` → `aria-<key>`; the special key `role` → the `role` attribute.
+- A **literal** value (`"Close"`, `true`) is a static attribute; a value that **reads state** (`ui.open`) compiles to an
+  `effect`, so it stays in sync — e.g. `aria(expanded: ui.open)` flips `aria-expanded` as the state flips. The oracle checks
+  the refs like any expression (a renamed state → `unknown-ref`, not a silent runtime bug).
+- Reach for `aria(...)` for accessible interactive widgets (menus, dialogs, tabs, disclosure) **instead of** a `Custom` escape.
 
 ## 7. Theme — how it works
 `theme.muten` is the agnostic **source of design values**. muten emits each entry as a `:root` CSS custom
@@ -301,6 +327,12 @@ Everything (layout AND look) is a `class("...")`. Two equivalent backings — pi
   - `lines.sum by price * qty` · `todos.count where not done` · `reviews.avg by score` · `prices.min by amount` · `prices.max by amount`.
   - `.length` is the count-all; `count where cond` is the filtered count. Works in interpolation, `when`, and a `get`.
   - **Embedding in a bigger expression needs grouping `()`** (the `by`/`where` body runs to the end): `when (todos.count where not done) > 0 { … }`. Standalone (in a `get`) needs none: `get openCount = todos.count where not done`.
+- **Membership — "is it selected / favorited / in the set"** — store the IDs as a **scalar list** and use `contains`:
+  `store { favs = [] : list<number> persist }`, then `when favs contains movie.id { … }` or `class("on" when favs contains movie.id)`.
+  `contains` is list membership for scalars (and case-insensitive substring for text). If you kept whole OBJECTS instead
+  of ids, use the count form: `(favs.count where id == movie.id) > 0`. **NEVER write a `use` fn doing `items.some(x => x.id === id)`**
+  — `contains` IS that, declaratively, and `persist` gives the localStorage for free. (`list<Entity> contains scalar` is
+  always false — it compares object identity — which is exactly why you store the *ids*, not the objects.)
 - **Sort a list** (`sort by` ascending / `sortDesc by` descending; returns a sorted COPY): `each contacts.sort by name as c { … }` ·
   `each scores.sortDesc by points as s { … }`. Use in `each` or a `get`. The key is a **literal field**, not a state
   variable (no `sort by sortKey` — duplicate the `each` per key, or sort in a `use` fn).
@@ -359,6 +391,13 @@ Navigating `/product/1` → `/product/2` re-mounts the page with the new `id` (r
 
 **`<head>` meta (SEO):** a page declares `meta { title "…" description "…" }` → `<title>` + `<meta>` tags
 (`og:title`/`og:description` auto-derived). Applied on navigation and baked into the SSG HTML at build.
+Optional `meta { lang "es" }` sets `<html lang>` (default `en`).
+
+**SEO by nature (the build emits it — you write nothing):** `muten build` already pre-renders every route to
+real crawlable HTML, and on top of that emits, for free:
+- **`sitemap.xml` + `robots.txt`** — derived from your `routes` (every page is auto-discoverable; add a route → it's in the sitemap).
+- per page: **`<link rel="canonical">`**, **`og:url`**, **`og:type`**, and a **JSON-LD `WebPage`** block (name/description/url) from the page's `meta {}`.
+- Pass the deploy origin for ABSOLUTE urls: **`muten build --url=https://your-site.com`** (without it, sitemap/canonical are relative). The author never hand-writes a sitemap, canonical, or schema block — adding a page is enough.
 
 ### Shell (persistent chrome)
 Wrap routes in a `shell { … slot … }` for a nav/footer around every page. `slot` is where the active
@@ -388,6 +427,11 @@ action create(t: Task) mutates tasks, draft { tasks.push(t)  draft.reset() }
 `Form` renders EVERY field, no `when` inside it (gate the whole Form with a `when`, or split entities for a wizard).
 Input types: `text`/`email`/`number`/`bool`(checkbox)/`enum`(select) only — password/date/textarea need a `Custom`.
 An enum field **cannot be `required`**. See §3.
+
+**Constraints** live on the entity field and are checked on submit (a failure blocks the action and shows a per-field error):
+`required` · `min:N` / `max:N` (number → value bound; text → length) · **`pattern:"<regex>"`** (e.g. `zip text pattern:"^\d{5}$"`).
+An **`email`** field validates its format automatically (a malformed value blocks submit). For a rule across TWO fields
+(`end > start`) or async uniqueness, do it inside the submit `action` with an `if` (use a `use` fn for the async part).
 
 ## 12. Parts — reusable composition
 `part` = a reusable fragment, **inlined at build** (not a runtime component). Pass OBJECTS (`$x.field`)
@@ -433,16 +477,21 @@ Link "{slug(post.title)}" -> "/blog/{post.id}"
 **Paths: prefer `~/` (absolute, from `src/`).** `~/lib/format.ts` resolves the SAME from EVERY file — no
 counting `../`. Write `use x from "~/lib/format.ts"` whether you're in `src/pages/a/b.muten` or a part; it's
 always `src/lib/format.ts`. (`./`/`../` relative still works, but `~/` is the canonical, location-independent form.)
-A `use` function can ALSO be **called as a statement inside an action or `effect`** — a side effect (persist to
-localStorage, scroll, analytics) that Muten can't express:
+A `use` function can ALSO be **called as a statement inside an action or `effect`** — a side effect (scroll,
+focus, analytics) that Muten can't express:
 ```
-use persist, scrollBottom from "./fx.ts"
+use track, scrollBottom from "./fx.ts"
 action send(text: text) mutates messages {
   messages.push({ role: "user", content: text })
-  persist(messages)      # use fn as a statement: a side effect, NO muten state mutated (so no `mutates` entry)
-  scrollBottom()
+  scrollBottom()         # use fn as a statement: a side effect, NO muten state mutated (so no `mutates` entry)
+  track("sent")
 }
 ```
+> **Don't escape for what Muten already does.** Before reaching for a `use` fn, check it isn't a built-in:
+> • **localStorage persistence** → the **`persist`** keyword on a state (§5), NOT a `use` fn that does `localStorage.setItem`.
+> • **"is X selected / favorited"** → **`contains`** on a `list<number>` of ids (§8), NOT a JS `.some(x => x.id === id)`.
+> • **filter / find / aggregate a list** → **`where` / `count where` / `sum by`** (§8), NOT `.filter`/`.find`/`.reduce`.
+> A `use` fn is for genuine foreign logic (date math, a formatting lib, a 3rd-party SDK) — never to reimplement a built-in.
 The call is checked like any other (undeclared → `unknown-function`). This replaces the old "every side effect
 needs a `Custom` component" pattern. Keep the border **synchronous** (no async/`await`); for async I/O use a
 `query` / `create` / `update` / `delete` (those are async with `.pending`/`.error`).
