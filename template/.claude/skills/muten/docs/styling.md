@@ -17,8 +17,9 @@ Text  "Total" class("text-xl font-bold")
 - A `Stack` is **flex-column by default**; a horizontal row is `class("flex flex-row")` (there is no `Row`
   primitive). Layout is CSS — Muten doesn't reinvent grid/flex.
 - Responsive: prefix with breakpoints — `class("grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4")`.
-- There is **no inline-style hatch**: every bit of appearance (colors, borders, shadows) goes through
-  `class()` + your CSS.
+- Static appearance (colors, borders, shadows) has **no inline-style hatch** — it all goes through `class()` +
+  your CSS. The one exception is a value that **changes at runtime** (a progress width, a dynamic transform):
+  use [`style()`](#dynamic-values--style) below.
 
 ### Reactive classes
 
@@ -31,6 +32,26 @@ Button class("ring-2 ring-primary" when invalid)     # multi-class: each token t
 
 A **hyphenated or multi-class** name must be **quoted** in a reactive toggle (`class("is-open" when x)`) — a
 bare `is-open` parses as a subtraction and errors. Stack several toggles on one node freely.
+
+## Dynamic values — `style()`
+
+`class()` can't interpolate state (`class("w-{pct}")` is rejected) and there's no arbitrary inline style. For a
+CSS value **driven by state** — a progress bar's width, a data-driven size, a transform — use `style()`:
+
+```muten
+state { pct = 40 : number }
+Stack class("bar") style(w: "{pct}%")        # sets CSS variable --w to "40%", reactively
+```
+```css
+.bar { width: var(--w); transition: width .2s; }
+```
+
+- Each key becomes a **CSS custom property** `--key` — muten prepends `--`, so `style()` can **only** set
+  variables, never an arbitrary property. It never competes with `class()` / Tailwind.
+- The value is an interpolated string (`"{pct}%"`, `"translateX({x}px)"`, `"{rows}rem"`); it updates
+  **reactively** when it reads state. A literal value (`style(c: "red")`) is set once.
+- Your CSS consumes it with `var(--key)`. The *look* stays in CSS; only the *changing value* lives in muten.
+- Use `class()` for everything static; reach for `style()` **only** when a value changes at runtime.
 
 ## Two backings — pick one per app
 

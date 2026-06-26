@@ -66,7 +66,7 @@ keys at runtime, duplicate the `each` per key behind a `when`, or sort in a [`us
 For a selection / favorites / "is X chosen" check, store the **ids as a scalar list** and use `contains`:
 
 ```muten
-store { favs = [] : list<number> persist }     # the ids, not the objects
+state { favs = [] : list<number> persist }     # the ids, not the objects (in a .store file)
 
 # anywhere:
 when favs contains movie.id { Icon "lucide:heart" }

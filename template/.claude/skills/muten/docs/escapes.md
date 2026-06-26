@@ -29,6 +29,7 @@ Custom Chart inputs(data: @sales) on(pointSelect: select)
 function mount(el, inputs, on) {        // THREE positional args
   const chart = makeChart(el, inputs.data);   // read a value: inputs.data
   chart.onPick = (p) => on.pointSelect(p);     // call a handler: on.pointSelect(payload)
+  return (next) => chart.setData(next.data);   // OPTIONAL: return an updater → muten re-calls it when a bound @state changes
 }
 ```
 
@@ -38,8 +39,11 @@ Rules that matter:
 - Define it as a plain **`function mount(...)`**, **not** `export function` — the file is inlined, so an
   `export` is a syntax error and leaves the screen blank.
 - **Pass state with `@`:** `inputs(data: @sales)` passes the array; bare `inputs(data: sales)` passes the
-  literal string `"sales"`. The value is a **snapshot at mount time** (not reactive). To feed a query's rows,
-  make a `get` first — `get rows = orders.data` — then `inputs(data: @rows)`.
+  literal string `"sales"`. To feed a query's rows, make a `get` first — `get rows = orders.data` — then
+  `inputs(data: @rows)`.
+- **Reactive inputs:** initial values are read at mount. For **live** values, `return` a function from `mount` —
+  muten re-calls it with the fresh `inputs` whenever a bound `@state` changes. Return nothing and the inputs
+  stay a mount-time snapshot (fine for a widget that owns its own data).
 
 `Custom` is the only way to use non-Muten **UI** code. It's for genuine widgets — not for things Muten already
 does (see below).

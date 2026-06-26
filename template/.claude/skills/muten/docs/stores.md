@@ -37,7 +37,7 @@ favorites, a cart, settings, theme:
 
 ```muten
 # src/cart.store
-store  { items = [] : list<number> persist }       # the ids; persisted to localStorage
+state  { items = [] : list<number> persist }       # the ids; persisted to localStorage
 get    count = items.length
 action add(id: number)    mutates items { items.push(id) }
 action remove(id: number) mutates items { items.remove where id == id }
@@ -72,7 +72,7 @@ Route guards in `app.muten` read a store boolean; when it flips, the active rout
 
 ```muten
 # src/auth.store
-store  { loggedIn = false : bool persist }
+state  { loggedIn = false : bool persist }
 action login  mutates loggedIn { loggedIn.set(true) }
 action logout mutates loggedIn { loggedIn.set(false) }
 ```

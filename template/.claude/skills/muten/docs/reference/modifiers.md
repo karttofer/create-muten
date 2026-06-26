@@ -13,6 +13,7 @@ Modifiers come **after** a primitive's positional args and attach a prop. They c
 | `inputs(k: v)` | `Custom` | values passed to a host-JS widget (`@` to pass state) |
 | `on(event: action)` | any | wire a DOM event to an action |
 | `aria(k: expr)` | any | `aria-*` / `role` attributes — accessibility, reactive |
+| `style(k: "…")` | any | bind a **dynamic CSS value** to state via a CSS variable `--k` (progress, transforms) |
 
 ## `class(...)`
 
@@ -52,6 +53,22 @@ Button "Menu" -> ui.toggle aria(expanded: ui.open, controls: "nav")
 ```
 
 See [Accessibility](../accessibility.md).
+
+## `style(...)`
+
+Bind a **dynamic CSS value** to state — the bounded path for a progress width, a data-driven size, a transform.
+Each key becomes a CSS custom property `--key` (muten prepends `--`, so it can only set variables, never an
+arbitrary property); the value is an interpolated string and is reactive:
+
+```muten
+Stack class("bar") style(w: "{pct}%")               # --w = "40%", updates with pct
+Stack style(t: "translateX({x}px)", o: "{op}")      # multiple vars
+```
+```css
+.bar { width: var(--w); }
+```
+
+`class()` for static look, `style()` only for a value that changes at runtime. See [Styling](../styling.md#dynamic-values--style).
 
 ## `inputs(...)` / `on(...)` on `Custom`
 

@@ -100,6 +100,20 @@ action next   mutates products, page       { page.set(page + 1)  products.refetc
 
 The query's `.loading` / `.error` reflect the refetch.
 
+**Path params — `{name}` in the source URL.** A refetch param that matches a `{name}` placeholder in the source
+URL is substituted into the **path** (the rest become the query string). This is how you fetch a nested or
+detail resource:
+
+```muten
+sources { posts: "/users/{id}/posts" }
+state   { posts = query posts : list<Post> }
+
+action loadUser(uid: number) mutates posts { posts.refetch(id: uid) }   # → GET /users/<uid>/posts
+```
+
+A `{name}` with no matching param is left literal, so call `refetch` (e.g. on mount via an action, or from a
+route param) before the data is valid — the **initial** auto-fetch has no params to fill the placeholder.
+
 ## Real-time — `query x live` (WebSocket)
 
 Append `live` to subscribe to a **WebSocket** instead of fetching: the server **pushes**, Muten reacts

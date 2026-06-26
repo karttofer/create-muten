@@ -25,6 +25,25 @@ zero-runtime HTML; a reactive one ships ~1KB of signals.
 - A reference is a **bare name** (no sigil) everywhere — `count`, `user.name`, `cart.total`. `{expr}` = interpolation inside a Text/label/path string: `Text "Hi, {user.name}"`. (NOT inside `class("…")` — for a dynamic class use `class(name when cond)`.)
 - Each page has **one root node**. Reactivity is automatic: reading a state in interpolation / `when` / `each` re-renders just that spot.
 
+### Where each piece goes (the #1 thing to get right)
+The syntax is small; the real skill is the **boundaries** — pick the right home and the oracle does the rest:
+
+| You need… | Put it in | Not |
+|---|---|---|
+| page-local reactive data | `state {}` on the page | a store (unless shared) |
+| state shared across pages | a `.store` | prop-drilling / page state |
+| a derived / computed value | `get` (store) | recomputing inline |
+| change state | an `action` (`mutates …`) | mutating outside an action |
+| **on-mount side effect** (init an SDK, analytics, focus) | a **page `effect {}`** (or store `effect` if global) | a `Custom`; "there's no lifecycle" (there is) |
+| list filter / total / membership | `where` / `sum by` / `contains` | a `use` fn with `.filter`/`.reduce`/`.some` |
+| localStorage persistence | `persist` on the state | `use` + `localStorage` |
+| async data load | a `query` state | a `use` fn (it's synchronous) |
+| genuine foreign logic (date math, a lib, an SDK) | a **`use`** function | reimplementing a built-in |
+| a non-Muten visual widget (chart, map) | a **`Custom`** component | a React/Vue component (there are none) |
+
+Rule of thumb: **declarative first** (`state`/`when`/`each`/`where`), **escape last** (`use`/`Custom`). When a piece
+is in the wrong place, `muten check` says so immediately — the boundaries are *enforced*, so you don't have to memorize them.
+
 ## 1. What you CAN install / use
 This is a normal **Vite** project, so the whole Vite/npm ecosystem for **styling, build, and data** works:
 - **Tailwind CSS — YES.** Install it (`tailwindcss`, `postcss`, `autoprefixer`), add the config + the
@@ -43,8 +62,11 @@ This is a normal **Vite** project, so the whole Vite/npm ecosystem for **styling
 - **No React / Vue / Svelte — at all.** Muten ships ZERO framework runtime. Pages are `.muten` → vanilla DOM;
   you don't compose the app from MUI/Chakra/shadcn. For a widget Muten can't express, drop to a vanilla-JS
   `Custom` (§13); for JS logic, `use` a function (§14). There is no JSX/hooks/`className` anywhere.
-- **No arbitrary inline CSS** — there's no inline-style hatch. ALL styling (layout, colors, borders, shadows)
-  goes through `class("…")` + your CSS (Tailwind utilities, or your own classes backed by `theme.muten` vars).
+- **No arbitrary inline CSS** — static styling (layout, colors, borders, shadows) ALL goes through `class("…")`
+  + your CSS (Tailwind utilities, or your own classes backed by `theme.muten` vars). The one exception is a value
+  that **changes at runtime** (progress width, dynamic transform): `style(w: "{pct}%")` sets a CSS variable
+  `--w` reactively, and your CSS reads `var(--w)`. `style()` can ONLY set CSS variables, never arbitrary
+  properties — it never competes with `class()`. Use it only for a value that changes; `class()` for everything static.
 
 ## 3. Limitations & known gaps (current — these are real, plan around them)
 - **The real build is `vite build` / `npm run dev`, NOT `muten build`.** `muten build` is a STRUCTURE-only static
@@ -328,7 +350,7 @@ Everything (layout AND look) is a `class("...")`. Two equivalent backings — pi
   - `.length` is the count-all; `count where cond` is the filtered count. Works in interpolation, `when`, and a `get`.
   - **Embedding in a bigger expression needs grouping `()`** (the `by`/`where` body runs to the end): `when (todos.count where not done) > 0 { … }`. Standalone (in a `get`) needs none: `get openCount = todos.count where not done`.
 - **Membership — "is it selected / favorited / in the set"** — store the IDs as a **scalar list** and use `contains`:
-  `store { favs = [] : list<number> persist }`, then `when favs contains movie.id { … }` or `class("on" when favs contains movie.id)`.
+  `state { favs = [] : list<number> persist }` (in a `.store` file), then `when favs contains movie.id { … }` or `class("on" when favs contains movie.id)`.
   `contains` is list membership for scalars (and case-insensitive substring for text). If you kept whole OBJECTS instead
   of ids, use the count form: `(favs.count where id == movie.id) > 0`. **NEVER write a `use` fn doing `items.some(x => x.id === id)`**
   — `contains` IS that, declaratively, and `persist` gives the localStorage for free. (`list<Entity> contains scalar` is
@@ -358,6 +380,8 @@ effect { /* runs whenever the store state it reads changes */ }
 ```
 Use it from any page/shell by name: `when ui.menuOpen { … }`, `Button "☰" -> ui.toggleMenu`. The Vite
 plugin auto-detects every `.store` file. `get` = memoized; `effect` = reactive side-effect (Angular-style).
+**`effect { }` also works on a PAGE** — the home for an ON-MOUNT side effect (init a 3rd-party SDK, analytics,
+focus): it runs when the page mounts and re-runs on its reactive deps. (Body = mutations + `use`-fn calls.)
 **A page action can CALL a store action** (composition) — `action add(d: Item) mutates draft { cart.add(d)  draft.reset() }` does
 store work AND local work in one handler (e.g. add to the store, then clear the form). Wire it with `Form submit(add)`.
 

@@ -27,7 +27,14 @@ Each cell is `name = <initial> : <type>`.
 | **`list<scalar>`** | `list<text>`, `list<number>`, `list<uuid>` — a flat list of primitives |
 | **`list<Entity>`** | `list<Todo>` — a list of records (an `entity` you declared) |
 
+A `list` **must be initialized with `[]`** (an empty list) — never `{}` or a scalar. `todos = {} : list<Todo>`
+is the classic slip (`{}` is the *draft* seed for an entity, not a list); the oracle rejects it. A non-list value
+here would crash `each` at runtime with "not iterable".
+
 An **enum** is not a state type — it lives as a field inside an `entity`; hold its current value as `text`.
+
+A `get` (derived value) **cannot reference itself**, directly or through another `get` — a cycle compiles to a
+"cannot access before initialization" crash, so the oracle rejects it (`get-cycle`).
 
 ## Reactivity — how it updates
 
@@ -86,7 +93,7 @@ favorites, a cart, settings, the current theme:
 
 ```muten
 # src/favorites.store  → referenced everywhere as favorites.ids
-store  { ids = [] : list<number> persist }
+state  { ids = [] : list<number> persist }
 action toggle(id: number) mutates ids { ids.push(id) }
 ```
 

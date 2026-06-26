@@ -22,6 +22,14 @@ entity Account {
 
 Constraints combine in any order on one field: `name text required min:2 max:40`.
 
+**A constraint must match the field kind** — the oracle rejects a mismatch (`constraint-kind`), because a
+`pattern` on a number or a `min` on a bool would silently do nothing:
+
+- `required` → any field. On a **bool** it means *must be checked* (a consent box: an unchecked box blocks
+  submit). On an **enum** it's redundant — a select always has a value — and is rejected.
+- `min` / `max` → **number** (value bound) or **text** (length bound) only.
+- `pattern` → **text** / **email** only.
+
 ## The automatic `email` check
 
 Declaring a field `email` not only renders `<input type=email>` — it **validates the format on submit** (a
