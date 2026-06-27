@@ -40,9 +40,13 @@ Page class("flex flex-col gap-4 p-6") {
 | `number` | `<input type="number">` | value is coerced with `Number()` |
 | `bool` | `<input type="checkbox">` | stores a boolean |
 | `enum` (`role admin \| member`) | `<select>` | one `<option>` per enum value |
+| `date` | `<input type="date">` | a native date picker |
+| `password` | `<input type="password">` | masked input; bound length with `min`/`max` |
+| `textarea` | `<textarea>` (4 rows) | multi-line text — post body, bio, message |
 
-> **Not supported as a field type:** `password`, `date`, `textarea`, file uploads. For those, drop to a
-> [`Custom`](escapes.md) component (the form is still yours; only that one input is host-JS).
+> **Not a field type:** `url` / `tel` / `color` / `range`, file uploads, or a nested entity. An unknown type is
+> **flagged by the oracle** (`unknown-field-type`, with a did-you-mean) — it would otherwise silently render as
+> a plain text input. For an input Muten doesn't have, drop that one field to a [`Custom`](escapes.md).
 
 ## Validation — constraints on the entity field
 

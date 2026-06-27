@@ -84,8 +84,9 @@ This is a normal **Vite** project, so the whole Vite/npm ecosystem for **styling
   **stateful** app use Vite; reach for `muten build` for crawlable static/content pages.
 - **Routing uses quoted string paths** (`"/path"`, History API). Params: `"/product/:id"` + `param id` (see §10).
 - **Forms** (`Form` auto-renders from an entity) render EVERY field — **no conditional fields** (gate the whole
-  `Form` with a `when`, or split into per-step entities). Input types are `text`/`email`/`number`/`bool`(checkbox)/
-  `enum`(select) only — **no password/date/textarea** (drop to `Custom`). An **enum field can't be `required`**.
+  `Form` with a `when`, or split into per-step entities). Field types: `text`/`email`/`number`/`bool`(checkbox)/
+  `enum`(select)/`date`/`password`/`textarea` — anything else (`url`/`tel`/file) is `unknown-field-type` (drop to
+  `Custom`). An **enum field can't be `required`**.
   `SearchField` is the single bound text input.
 - **`match` for enums** — `match status { active -> Text "Active"  lead -> Badge … }` renders the matching arm
   (sugar for N `when status == "x"`). **`DataTable`** shows raw cell
@@ -469,7 +470,7 @@ action create(t: Task) mutates tasks, draft { tasks.push(t)  draft.reset() }
 # in the page:  Form bind(draft) submit(create) "Add task"
 ```
 `Form` renders EVERY field, no `when` inside it (gate the whole Form with a `when`, or split entities for a wizard).
-Input types: `text`/`email`/`number`/`bool`(checkbox)/`enum`(select) only — password/date/textarea need a `Custom`.
+Field types: `text`/`email`/`number`/`bool`(checkbox)/`enum`(select)/`date`/`password`/`textarea` — anything else (`url`/file) is flagged `unknown-field-type`; use a `Custom`.
 An enum field **cannot be `required`**. See §3.
 
 **Constraints** live on the entity field and are checked on submit (a failure blocks the action and shows a per-field error):

@@ -45,7 +45,10 @@ const tailwindStyles = (daisyui) => `@import "tailwindcss";${daisyui ? '\n@plugi
 
 /* Muten's Stack primitive. In @layer base so Tailwind utilities ALWAYS win the cascade: a
    class("flex-row")/class("grid") on a Stack overrides this deterministically (no cascade race). */
-@layer base {
+@layer base {${daisyui ? `
+  /* DaisyUI puts the theme on <html>, but nothing fills the body — without this it's transparent and dark
+     cards float on black. bg-base-200 (page) sits a shade under the card's bg-base-100. */
+  body { @apply bg-base-200 text-base-content; }` : ''}
   .mu-stack, .mu-page, .mu-header, .mu-nav, .mu-sidebar, .mu-footer { display: flex; flex-direction: column; min-height: 0; }
   .mu-button, .mu-link { display: inline-flex; align-items: center; gap: 6px; }
   .muten-outlet { flex: 1 1 auto; min-width: 0; }
@@ -85,9 +88,10 @@ const FORM_CSS = `
 .mu-form-title { display: none; }
 .mu-field-group { display: flex; flex-direction: column; gap: 4px; }
 .mu-label { font-size: 13px; font-weight: 600; color: var(--color-text, #18181b); }
-.mu-field { width: 100%; padding: 9px 12px; font-size: 14px; border-radius: var(--radius-md, 8px);
+.mu-field { width: 100%; padding: 9px 12px; font-size: 14px; border-radius: var(--radius-md, 8px); font-family: inherit;
   border: 1px solid var(--color-border, #d4d4d8); background: var(--color-bg, #ffffff); color: var(--color-text, #18181b); }
 .mu-field:focus { outline: 2px solid var(--color-primary, #4f46e5); outline-offset: -1px; }
+.mu-field-area { min-height: 90px; line-height: 1.5; resize: vertical; }
 .mu-field-check { width: 16px; height: 16px; accent-color: var(--color-primary, #4f46e5); }
 .mu-field-error { color: var(--color-danger, #dc2626); font-size: 12px; }
 .mu-submit { padding: 9px 14px; border: none; border-radius: var(--radius-md, 8px); cursor: pointer; font-weight: 600; font-size: 14px;
@@ -96,10 +100,15 @@ const FORM_CSS = `
 `;
 // vite.config composed from the chosen options — muten always; tailwind last. `styling` is the theme
 // ADAPTER (data) for the chosen library, passed to muten() so it emits theme.muten in that format.
-const viteConfig = ({ tailwind, styling }) => {
+const viteConfig = ({ tailwind, styling, classes }) => {
   const imports = [`import muten from '@muten/core/vite-plugin-muten.js';`];
   if (tailwind) imports.push(`import tailwindcss from '@tailwindcss/vite';`);
-  const mutenCall = styling ? `muten({\n    styling: { theme: ${JSON.stringify(styling, null, 2).replace(/\n/g, '\n    ')} },\n  })` : 'muten()';
+  const stylingObj = {}; // { theme, classes } — both pure data; the engine ships neither
+  if (styling) stylingObj.theme = styling;
+  if (classes) stylingObj.classes = classes;
+  const mutenCall = Object.keys(stylingObj).length
+    ? `muten({\n    styling: ${JSON.stringify(stylingObj, null, 2).replace(/\n/g, '\n    ')},\n  })`
+    : 'muten()';
   const plugins = [mutenCall, ...(tailwind ? ['tailwindcss()'] : [])];
   return `${imports.join('\n')}\n\nexport default {\n  plugins: [${plugins.join(', ')}],\n};\n`;
 };
@@ -154,6 +163,14 @@ theme {
 const DAISY_ADAPTER = {
   prefix: { colors: '--color-', radius: '--radius-' },
   blocks: [{ open: '@plugin "daisyui/theme" {', close: '}', attrs: { name: 'app', default: 'true', 'color-scheme': '$scheme' }, sections: ['colors', 'radius'] }],
+};
+// CLASS MAP (pure data): muten's auto-generated <Form> parts — the input/label/submit class() can't reach —
+// emit THESE DaisyUI classes instead of the default mu-*. No bridge CSS; the engine stays agnostic.
+const DAISY_CLASSES = {
+  form: 'flex flex-col gap-3', 'form-title': 'hidden', 'field-group': 'flex flex-col gap-1',
+  label: 'text-sm font-semibold', field: 'input w-full', 'field-select': 'select w-full',
+  'field-area': 'textarea w-full', 'field-check': 'checkbox', 'field-error': 'text-error text-xs',
+  submit: 'btn btn-primary w-full',
 };
 const TAILWIND_ADAPTER = {
   prefix: { colors: '--color-', space: '--spacing-', font: '--font-', radius: '--radius-' },
@@ -284,6 +301,7 @@ async function main() {
     writeFileSync(join(target, 'theme.muten'), EMPTY_THEME);             // no framework -> empty theme.muten (you fill it; muten emits :root vars)
   }
   const styling = daisyui ? DAISY_ADAPTER : tailwind ? TAILWIND_ADAPTER : null; // the theme adapter wired into vite.config
+  const classes = daisyui ? DAISY_CLASSES : null;                               // the Form class map (DaisyUI only — it has component classes; Tailwind-only keeps mu-* + your own rules)
   addDev({ '@iconify-json/lucide': '^1.2.0' }); // default icon set for `Icon "lucide:…"` (build-inlined). Add more sets with `npm i -D @iconify-json/<set>`.
   if (style === 'scss') addDev({ sass: '^1.101.0' });
   if (tauri) {                                  // native desktop wrapper around the same web build (dist)
@@ -302,7 +320,7 @@ async function main() {
     pkg.scripts = { ...pkg.scripts, tauri: 'tauri', 'tauri:dev': 'tauri dev', 'tauri:build': 'tauri build' };
     appendAgents(TAURI_NOTE(pm));
   }
-  writeFileSync(join(target, 'vite.config.mjs'), viteConfig({ tailwind, styling })); // composed: muten (+ theme adapter) + chosen plugins
+  writeFileSync(join(target, 'vite.config.mjs'), viteConfig({ tailwind, styling, classes })); // composed: muten (+ theme adapter + Form class map) + chosen plugins
   writeFileSync(pkgPath, JSON.stringify(pkg, null, 2) + '\n');
 
   const desc = `muten, ${style}${tailwind ? ' + Tailwind' : ''}${daisyui ? ' + DaisyUI' : ''}${vercel ? ' + Vercel' : ''}${tauri ? ' + Tauri' : ''}`;

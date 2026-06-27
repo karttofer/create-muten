@@ -137,7 +137,7 @@ check`) catches mistakes in milliseconds without a browser, edits stay tiny, and
 declarative 80% - CRUD, dashboards, catalogs, content, internal tools. For the rest, you don't fight it - you
 **couple in other tech** through bounded escapes. Reach for the **lowest tier that works**:
 
-- **Pure muten**: CRUD / SaaS / catalog / dashboard / content: pages, routing (paths are **quoted strings**: `routes { "/" -> home  "/404" -> notfound }`; `Link "label" -> "/path"`; guard redirects `else "/login"`), `state`/`store` (with page->store action composition), `query` over REST, `Form` (text/number/email/bool/enum + validation), `DataTable`, `when`/`each`, SSG + SEO, and the bounded **list toolkit**: inline objects, `patch where`/`remove where` edits, `each...where` filter, aggregates (`sum`/`count`/`avg`/`min`/`max by`), `sort`/`sortDesc by` (literal field or a `text` state for a user-chosen column), `take(n)` pagination, `toggle`. `use` functions callable as **statements** inside `action`/`effect` (side effects: persist, scroll, analytics). `on(enter: action)` on inputs for Enter-to-submit without `Custom`. The declarative 80%, zero extra deps.
+- **Pure muten**: CRUD / SaaS / catalog / dashboard / content: pages, routing (paths are **quoted strings**: `routes { "/" -> home  "/404" -> notfound }`; `Link "label" -> "/path"`; guard redirects `else "/login"`), `state`/`store` (with page->store action composition), `query` over REST, `Form` (text/number/email/bool/enum/date/password/textarea + validation), `DataTable`, `when`/`each`, SSG + SEO, and the bounded **list toolkit**: inline objects, `patch where`/`remove where` edits, `each...where` filter, aggregates (`sum`/`count`/`avg`/`min`/`max by`), `sort`/`sortDesc by` (literal field or a `text` state for a user-chosen column), `take(n)` pagination, `toggle`. `use` functions callable as **statements** inside `action`/`effect` (side effects: persist, scroll, analytics). `on(enter: action)` on inputs for Enter-to-submit without `Custom`. The declarative 80%, zero extra deps.
 - **muten + the platform** *(no framework runtime)* - native HTML (`<input type="date">`, `<dialog>`) + `class()`,
   CSS libs (Tailwind / DaisyUI), **vanilla JS via `Custom`** (charts, maps, date-pickers, rich-text, grids),
   `use fmt from "./lib.ts"` for any JS logic. Almost every "hard widget" lands here - muten ships zero framework
@@ -163,7 +163,7 @@ These are honest gaps found during stress-testing. They are tracked; none are de
 - `DataTable` renders raw cell values; no per-column formatting yet (use `each` + a `Part` for formatted cells).
 - No standalone `Select`: a `Form` auto-generates one for enum fields; outside a `Form`, build a button group.
 - An `Icon` name is a static literal; a per-value icon is a `match` over static Icons, a data-URL icon is an `Image`.
-- `Form` renders all entity fields (no conditional fields), enum fields cannot be `required`, and field types are limited to `text`/`number`/`email`/`bool`/`enum` - no `password`, `date`, or `textarea` (drop to `Custom`).
+- `Form` renders all entity fields (no conditional fields), enum fields cannot be `required`. Field types: `text`/`number`/`email`/`bool`/`enum`/`date`/`password`/`textarea` (an unknown type is flagged `unknown-field-type`; drop it to a `Custom`).
 - `query x live` (WebSocket) requires the server to send an `id` per row for keyed diffing.
 - `Custom` inputs receive a snapshot of state at mount; pass state via `@` props for reactivity.
 

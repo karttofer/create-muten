@@ -119,9 +119,10 @@ Stack class("grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-md") {
 # }
 ```
 
-## Dates / calendar (muten has NO date type — use a JS facade)
-Date math lives in a `use` function. Anchor state in an ISO string; derive the grid. A `use` fn CAN return a list
-that `each` iterates, with field access on the items.
+## Dates / calendar
+Date **math + formatting are built in** — `daysUntil` / `dayKey` / `addDays` / `now` / `ago` / `date` / `time`
+(no `use`), and `Form` has a `date` field. What's NOT built in is **calendar-grid layout** (the 42-cell month):
+for that, a `use` fn anchors an ISO string and returns the cells `each` iterates, with field access on the items.
 ```
 # src/lib/cal.ts (named exports)
 #   export function addMonths(anchor, n) {...}
