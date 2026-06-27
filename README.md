@@ -137,7 +137,7 @@ check`) catches mistakes in milliseconds without a browser, edits stay tiny, and
 declarative 80% - CRUD, dashboards, catalogs, content, internal tools. For the rest, you don't fight it - you
 **couple in other tech** through bounded escapes. Reach for the **lowest tier that works**:
 
-- **Pure muten**: CRUD / SaaS / catalog / dashboard / content: pages, routing (paths are **quoted strings**: `routes { "/" -> home  "/404" -> notfound }`; `Link "label" -> "/path"`; guard redirects `else "/login"`), `state`/`store` (with page->store action composition), `query` over REST, `Form` (text/number/email/bool/enum + validation), `DataTable`, `when`/`each`, SSG + SEO, and the bounded **list toolkit**: inline objects, `patch where`/`remove where` edits, `each...where` filter, aggregates (`sum`/`count`/`avg`/`min`/`max by`), `sort`/`sortDesc by`, `toggle`. `use` functions callable as **statements** inside `action`/`effect` (side effects: persist, scroll, analytics). `on(enter: action)` on inputs for Enter-to-submit without `Custom`. The declarative 80%, zero extra deps.
+- **Pure muten**: CRUD / SaaS / catalog / dashboard / content: pages, routing (paths are **quoted strings**: `routes { "/" -> home  "/404" -> notfound }`; `Link "label" -> "/path"`; guard redirects `else "/login"`), `state`/`store` (with page->store action composition), `query` over REST, `Form` (text/number/email/bool/enum + validation), `DataTable`, `when`/`each`, SSG + SEO, and the bounded **list toolkit**: inline objects, `patch where`/`remove where` edits, `each...where` filter, aggregates (`sum`/`count`/`avg`/`min`/`max by`), `sort`/`sortDesc by` (literal field or a `text` state for a user-chosen column), `take(n)` pagination, `toggle`. `use` functions callable as **statements** inside `action`/`effect` (side effects: persist, scroll, analytics). `on(enter: action)` on inputs for Enter-to-submit without `Custom`. The declarative 80%, zero extra deps.
 - **muten + the platform** *(no framework runtime)* - native HTML (`<input type="date">`, `<dialog>`) + `class()`,
   CSS libs (Tailwind / DaisyUI), **vanilla JS via `Custom`** (charts, maps, date-pickers, rich-text, grids),
   `use fmt from "./lib.ts"` for any JS logic. Almost every "hard widget" lands here - muten ships zero framework
@@ -145,8 +145,8 @@ declarative 80% - CRUD, dashboards, catalogs, content, internal tools. For the r
 
 **Deploy, honestly:** `npm run dev` runs both tiers. For production:
 
-- `muten build` (CLI SSG) is **structure-only**: it emits HTML per route but omits non-layout token CSS, the project `styles.css`, and does not bundle `use` functions (they throw if served from the static output). Use it only for genuinely static, style-free content pages.
-- **`vite build`** is the real path for any styled or interactive app. It bundles everything - `use` functions, `Custom` components, shared cross-page state - and is what most Muten apps ship with.
+- `muten build` (CLI SSG) ships zero-JS HTML per route — now **fully styled** (it inlines the theme + project `styles.css`) and **pre-rendered** (it SSRs your store/`query` data). A no-bundler static export still can't bundle `use` functions (it warns) or persist store state across full-page navigations. Great for crawlable static/content pages.
+- **`vite build`** is the path for any **stateful** app. It bundles everything - `use` functions, `Custom` components, shared cross-page state - and is what most Muten apps ship with.
 
 Most real apps use `vite build`.
 
@@ -159,11 +159,10 @@ Full reference (every primitive, the tiers, the roadmap): [`@muten/core`](https:
 
 These are honest gaps found during stress-testing. They are tracked; none are design mistakes.
 
-- **`muten build` is structure-only** (see Deploy above). Use `vite build` for real apps.
-- No `match`/`switch`: use N separate `when` blocks per enum value.
-- `DataTable` renders raw cell values; no per-column formatting yet.
+- **`muten build`** ships styled, SSR'd HTML, but a no-bundler static export can't bundle `use` functions or keep store state across full-page navigations (see Deploy above) — use `vite build` for a stateful app.
+- `DataTable` renders raw cell values; no per-column formatting yet (use `each` + a `Part` for formatted cells).
 - No standalone `Select`: a `Form` auto-generates one for enum fields; outside a `Form`, build a button group.
-- `sort by` takes a literal field name, not a variable.
+- An `Icon` name is a static literal; a per-value icon is a `match` over static Icons, a data-URL icon is an `Image`.
 - `Form` renders all entity fields (no conditional fields), enum fields cannot be `required`, and field types are limited to `text`/`number`/`email`/`bool`/`enum` - no `password`, `date`, or `textarea` (drop to `Custom`).
 - `query x live` (WebSocket) requires the server to send an `id` per row for keyed diffing.
 - `Custom` inputs receive a snapshot of state at mount; pass state via `@` props for reactivity.

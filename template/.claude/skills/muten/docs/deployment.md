@@ -7,13 +7,18 @@ Muten has **two build modes**. Pick by what the app is.
 | Output | a single-page app (one `index.html` + JS) | static HTML per route (SSG) |
 | Navigation | client-side router (no reload) | each route is its own page (full load) |
 | Ships | the tiny signals runtime + your app | zero JS where possible |
-| Styles, `use` fns, stores | **bundled** ✓ | **omitted** (structure-only) |
+| Styles (theme + stylesheet) | **bundled** ✓ | **inlined** ✓ |
+| Stores / `query` data | **bundled** ✓ | inlined + **pre-rendered (SSR)** ✓ |
+| `use` functions | **bundled** ✓ | **omitted** (warns — needs a bundler) |
 | SEO | `<head>` updated on navigation | full: pre-rendered HTML + sitemap/robots/canonical/JSON-LD |
 | Best for | apps (dashboards, SaaS, anything stateful/styled) | content/marketing/catalog where crawlability matters |
 
-**Most real apps use `vite build`** — it bundles everything (your CSS, `use` functions, stores). `muten build`
-is the zero-JS SSG path for crawlable static content; it intentionally omits the project stylesheet and does
-not bundle `use` functions (they'd throw). See [SEO](seo.md) for what `muten build` emits.
+**Most real apps use `vite build`** — it bundles everything (your CSS, `use` functions, stores) into a stateful
+SPA. `muten build` is the zero-JS SSG path for crawlable static content: it **inlines the theme + project
+stylesheet** and **pre-renders (SSR) your stores/`query` data** into the HTML, so each page ships fully styled
+with real content. The one thing it can't inline is a `use` function (external TS — no bundler in the SSG); it
+**warns** and you switch to `vite build`. Store state also doesn't persist across full-page navigations (each
+static page loads fresh) — again `vite build` for a stateful multi-page app. See [SEO](seo.md) for the metadata.
 
 ## The SPA fallback
 

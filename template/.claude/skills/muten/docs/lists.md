@@ -58,8 +58,30 @@ each contacts.sort by name as c { Text "{c.name}" }
 each scores.sortDesc by points as s { Text "{s.name}: {s.points}" }
 ```
 
-The sort key is a **literal field name**, not a state variable (no `sort by someVar`). To sort by different
-keys at runtime, duplicate the `each` per key behind a `when`, or sort in a [`use`](escapes.md) function.
+The sort key is a **field name** — `sort by price`. To let the user **choose the column at runtime**, sort
+by a `text` state holding the field name (a sortable table header):
+
+```muten
+state { sortCol = "price" : text }            # the chosen column
+get sorted = rows.sortDesc by sortCol         # sorts by rows[sortCol]
+# Button "Price" -> setSort("price")  Button "Name" -> setSort("name")
+```
+
+A **literal** field (`by price`) stays a static key; a ref to a `text` **state** (`by sortCol`) is the dynamic
+column. (The oracle requires the dynamic key to be `text`.)
+
+## Pagination / top-N — `take`
+
+`list.take(n)` returns the first `n` items — a "load more" page or a leaderboard top-N. `n` is a literal or a
+`number` state, so a button that raises a `limit` state grows the page reactively:
+
+```muten
+state { posts = query posts : list<Post>  limit = 10 : number }
+get page = posts.take(limit)                  # reactive: bump `limit` -> more rows
+# each page as p { … }   Button "Load more" -> more   # more: limit.set(limit + 10)
+```
+
+Combine freely: `posts.sortDesc by date` then `.take(limit)` for "latest N".
 
 ## Membership — "is it in the list?"
 
@@ -75,6 +97,15 @@ class("on" when favs contains movie.id)
 
 `contains` is **list membership** for scalars (and case-insensitive substring for text):
 `tags contains "sale"`, `favs contains movie.id`.
+
+To **add or remove** from such a set (favorite / un-favorite, subscribe / unsubscribe), use `toggle` in an
+action — it adds the value if absent, removes it if present:
+
+```muten
+action fav(id: number) mutates favs { favs.toggle(id) }   # on a list<number>: in ⇄ out
+```
+
+(`favs.toggle(id)` is the scalar-list membership flip; `bool.toggle()` with no arg flips a boolean.)
 
 > **Why store ids, not objects?** `list<Entity> contains <scalar>` is always false — it compares object
 > identity, not a field. So a "favorites" set is a `list<number>` of ids. If you *do* have a list of objects
@@ -103,8 +134,10 @@ action toggle(id: uuid) mutates todos {
 | render | `each list as item { … }` |
 | filter render | `each list as item where cond { … }` |
 | count / total / avg / min / max | `list.count where …`, `list.sum by …`, `.avg`, `.min`, `.max` |
-| sort | `each list.sort by field as item`, `sortDesc by field` |
+| sort | `each list.sort by field as item`, `sortDesc by field` (field can be a `text` state = dynamic column) |
+| paginate / top-N | `list.take(n)` (n = literal or `number` state) |
 | membership | `list contains x` · `(list.count where field == x) > 0` |
+| add ⇄ remove | `list.toggle(x)` (in an action) |
 | edit in place | `list.patch where … with { … }` (in an action) |
 
 Anything beyond these (an arbitrary transform) is a [`use`](escapes.md) function — a deliberate, checked

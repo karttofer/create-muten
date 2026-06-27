@@ -39,6 +39,11 @@ Page class("flex flex-col gap-6") {
 | `Icon` | inline `<svg>` | Iconify `set:name`, resolved at build (tree-shaken), `aria-hidden`: `Icon "lucide:settings"` |
 | `Video` | `<video>` | bare-keyword flags: `Video "clip.mp4" controls autoplay loop muted playsinline` |
 
+> **Data-driven icon?** The `Icon` name is a static literal (it inlines the SVG at build, so it can't read
+> data). Two paths: a **per-value** icon (status / type / category) is a `match` over static Icons —
+> `match item.status { active -> Icon "lucide:check"  paused -> Icon "lucide:pause" }` (each arm still
+> tree-shakes); an icon whose **URL lives in your data** is an `Image` — `Image "{item.iconUrl}" alt("")`.
+
 ## Interactive
 
 | Primitive | Element | Notes |

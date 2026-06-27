@@ -25,7 +25,13 @@ const RESET = `/* Your look. Muten ships STRUCTURE (primitives); the LOOK lives 
 body { margin: 0; font: 15px/1.55 system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif; color: #111; }
 h1, h2, h3, h4, h5, h6, p { margin: 0; }
 h1 { font-size: 32px; font-weight: 700; letter-spacing: -.02em; }
-.mu-stack { display: flex; flex-direction: column; }
+/* Every muten container is a column by default (override to row/grid with class("…")). Without this the
+   landmark primitives (Nav/Sidebar/Header/Footer) inherit block flow and render their children horizontally —
+   the #1 "my sidebar is sideways" surprise. Button/Link default to an inline row (icon + label, centered). */
+.mu-stack, .mu-page, .mu-header, .mu-nav, .mu-sidebar, .mu-footer { display: flex; flex-direction: column; min-height: 0; }
+.mu-button, .mu-link { display: inline-flex; align-items: center; gap: 6px; }
+/* the shell's slot wrapper fills the space left by a sidebar/header (else a flex-row shell collapses the page). */
+.muten-outlet { flex: 1 1 auto; min-width: 0; }
 img { max-width: 100%; display: block; }
 a { color: inherit; text-decoration: none; }
 /* a11y: skip-link (muten emits it in the shell) — off-screen until keyboard-focused */
@@ -40,7 +46,9 @@ const tailwindStyles = (daisyui) => `@import "tailwindcss";${daisyui ? '\n@plugi
 /* Muten's Stack primitive. In @layer base so Tailwind utilities ALWAYS win the cascade: a
    class("flex-row")/class("grid") on a Stack overrides this deterministically (no cascade race). */
 @layer base {
-  .mu-stack { display: flex; flex-direction: column; }
+  .mu-stack, .mu-page, .mu-header, .mu-nav, .mu-sidebar, .mu-footer { display: flex; flex-direction: column; min-height: 0; }
+  .mu-button, .mu-link { display: inline-flex; align-items: center; gap: 6px; }
+  .muten-outlet { flex: 1 1 auto; min-width: 0; }
 }
 `;
 // Starter welcome page styles (used by the scaffolded home.muten). Self-contained plain CSS — looks good

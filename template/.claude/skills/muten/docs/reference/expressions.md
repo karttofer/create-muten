@@ -80,6 +80,9 @@ needs (dates, initials, currency, case) so you never hand-roll `Date`/string log
 | `weekday(isoText)` | day name (`Monday`) |
 | `now()` | the **current** time as an ISO string — stamp a new record |
 | `isToday(isoText)` / `isPast(isoText)` / `isFuture(isoText)` | booleans for `when` — today? before/after now? |
+| `daysUntil(isoText)` | whole days from today (negative if past) — `"in {daysUntil(due)} days"`, due-soon badges |
+| `dayKey(isoText)` | the calendar day as `YYYY-MM-DD` (drops the time) — group/match by day: `when dayKey(a.date) == dayKey(cell) { … }` |
+| `addDays(isoText, n)` | the date `n` days later as ISO — a deadline / reminder window |
 | `before(text, sep)` / `after(text, sep)` | the part before / after the first `sep` — `before(email, "@")` → username |
 
 ```muten

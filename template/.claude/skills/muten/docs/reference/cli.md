@@ -27,8 +27,9 @@ dist/app.map.json         # the app graph
 - GET `sources` are fetched at build and baked into the HTML; non-GET run client-side.
 - Per page, the `<head>` gets canonical + `og:url`/`og:type` + a JSON-LD `WebPage` block.
 
-> For a styled, fully-interactive app (stores, `use` functions, project CSS), build the SPA with **`vite build`**
-> instead — `muten build` is the structure-only SSG path. See [Deployment](../deployment.md).
+> `muten build` ships **styled** (theme + `src/styles.css` inlined), **SSR'd** (store/`query` data pre-rendered)
+> zero-JS HTML. For a **stateful** app — `use` functions, or store state that survives full-page navigations —
+> build the SPA with **`vite build`** instead. See [Deployment](../deployment.md).
 
 ## `muten check` (alias `muten lint`)
 

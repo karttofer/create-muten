@@ -91,7 +91,8 @@ Page class("pad-lg gap-lg") {
 ```
 
 ## Kanban / pipeline (one column per enum value)
-No `match`/`switch` — render one `each … where` per stage. Advance with `patch where … with` (position-preserving).
+One `each … where` per stage (each column filters by its stage value). Advance a card with `patch where … with`
+(position-preserving). For a per-card badge that varies by stage, use `match card.stage { … }` inside the column.
 ```
 state { draft = {} : Deal }
 action create(d: Deal) mutates draft { deals.add(d)  draft.reset() }

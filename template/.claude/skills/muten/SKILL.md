@@ -57,7 +57,8 @@ This is a normal **Vite** project, so the whole Vite/npm ecosystem for **styling
   (`use fmt from "./lib.ts"` → `Text "{fmt(x)}"`). The `.ts` is a facade over any npm. See §14.
 - **Built-in formatting — NO `use`, NO hand-rolled JS.** Dates / initials / currency / case have **built-in
   functions, always available**: `upper` · `lower` · `initial` (first letter, for avatars) · `truncate(s, n)` ·
-  `money(n)` · `ago` (relative time) · `date` · `time`. Call them directly in any expression — **do NOT write
+  `money(n)` · `ago` (relative time) · `date` · `time` · `now()` · `daysUntil` / `dayKey` / `addDays` (date math) ·
+  `isToday` / `isPast` / `isFuture`. Call them directly in any expression — **do NOT write
   your own `formatTime`/`getInitials`/`Date` logic** (that ships an un-checked, often buggy escape):
   `Text "{ago(msg.time)}"`, `Text "{initial(user.name)}"`, `Text "{money(order.total)}"`,
   `Text "{date(msg.time)} at {time(msg.time)}"`. Timestamps are `text` (ISO strings); `ago`/`date`/`time` parse
@@ -76,9 +77,11 @@ This is a normal **Vite** project, so the whole Vite/npm ecosystem for **styling
   properties — it never competes with `class()`. Use it only for a value that changes; `class()` for everything static.
 
 ## 3. Limitations & known gaps (current — these are real, plan around them)
-- **The real build is `vite build` / `npm run dev`, NOT `muten build`.** `muten build` is a STRUCTURE-only static
-  export (SSG for crawlability): it omits your `src/styles.css`, and does NOT bundle `use`
-  functions (they throw at runtime). Use it only for zero-JS static pages; for any styled/interactive app, ship with Vite.
+- **The runnable build is `vite build` / `npm run dev`.** `muten build` is the zero-JS SSG export: it now
+  **inlines the theme + `src/styles.css`** and **pre-renders (SSR) your stores/`query` data**, so pages ship
+  fully styled with real content. Its only gaps are inherent to a no-bundler static export: `use` functions
+  aren't bundled (it **warns**), and store state doesn't persist across full-page navigations. For a styled
+  **stateful** app use Vite; reach for `muten build` for crawlable static/content pages.
 - **Routing uses quoted string paths** (`"/path"`, History API). Params: `"/product/:id"` + `param id` (see §10).
 - **Forms** (`Form` auto-renders from an entity) render EVERY field — **no conditional fields** (gate the whole
   `Form` with a `when`, or split into per-step entities). Input types are `text`/`email`/`number`/`bool`(checkbox)/
@@ -87,8 +90,8 @@ This is a normal **Vite** project, so the whole Vite/npm ecosystem for **styling
 - **`match` for enums** — `match status { active -> Text "Active"  lead -> Badge … }` renders the matching arm
   (sugar for N `when status == "x"`). **`DataTable`** shows raw cell
   text (no per-column formatting — use `each` + `Stack` for formatted/badge cells). **No standalone `Select`** (Form
-  makes one for enum fields; elsewhere build a button group + `class(active when …)`). **`sort by` takes a literal
-  field**, not a state variable (duplicate the `each` per sort key, or sort in a `use` function).
+  makes one for enum fields; elsewhere build a button group + `class(active when …)`). **`sort by`** takes a
+  field name, OR a `text` **state** holding the field name for a user-chosen column (`sortDesc by sortCol`).
 - **`query x live`** needs the server to send a stable `id` per row, or keyed diffing rebuilds every row each push.
 - **`Custom` inputs are a snapshot at mount** (not reactive — §13). **Shell has no local state** (use a `.store`).
   **Pages are single-root** (one top node). **Flip a bool** with `x.toggle()`.
@@ -367,8 +370,14 @@ Everything (layout AND look) is a `class("...")`. Two equivalent backings — pi
   — `contains` IS that, declaratively, and `persist` gives the localStorage for free. (`list<Entity> contains scalar` is
   always false — it compares object identity — which is exactly why you store the *ids*, not the objects.)
 - **Sort a list** (`sort by` ascending / `sortDesc by` descending; returns a sorted COPY): `each contacts.sort by name as c { … }` ·
-  `each scores.sortDesc by points as s { … }`. Use in `each` or a `get`. The key is a **literal field**, not a state
-  variable (no `sort by sortKey` — duplicate the `each` per key, or sort in a `use` fn).
+  `each scores.sortDesc by points as s { … }`. Use in `each` or a `get`. The key is a field name — OR a `text`
+  **state** holding the field name for a **user-chosen column**: `get sorted = rows.sortDesc by sortCol` (a
+  literal `by price` stays static; a ref to a `text` state `by sortCol` is the dynamic column).
+- **Paginate / top-N** — `list.take(n)` returns the first `n` items (`n` = a literal or a `number` state). A
+  reactive "load more": `get page = posts.take(limit)` + a button that bumps `limit`. Chains after sort:
+  `posts.sortDesc by date` then `.take(10)` = "latest 10".
+- **Add ⇄ remove from a set** — `list.toggle(x)` in an action adds `x` if absent, removes if present (the
+  un-favorite / unsubscribe that a scalar `remove where` can't do): `action fav(id: number) mutates favs { favs.toggle(id) }`.
 - **`match` for enums** (sugar over N `when`): renders the arm whose value the subject equals. Each arm is `value -> node`
   or `value -> { … }`; the value is the enum literal (bare or quoted). Cleaner than repeating `when status == "x"`:
   ```
@@ -541,7 +550,7 @@ date-picker), drop to a vanilla-JS `Custom` (§13) — there is no framework-com
 - `class()` is the ONLY way to style — layout AND look (Tailwind utilities, or your CSS backed by `theme.muten` vars).
 - `Image` without `alt` fails validation (`alt("")` for decorative).
 - Actions may only touch their declared `mutates`.
-- **The runnable build is `vite build` / `npm run dev`, not `muten build`** (which is structure-only SSG — §3).
+- **The runnable build is `vite build` / `npm run dev`**; `muten build` is the zero-JS SSG (styled + SSR'd, but no `use` bundling / no cross-page state — §3).
 - **Paths are quoted strings** (`-> "/x"`, `routes { "/x" -> p }`); a hyphenated reactive class must be quoted (`class("is-open" when x)`).
 - **`Custom` inputs need `@` to pass state** (`inputs(data: @items)`) and are a snapshot, not reactive (§13).
 - Want a library? CSS → `class()`. JS function → `use` (§14, also callable in actions). A widget → `Custom` (§13). There is no framework-component escape.
