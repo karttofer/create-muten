@@ -1,4 +1,4 @@
-# Reference — Expressions
+# Reference - Expressions
 
 The expression grammar is shared by interpolation (`{…}`), `when` conditions, `class(… when cond)`, action
 arguments, `get` values, and source/aggregate bodies.
@@ -6,7 +6,7 @@ arguments, `get` values, and source/aggregate bodies.
 ## References
 
 A bare name, dotted for members: `count`, `user.name`, `cart.total`, `$item.field` (in a [part](../parts.md)),
-`item.field` (the scope var inside `each`). The oracle resolves every reference — an unknown or renamed one is
+`item.field` (the scope var inside `each`). The oracle resolves every reference - an unknown or renamed one is
 an `unknown-ref` error with the exact location.
 
 ## Operators
@@ -33,10 +33,10 @@ text (`name contains q`). See [Lists § membership](../lists.md#membership--is-i
 
 ## Interpolation
 
-`{expr}` embeds an expression inside a string prop — a label, a path, an alt:
+`{expr}` embeds an expression inside a string prop - a label, a path, an alt:
 
 ```muten
-Text "Hi, {user.name} — {cart.count} items"
+Text "Hi, {user.name} - {cart.count} items"
 Link "Open" -> "/product/{p.id}"
 Image "{p.image}" alt("Photo of {p.name}")
 ```
@@ -64,26 +64,26 @@ Text "Open: {todos.count where not done}"
 
 ## Built-in functions
 
-A fixed set of formatting functions is **always available** — no `use`, no import. They cover the universal
+A fixed set of formatting functions is **always available** - no `use`, no import. They cover the universal
 needs (dates, initials, currency, case) so you never hand-roll `Date`/string logic in a `use`:
 
 | Function | Result |
 |---|---|
 | `upper(text)` / `lower(text)` | case |
-| `initial(name)` | first letter, uppercased — avatar initials |
+| `initial(name)` | first letter, uppercased - avatar initials |
 | `truncate(text, n)` | first `n` chars, + `…` if longer |
 | `money(number[, "USD"])` | localized currency (`$1,234.56`) |
-| `ago(isoText)` | relative time — `just now` / `5m ago` / `3h ago` / `2d ago` |
+| `ago(isoText)` | relative time - `just now` / `5m ago` / `3h ago` / `2d ago` |
 | `date(isoText)` / `time(isoText)` | short date (`Jan 5`) / short time (`3:42 PM`) |
 | `datetime(isoText)` | full date + time (`Jan 5, 2024, 3:42 PM`) |
-| `calendar(isoText)` | chat-style smart timestamp — `Today at 3:42 PM` / `Yesterday at …` / `Jan 5 at …` |
+| `calendar(isoText)` | chat-style smart timestamp - `Today at 3:42 PM` / `Yesterday at …` / `Jan 5 at …` |
 | `weekday(isoText)` | day name (`Monday`) |
-| `now()` | the **current** time as an ISO string — stamp a new record |
-| `isToday(isoText)` / `isPast(isoText)` / `isFuture(isoText)` | booleans for `when` — today? before/after now? |
-| `daysUntil(isoText)` | whole days from today (negative if past) — `"in {daysUntil(due)} days"`, due-soon badges |
-| `dayKey(isoText)` | the calendar day as `YYYY-MM-DD` (drops the time) — group/match by day: `when dayKey(a.date) == dayKey(cell) { … }` |
-| `addDays(isoText, n)` | the date `n` days later as ISO — a deadline / reminder window |
-| `before(text, sep)` / `after(text, sep)` | the part before / after the first `sep` — `before(email, "@")` → username |
+| `now()` | the **current** time as an ISO string - stamp a new record |
+| `isToday(isoText)` / `isPast(isoText)` / `isFuture(isoText)` | booleans for `when` - today? before/after now? |
+| `daysUntil(isoText)` | whole days from today (negative if past) - `"in {daysUntil(due)} days"`, due-soon badges |
+| `dayKey(isoText)` | the calendar day as `YYYY-MM-DD` (drops the time) - group/match by day: `when dayKey(a.date) == dayKey(cell) { … }` |
+| `addDays(isoText, n)` | the date `n` days later as ISO - a deadline / reminder window |
+| `before(text, sep)` / `after(text, sep)` | the part before / after the first `sep` - `before(email, "@")` → username |
 
 ```muten
 Text "{initial(user.name)}"                       # avatar bubble
@@ -94,11 +94,11 @@ Text "Hi, {before(user.email, "@")}"              # the email username (no use f
 action send mutates msgs { msgs.push({ text: draft, time: now() }) }   # stamp with now()
 ```
 
-Don't hand-write `new Date().toISOString()` or an email-splitter in a `use` — these are the built-ins for it.
+Don't hand-write `new Date().toISOString()` or an email-splitter in a `use` - these are the built-ins for it.
 
 A timestamp is a `text` field holding an ISO string (e.g. `created text`); `ago`/`date`/`time` parse it.
 Compose freely (`upper(truncate(name, 12))`). For anything NOT in this set (grouping, joins, custom parsing),
-`use` a function — but never reimplement these.
+`use` a function - but never reimplement these.
 
 ## Literals
 

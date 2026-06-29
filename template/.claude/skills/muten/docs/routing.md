@@ -1,6 +1,6 @@
 # Pages & routing
 
-`src/app.muten` is the **root** — the single file an agent (or a person) reads first. It maps URLs to pages
+`src/app.muten` is the **root** - the single file an agent (or a person) reads first. It maps URLs to pages
 and, optionally, wraps them in a persistent shell. Routing is client-side (History API, no reload), and every
 route also pre-renders to static HTML at build.
 
@@ -18,7 +18,7 @@ routes {
 - Paths are **quoted strings**. The **first route is the default**.
 - The page name (`home`) must match the folder under `src/pages/` (`src/pages/home/home.muten`).
 - A route named `"/404"` is the catch-all for unmatched paths; without one, the first route is shown.
-- Navigate with `Link "Label" -> "/path"` — client-side, no reload. Focus moves to the page's `<main>` on
+- Navigate with `Link "Label" -> "/path"` - client-side, no reload. Focus moves to the page's `<main>` on
   navigation (see [Accessibility](accessibility.md)).
 
 ## Route params
@@ -51,12 +51,12 @@ routes {
 }
 ```
 
-(`auth.loggedIn` is a member of an `auth.store` — see [Stores](stores.md).)
+(`auth.loggedIn` is a member of an `auth.store` - see [Stores](stores.md).)
 
 ## The shell (persistent chrome)
 
 Wrap every route in a `shell { … slot … }` for a navbar/footer that persists across navigation. `slot` is
-where the active page mounts. The **shell has no local state** — use a [store](stores.md) for things like a
+where the active page mounts. The **shell has no local state** - use a [store](stores.md) for things like a
 mobile menu:
 
 ```muten
@@ -78,14 +78,14 @@ The shell also emits a keyboard **skip-link** to the content automatically (see 
 
 A page declares `meta { title "…" description "…" lang "…" }` → `<title>` + `<meta>` tags, applied on
 navigation and baked into the static HTML. See [SEO](seo.md) for the full SEO story (sitemap, canonical,
-JSON-LD — all automatic).
+JSON-LD - all automatic).
 
-## The app graph — `app.map.json`
+## The app graph - `app.map.json`
 
 `muten map` (or any build) emits `app.map.json`: a compact index of routes + their models, state, and sources.
 It's the root an agent reads to understand the whole app without grepping a component tree.
 
 ## See also
-- [SEO](seo.md) — meta, sitemap, canonical from your routes.
-- [Stores](stores.md) — the global booleans guards read.
-- [Deployment](deployment.md) — SPA fallback (serve `index.html` for any path).
+- [SEO](seo.md) - meta, sitemap, canonical from your routes.
+- [Stores](stores.md) - the global booleans guards read.
+- [Deployment](deployment.md) - SPA fallback (serve `index.html` for any path).

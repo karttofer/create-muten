@@ -145,21 +145,21 @@ declarative 80% - CRUD, dashboards, catalogs, content, internal tools. For the r
 
 **Deploy, honestly:** `npm run dev` runs both tiers. For production:
 
-- `muten build` (CLI SSG) ships zero-JS HTML per route — now **fully styled** (it inlines the theme + project `styles.css`) and **pre-rendered** (it SSRs your store/`query` data). A no-bundler static export still can't bundle `use` functions (it warns) or persist store state across full-page navigations. Great for crawlable static/content pages.
+- `muten build` (CLI SSG) ships zero-JS HTML per route - now **fully styled** (it inlines the theme + project `styles.css`) and **pre-rendered** (it SSRs your store/`query` data). A no-bundler static export still can't bundle `use` functions (it warns) or persist store state across full-page navigations. Great for crawlable static/content pages.
 - **`muten bundle`** is the path for any **stateful** app. It bundles everything - `use` functions, `Custom` components, shared cross-page state - and is what most Muten apps ship with.
 
 Most real apps use `muten bundle`.
 
 Full reference (every primitive, the tiers, the roadmap): [`@muten/core`](https://www.npmjs.com/package/@muten/core).
 
-> **Status: pre-1.0.** The core (language, compiler, CLI, the runner — `muten dev`/`bundle` with surgical
-> HMR — and the VS Code extension) is solid; the ecosystem is young. Great for real apps, not yet for critical production.
+> **Status: pre-1.0.** The core (language, compiler, CLI, the runner - `muten dev`/`bundle` with surgical
+> HMR - and the VS Code extension) is solid; the ecosystem is young. Great for real apps, not yet for critical production.
 
 ## Known limitations
 
 These are honest gaps found during stress-testing. They are tracked; none are design mistakes.
 
-- **`muten build`** ships styled, SSR'd HTML, but a no-bundler static export can't bundle `use` functions or keep store state across full-page navigations (see Deploy above) — use `muten bundle` for a stateful app.
+- **`muten build`** ships styled, SSR'd HTML, but a no-bundler static export can't bundle `use` functions or keep store state across full-page navigations (see Deploy above) - use `muten bundle` for a stateful app.
 - `DataTable` renders raw cell values; no per-column formatting yet (use `each` + a `Part` for formatted cells).
 - No standalone `Select`: a `Form` auto-generates one for enum fields; outside a `Form`, build a button group.
 - An `Icon` name is a static literal; a per-value icon is a `match` over static Icons, a data-URL icon is an `Image`.

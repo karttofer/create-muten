@@ -1,13 +1,13 @@
-# Reference — Modifiers
+# Reference - Modifiers
 
-Modifiers come **after** a primitive's positional args and attach a prop. They compose freely on one node — as
+Modifiers come **after** a primitive's positional args and attach a prop. They compose freely on one node - as
 **siblings**, never nested inside each other's `()`. Write `Stack class("card") aria(live: "polite") { … }`, NOT
-`Stack class("card" aria(…))` (the JSX-props instinct — the oracle rejects it with a message that points you
+`Stack class("card" aria(…))` (the JSX-props instinct - the oracle rejects it with a message that points you
 to the sibling form).
 
 | Modifier | Applies to | What it does |
 |---|---|---|
-| `class("…")` | any | styling — layout AND look (Tailwind utilities or your CSS). Reactive toggles too. |
+| `class("…")` | any | styling - layout AND look (Tailwind utilities or your CSS). Reactive toggles too. |
 | `bind(state)` | `SearchField`, `Form` | two-way bind to a state cell |
 | `submit(action)` | `Form` | the action to run on a valid submit |
 | `where(clauses)` | `DataTable` | filter clauses: `where(role == admin, name contains @q)` |
@@ -15,7 +15,7 @@ to the sibling form).
 | `alt("…")` | `Image` | **required** accessible/SEO alt text (`alt("")` for decorative) |
 | `inputs(k: v)` | `Custom` | values passed to a host-JS widget (`@` to pass state) |
 | `on(event: action)` | any | wire a DOM event to an action |
-| `aria(k: expr)` | any | `aria-*` / `role` attributes — accessibility, reactive |
+| `aria(k: expr)` | any | `aria-*` / `role` attributes - accessibility, reactive |
 | `style(k: "…")` | any | bind a **dynamic CSS value** to state via a CSS variable `--k` (progress, transforms) |
 
 ## `class(...)`
@@ -48,7 +48,7 @@ events or for `Custom` component events.
 
 ## `aria(...)`
 
-Express accessibility on any node — each key → `aria-<key>`, `role` → `role`. A literal is static; a value that
+Express accessibility on any node - each key → `aria-<key>`, `role` → `role`. A literal is static; a value that
 reads state is reactive:
 
 ```muten
@@ -61,7 +61,7 @@ See [Accessibility](../accessibility.md).
 
 ## `style(...)`
 
-Bind a **dynamic CSS value** to state — the bounded path for a progress width, a data-driven size, a transform.
+Bind a **dynamic CSS value** to state - the bounded path for a progress width, a data-driven size, a transform.
 Each key becomes a CSS custom property `--key` (muten prepends `--`, so it can only set variables, never an
 arbitrary property); the value is an interpolated string and is reactive:
 

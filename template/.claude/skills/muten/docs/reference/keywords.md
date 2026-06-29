@@ -1,4 +1,4 @@
-# Reference — Keywords
+# Reference - Keywords
 
 Every keyword, grouped by role. Keywords are **lowercase**.
 
@@ -45,7 +45,7 @@ Every keyword, grouped by role. Keywords are **lowercase**.
 |---|---|
 | `query` | an async state backed by a source: `users = query listUsers : list<User>` |
 | `live` | append to a query → WebSocket subscription |
-| `every` | **not supported** — `every Ns` polling is rejected; use `live` (WebSocket) or `refetch()` from an action |
+| `every` | **not supported** - `every Ns` polling is rejected; use `live` (WebSocket) or `refetch()` from an action |
 | `persist` | back a state with localStorage |
 | `post` / `put` / `delete` | explicit non-REST request in an action |
 | `body` | the request body for `post`/`put` |

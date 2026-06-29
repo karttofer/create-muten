@@ -2,7 +2,7 @@
 
 In Muten a form is **derived from an entity**, not hand-wired field by field. You declare the data shape
 (`entity`), hold a draft of it in `state`, and `Form` renders one input per field, validates on submit, and
-calls your action with the completed record. Accessibility is built in — you write none of it (see
+calls your action with the completed record. Accessibility is built in - you write none of it (see
 [§ Accessibility](#accessibility), and the cross-cutting [accessibility guide](accessibility.md)).
 
 ## The shortest complete form
@@ -24,8 +24,8 @@ Page class("flex flex-col gap-4 p-6") {
 }
 ```
 
-- **`bind(draft)`** — the form reads and writes a single page-local `state` cell whose type is an entity.
-- **`submit(send)`** — on a valid submit, the action runs with the draft as its argument (a `<- item` /
+- **`bind(draft)`** - the form reads and writes a single page-local `state` cell whose type is an entity.
+- **`submit(send)`** - on a valid submit, the action runs with the draft as its argument (a `<- item` /
   typed-param action receives it). `draft.reset()` clears the form for free, because the bind is two-way.
 - The bare string (`"Send message"`) is the submit button's label.
 
@@ -42,13 +42,13 @@ Page class("flex flex-col gap-4 p-6") {
 | `enum` (`role admin \| member`) | `<select>` | one `<option>` per enum value |
 | `date` | `<input type="date">` | a native date picker |
 | `password` | `<input type="password">` | masked input; bound length with `min`/`max` |
-| `textarea` | `<textarea>` (4 rows) | multi-line text — post body, bio, message |
+| `textarea` | `<textarea>` (4 rows) | multi-line text - post body, bio, message |
 
 > **Not a field type:** `url` / `tel` / `color` / `range`, file uploads, or a nested entity. An unknown type is
-> **flagged by the oracle** (`unknown-field-type`, with a did-you-mean) — it would otherwise silently render as
+> **flagged by the oracle** (`unknown-field-type`, with a did-you-mean) - it would otherwise silently render as
 > a plain text input. For an input Muten doesn't have, drop that one field to a [`Custom`](escapes.md).
 
-## Validation — constraints on the entity field
+## Validation - constraints on the entity field
 
 Constraints live on the **entity** declaration, so they travel with the data shape and are enforced wherever
 the entity is used. They are checked **on submit**; a failure shows a per-field message and **blocks the
@@ -58,7 +58,7 @@ action** (it never runs with invalid data).
 entity Account {
   name     text  required min:2 max:40
   email    email required
-  zip      text  pattern:"^\d{5}$"      # US ZIP — any regex
+  zip      text  pattern:"^\d{5}$"      # US ZIP - any regex
   age      number min:18
 }
 ```
@@ -70,10 +70,10 @@ entity Account {
 | `pattern:"<regex>"` | a non-empty value must match the JS regular expression | `Invalid format` |
 | *(automatic)* on `email` fields | a non-empty value must look like an email | `Enter a valid email` |
 
-`pattern` takes a normal JavaScript regex **as a string** — `pattern:"^\d{5}$"`, `pattern:"^[A-Z]{2,}$"`.
+`pattern` takes a normal JavaScript regex **as a string** - `pattern:"^\d{5}$"`, `pattern:"^[A-Z]{2,}$"`.
 The `email` check is automatic: declaring a field `email` now validates its format (it used to only set the
 input type). For a rule that spans **two** fields (`end > start`) or needs async I/O (uniqueness against the
-server), do it inside the submit `action` with an `if` — and a [`use`](escapes.md) function for the async part.
+server), do it inside the submit `action` with an `if` - and a [`use`](escapes.md) function for the async part.
 
 ### Async submit state
 
@@ -87,7 +87,7 @@ when send.error   { Text "Could not send: {send.error}" class("text-red-600") }
 
 ## Accessibility
 
-**The compiler emits an accessible form — you write nothing for this.** Every field becomes a group:
+**The compiler emits an accessible form - you write nothing for this.** Every field becomes a group:
 
 ```html
 <div class="mu-field-group">
@@ -131,10 +131,10 @@ into `src/styles.css`, override freely):
 - `Form` renders **every** field, in declaration order, with **no conditional fields**. To branch, gate the
   whole `Form` with a `when`, or split the entity (e.g. a multi-step wizard = one entity per step).
 - An **`enum` field cannot be `required`** (a select always has a value).
-- No nested entities or field arrays inside one `Form`. For a fully bespoke form, don't use `Form` — build
+- No nested entities or field arrays inside one `Form`. For a fully bespoke form, don't use `Form` - build
   the inputs yourself with `SearchField bind(field)` + `aria(...)`, and validate in the action.
 
 ## See also
-- [State & reactivity](state.md) — how the bound draft works.
-- [Accessibility](accessibility.md) — the `aria(...)` modifier and the app-wide a11y the compiler emits.
-- [Data](data.md) — `create`/`update`/`delete` for forms that write to a backend.
+- [State & reactivity](state.md) - how the bound draft works.
+- [Accessibility](accessibility.md) - the `aria(...)` modifier and the app-wide a11y the compiler emits.
+- [Data](data.md) - `create`/`update`/`delete` for forms that write to a backend.

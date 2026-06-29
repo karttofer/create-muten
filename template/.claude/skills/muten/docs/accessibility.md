@@ -3,15 +3,15 @@
 Muten is **HTML + logic**, so accessibility is part of the language, not a styling afterthought. It comes in
 two layers:
 
-1. **The floor** — correct, accessible HTML the **compiler emits for free**. You write nothing.
-2. **`aria(...)`** — a modifier to **express** any `aria-*` / `role` yourself, on any node, reactively.
+1. **The floor** - correct, accessible HTML the **compiler emits for free**. You write nothing.
+2. **`aria(...)`** - a modifier to **express** any `aria-*` / `role` yourself, on any node, reactively.
 
-Together: a Muten app is accessible by default, and fully controllable where it matters — without ever
+Together: a Muten app is accessible by default, and fully controllable where it matters - without ever
 dropping to a `Custom` escape for an interactive widget.
 
 ---
 
-## Layer 1 — what the compiler emits (the floor)
+## Layer 1 - what the compiler emits (the floor)
 
 You write none of this; it falls out of using the primitives.
 
@@ -33,18 +33,18 @@ region linked via `aria-describedby` + announced with `aria-live="polite"`. See 
 
 ### Tables, icons, search, navigation
 - `DataTable` column headers are `<th scope="col">` (cells are tied to their header).
-- `Icon` is `aria-hidden="true"` — icons are decorative; meaning lives in adjacent text.
+- `Icon` is `aria-hidden="true"` - icons are decorative; meaning lives in adjacent text.
 - `SearchField` gets an accessible name (its placeholder, or `"Search"`).
 - The **shell** emits a keyboard **skip-link** as its first element, and focus moves to `<main>` on client-side
-  navigation — so keyboard and screen-reader users land on the new page's content, not back at the top of the chrome.
+  navigation - so keyboard and screen-reader users land on the new page's content, not back at the top of the chrome.
 
 ### What is deliberately NOT automatic
-`aria-live` is **not** put on every `when`/`each` — blanket live regions are *bad* a11y (they announce
-everything). You opt a region into live updates yourself, with `aria(live: "polite")` — see below.
+`aria-live` is **not** put on every `when`/`each` - blanket live regions are *bad* a11y (they announce
+everything). You opt a region into live updates yourself, with `aria(live: "polite")` - see below.
 
 ---
 
-## Layer 2 — the `aria(...)` modifier
+## Layer 2 - the `aria(...)` modifier
 
 Write any `aria-*` attribute (or `role`) on **any** node, the same way you write `class(...)` or `on(...)`:
 
@@ -62,20 +62,20 @@ Stack aria(live: "polite") { Text "{results.length} results" }
   - a value that **reads state** (`ui.open`) → **reactive**: it compiles to an effect, so e.g.
     `aria(expanded: ui.open)` flips `aria-expanded` between `"true"`/`"false"` as the state changes.
 - The **oracle checks the refs** like any expression: `aria(expanded: opne)` is an `unknown-ref` error at
-  compile time, with the exact location — not a silent runtime bug.
+  compile time, with the exact location - not a silent runtime bug.
 
 ### When to use which
 - Prefer **semantic HTML** (a real `Button`, a real `Title hN`) over re-creating it with `role`.
 - Use **`aria(...)`** for the parts semantics can't express: an accessible name on an icon-only control,
   `aria-expanded`/`aria-controls` for a disclosure or menu, `role`/`aria-modal` for a dialog,
   `aria-live` for a status region you choose to announce.
-- This is the reason you **don't** need a `Custom` escape for an accessible interactive widget — `aria(...)`
+- This is the reason you **don't** need a `Custom` escape for an accessible interactive widget - `aria(...)`
   keeps it in declarative, oracle-checked Muten.
 
 ## Quick reference
 
 ```muten
-aria(label: "…")              # aria-label   — accessible name
+aria(label: "…")              # aria-label   - accessible name
 aria(labelledby: "id")        # aria-labelledby
 aria(describedby: "id")       # aria-describedby
 aria(role: "dialog")          # role
@@ -86,8 +86,8 @@ aria(live: "polite")          # aria-live (status regions you choose)
 aria(hidden: true)            # aria-hidden
 ```
 
-Any `aria-*` attribute works — the key after `aria(` is whatever follows `aria-` in HTML.
+Any `aria-*` attribute works - the key after `aria(` is whatever follows `aria-` in HTML.
 
 ## See also
-- [Forms & validation](forms.md) — the accessible form the compiler builds for you.
-- [Modifiers reference](reference/modifiers.md) — `aria` alongside `class`, `on`, `bind`, …
+- [Forms & validation](forms.md) - the accessible form the compiler builds for you.
+- [Modifiers reference](reference/modifiers.md) - `aria` alongside `class`, `on`, `bind`, …

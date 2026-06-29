@@ -1,4 +1,4 @@
-# Reference — Primitives
+# Reference - Primitives
 
 Every primitive, its output element, and how it's used. Primitives are **PascalCase**. A bare string is the
 node's main prop; `{ … }` is its children. Style any primitive with [`class()`](modifiers.md); add
@@ -9,7 +9,7 @@ accessibility with [`aria()`](modifiers.md).
 | Primitive | Element | Notes |
 |---|---|---|
 | `Stack` | `<div>` | a **flex column** by default; a row is `class("flex flex-row")` |
-| `Page` | `<main>` | the page root — **one per route**; the focus target on navigation |
+| `Page` | `<main>` | the page root - **one per route**; the focus target on navigation |
 | `Header` | `<header>` | landmark |
 | `Nav` | `<nav>` | landmark; `Nav "Main" …` sets its `aria-label` |
 | `Sidebar` | `<aside>` | complementary landmark |
@@ -35,14 +35,14 @@ Page class("flex flex-col gap-6") {
 
 | Primitive | Element | Notes |
 |---|---|---|
-| `Image` | `<img>` | **`alt` required**: `Image "{p.image}" alt("{p.title}")` — `alt("")` for decorative |
+| `Image` | `<img>` | **`alt` required**: `Image "{p.image}" alt("{p.title}")` - `alt("")` for decorative |
 | `Icon` | inline `<svg>` | Iconify `set:name`, resolved at build (tree-shaken), `aria-hidden`: `Icon "lucide:settings"` |
 | `Video` | `<video>` | bare-keyword flags: `Video "clip.mp4" controls autoplay loop muted playsinline` |
 
 > **Data-driven icon?** The `Icon` name is a static literal (it inlines the SVG at build, so it can't read
-> data). Two paths: a **per-value** icon (status / type / category) is a `match` over static Icons —
+> data). Two paths: a **per-value** icon (status / type / category) is a `match` over static Icons -
 > `match item.status { active -> Icon "lucide:check"  paused -> Icon "lucide:pause" }` (each arm still
-> tree-shakes); an icon whose **URL lives in your data** is an `Image` — `Image "{item.iconUrl}" alt("")`.
+> tree-shakes); an icon whose **URL lives in your data** is an `Image` - `Image "{item.iconUrl}" alt("")`.
 
 ## Interactive
 
@@ -62,7 +62,7 @@ SearchField bind(q) on(enter: search) "Search products"
 
 | Primitive | Element | Notes |
 |---|---|---|
-| `Form` | `<form>` | auto-built from an entity draft: `Form bind(draft) submit(create) "Save"` — see [Forms](../forms.md) |
+| `Form` | `<form>` | auto-built from an entity draft: `Form bind(draft) submit(create) "Save"` - see [Forms](../forms.md) |
 | `DataTable` | `<table>` | a reactive table over a list/query (`@` sigil): `DataTable @users columns(name, email)`; headers are `<th scope>` |
 | `RowAction` | `<button>` (per row) | a button inside each `DataTable` row: `RowAction "Delete" -> remove(row.id)` |
 
@@ -80,8 +80,8 @@ DataTable @users columns(name, email, role) {
 
 | Primitive | Element | Notes |
 |---|---|---|
-| `slot` | — | the outlet for caller content: the active page inside a `shell`, or the caller's children inside a `part` |
-| `Custom` | host `<div>` | mount a vanilla-JS widget: `Custom Chart inputs(data: @sales) on(pick: select)` — see [Escapes](../escapes.md) |
+| `slot` | - | the outlet for caller content: the active page inside a `shell`, or the caller's children inside a `part` |
+| `Custom` | host `<div>` | mount a vanilla-JS widget: `Custom Chart inputs(data: @sales) on(pick: select)` - see [Escapes](../escapes.md) |
 
 ## Control flow (lowercase keywords, not primitives)
 

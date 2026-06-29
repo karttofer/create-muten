@@ -1,11 +1,11 @@
-# Reference — CLI
+# Reference - CLI
 
 The `muten` binary ships with the app (it's a dependency of `@muten/core`). Run it via `npx muten …` or an
 npm script.
 
 ```sh
 muten dev    [dir] [--vite]              # dev server (native esbuild + live reload; serves /_muten/graph)
-muten bundle [dir] [--vite]              # production CSR build (per-route chunks + a ship-size report — each route's gzip size, so bloat is visible)
+muten bundle [dir] [--vite]              # production CSR build (per-route chunks + a ship-size report - each route's gzip size, so bloat is visible)
 muten build  [dir] [--url=https://site.com]   # static SSG → crawlable HTML per route
 muten check  [dir] [--json] [--watch]    # the oracle; --watch re-lints the app on every change
 muten map    [dir] [--json]
@@ -15,7 +15,7 @@ muten map    [dir] [--json]
 
 ## `muten dev`
 
-Starts the **dev server**: muten's own engine (esbuild) compiles your `.muten` on the fly — per-route chunks,
+Starts the **dev server**: muten's own engine (esbuild) compiles your `.muten` on the fly - per-route chunks,
 the live oracle, theme + Tailwind, client-side routing, and full-reload on save. No Vite, no config. This is
 what `npm run dev` runs.
 
@@ -24,14 +24,14 @@ what `npm run dev` runs.
 
 A compile error (syntax or oracle) shows a code-frame in the terminal AND a browser overlay (file:line:col +
 "did you mean"); an uncaught **runtime** error shows its own overlay. The dev server also serves
-**`/_muten/graph`** — the live app graph (routes / stores / parts) an AI can read without parsing files.
+**`/_muten/graph`** - the live app graph (routes / stores / parts) an AI can read without parsing files.
 
 ## `muten bundle`
 
 The **production CSR build** (esbuild): bundles the SPA (your `use` functions, `Custom` components, shared
 cross-page state) to `./dist/` with per-route code-splitting + source maps, writes **`dist/app.map.json`** (the
 app graph), and prints a **per-route ship report** (each route's JS + gzip, so bloat is visible). This is what
-`npm run build` runs — the path for a **stateful** app. (For a zero-JS static export instead, use `muten build`
+`npm run build` runs - the path for a **stateful** app. (For a zero-JS static export instead, use `muten build`
 below.) `--vite` for the legacy engine.
 
 ## `muten build`
@@ -45,19 +45,19 @@ dist/robots.txt           # allow + Sitemap directive
 dist/app.map.json         # the app graph
 ```
 
-- **`--url=https://site.com`** — your deploy origin, used for **absolute** sitemap / canonical / `og:url`
+- **`--url=https://site.com`** - your deploy origin, used for **absolute** sitemap / canonical / `og:url`
   URLs. Without it they're emitted relative (with a note).
 - GET `sources` are fetched at build and baked into the HTML; non-GET run client-side.
 - Per page, the `<head>` gets canonical + `og:url`/`og:type` + a JSON-LD `WebPage` block.
 
 > `muten build` ships **styled** (theme + `src/styles.css` inlined), **SSR'd** (store/`query` data pre-rendered)
-> zero-JS HTML. For a **stateful** app — `use` functions, or store state that survives full-page navigations —
+> zero-JS HTML. For a **stateful** app - `use` functions, or store state that survives full-page navigations -
 > build the SPA with **`muten bundle`** instead. See [Deployment](../deployment.md).
 
 ## `muten check` (alias `muten lint`)
 
 The **deterministic oracle**: parses + validates every page (unknown state/action/part, bad token, illegal
-mutation, unknown ref, type mismatch) — **no compile, no browser**, in milliseconds.
+mutation, unknown ref, type mismatch) - **no compile, no browser**, in milliseconds.
 
 ```sh
 muten check                 # human-readable diagnostics; exit 1 if any error
@@ -71,7 +71,7 @@ inline as you type, with one-click quick-fixes.)
 
 ## `muten map`
 
-Emits **`app.map.json`** — a compact index of routes + their models, state, and sources — the root an agent
+Emits **`app.map.json`** - a compact index of routes + their models, state, and sources - the root an agent
 reads first to understand the whole app.
 
 ```sh
@@ -80,6 +80,6 @@ muten map --json            # prints it to stdout
 ```
 
 ## See also
-- [Deployment](../deployment.md) — `muten bundle` vs `muten build`.
-- [SEO](../seo.md) — what `muten build --url=` emits.
-- [Getting started](../getting-started.md) — the dev loop.
+- [Deployment](../deployment.md) - `muten bundle` vs `muten build`.
+- [SEO](../seo.md) - what `muten build --url=` emits.
+- [Getting started](../getting-started.md) - the dev loop.

@@ -1,4 +1,4 @@
-# Muten recipes — proven app structures
+# Muten recipes - proven app structures
 
 Copy-paste skeletons that lint + run. Pair with `SKILL.md` (language) and `design.md` (look). These are the
 shapes that work; adapt the names. All verified by building real apps.
@@ -24,7 +24,7 @@ The folder under `src/pages/<name>/<name>.muten` must match the route's page nam
 
 ## Store-centric data (the recommended architecture)
 App-global data lives in a `.store`; pages read it by domain name. **Derive everything in the store as `get`s**
-(filters, sums, counts) — pages just iterate `domain.<get>`. This is cleaner AND sidesteps cross-page type friction.
+(filters, sums, counts) - pages just iterate `domain.<get>`. This is cleaner AND sidesteps cross-page type friction.
 ```
 # src/customers.store   → referenced everywhere as customers.<member>
 entity Customer { name text required  company text  email email required  status lead | active | churned }
@@ -42,10 +42,10 @@ action remove(cid: text)             mutates items { items.remove where id == ci
 action setStatus(cid: text, s: text) mutates items { items.patch where id == cid with { status: s } }
 ```
 - Iterating a store list in a page works: `each customers.items as c { Text "{c.name}" }`.
-- A page redefines the `entity` for its own `Form` draft (entities don't cross the store border — small, expected dup).
+- A page redefines the `entity` for its own `Form` draft (entities don't cross the store border - small, expected dup).
 - `remove`/`patch where id == cid`: name the param DIFFERENTLY from the field (`cid`, not `id`).
 
-## Dashboard with KPIs (aggregates — no JS)
+## Dashboard with KPIs (aggregates - no JS)
 ```
 screen dashboard
 use money from "~/lib/money.ts"
@@ -107,7 +107,7 @@ Stack class("grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-md") {
     each deals.items as d where d.stage == "qualified" { DealCard(item: d) }
   }
 }
-# src/parts/dealcard.muten — a part can reference stores + use + when inside
+# src/parts/dealcard.muten - a part can reference stores + use + when inside
 # use money from "~/lib/money.ts"
 # part DealCard(item: Deal) {
 #   Stack class("pad-md gap-xs panel") {
@@ -120,7 +120,7 @@ Stack class("grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-md") {
 ```
 
 ## Dates / calendar
-Date **math + formatting are built in** — `daysUntil` / `dayKey` / `addDays` / `now` / `ago` / `date` / `time`
+Date **math + formatting are built in** - `daysUntil` / `dayKey` / `addDays` / `now` / `ago` / `date` / `time`
 (no `use`), and `Form` has a `date` field. What's NOT built in is **calendar-grid layout** (the 42-cell month):
 for that, a `use` fn anchors an ISO string and returns the cells `each` iterates, with field access on the items.
 ```
@@ -151,7 +151,7 @@ Page {
 ```
 Note: nested `each` works; a reactive class can be multi-token (`class("ring-2 ring-primary" when c.today)`).
 
-## `use` — JS logic facade (formatting, dates, anything synchronous)
+## `use` - JS logic facade (formatting, dates, anything synchronous)
 ```
 # src/lib/money.ts
 export function money(n: number): string { return "$" + (n || 0).toLocaleString("en-US"); }

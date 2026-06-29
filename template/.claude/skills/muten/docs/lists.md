@@ -1,11 +1,11 @@
 # Lists
 
-Muten has a **bounded list toolkit**: rendering, filtering, aggregating, sorting, and membership — all
+Muten has a **bounded list toolkit**: rendering, filtering, aggregating, sorting, and membership - all
 declarative, all checked by the oracle. There is intentionally **no raw `map`/`reduce`/`filter`** in the
 language: the common list jobs have first-class forms, and anything past them is an explicit
 [`use`](escapes.md) function. This keeps lists analyzable (and keeps an AI from re-deriving them by hand).
 
-## Rendering — `each`
+## Rendering - `each`
 
 ```muten
 each todos as t {
@@ -20,7 +20,7 @@ For a `query` state, iterate `.data`:
 each users.data as u { Text "{u.name}" }
 ```
 
-### Filtering — `where`
+### Filtering - `where`
 
 Render only the matching items (the item's fields are bare inside `where`):
 
@@ -49,7 +49,7 @@ Text "Priciest: {prices.max by amount}"
   end of the expression): `when (todos.count where not done) > 0 { … }`. Standalone (in a `get`) needs none:
   `get openCount = todos.count where not done`.
 
-## Sorting — `sort` / `sortDesc`
+## Sorting - `sort` / `sortDesc`
 
 Return a sorted **copy** (ascending with `sort by`, descending with `sortDesc by`):
 
@@ -58,7 +58,7 @@ each contacts.sort by name as c { Text "{c.name}" }
 each scores.sortDesc by points as s { Text "{s.name}: {s.points}" }
 ```
 
-The sort key is a **field name** — `sort by price`. To let the user **choose the column at runtime**, sort
+The sort key is a **field name** - `sort by price`. To let the user **choose the column at runtime**, sort
 by a `text` state holding the field name (a sortable table header):
 
 ```muten
@@ -70,9 +70,9 @@ get sorted = rows.sortDesc by sortCol         # sorts by rows[sortCol]
 A **literal** field (`by price`) stays a static key; a ref to a `text` **state** (`by sortCol`) is the dynamic
 column. (The oracle requires the dynamic key to be `text`.)
 
-## Pagination / top-N — `take`
+## Pagination / top-N - `take`
 
-`list.take(n)` returns the first `n` items — a "load more" page or a leaderboard top-N. `n` is a literal or a
+`list.take(n)` returns the first `n` items - a "load more" page or a leaderboard top-N. `n` is a literal or a
 `number` state, so a button that raises a `limit` state grows the page reactively:
 
 ```muten
@@ -83,7 +83,7 @@ get page = posts.take(limit)                  # reactive: bump `limit` -> more r
 
 Combine freely: `posts.sortDesc by date` then `.take(limit)` for "latest N".
 
-## Membership — "is it in the list?"
+## Membership - "is it in the list?"
 
 For a selection / favorites / "is X chosen" check, store the **ids as a scalar list** and use `contains`:
 
@@ -99,7 +99,7 @@ class("on" when favs contains movie.id)
 `tags contains "sale"`, `favs contains movie.id`.
 
 To **add or remove** from such a set (favorite / un-favorite, subscribe / unsubscribe), use `toggle` in an
-action — it adds the value if absent, removes it if present:
+action - it adds the value if absent, removes it if present:
 
 ```muten
 action fav(id: number) mutates favs { favs.toggle(id) }   # on a list<number>: in ⇄ out
@@ -107,14 +107,14 @@ action fav(id: number) mutates favs { favs.toggle(id) }   # on a list<number>: i
 
 (`favs.toggle(id)` is the scalar-list membership flip; `bool.toggle()` with no arg flips a boolean.)
 
-> **Why store ids, not objects?** `list<Entity> contains <scalar>` is always false — it compares object
+> **Why store ids, not objects?** `list<Entity> contains <scalar>` is always false - it compares object
 > identity, not a field. So a "favorites" set is a `list<number>` of ids. If you *do* have a list of objects
 > and must test a field, use the count form: `(favs.count where id == movie.id) > 0`.
 >
-> **Never** write a `use` function doing `items.some(x => x.id === id)` — `contains` (or `count where`) *is*
+> **Never** write a `use` function doing `items.some(x => x.id === id)` - `contains` (or `count where`) *is*
 > that, declaratively, and the oracle checks it. See [when NOT to escape](escapes.md#dont-escape-for-what-muten-already-does).
 
-## Editing items in place — `patch`
+## Editing items in place - `patch`
 
 To toggle or update an item **without reordering it**, use `patch` in an action (position-preserving; list
 only the changed fields):
@@ -140,10 +140,10 @@ action toggle(id: uuid) mutates todos {
 | add ⇄ remove | `list.toggle(x)` (in an action) |
 | edit in place | `list.patch where … with { … }` (in an action) |
 
-Anything beyond these (an arbitrary transform) is a [`use`](escapes.md) function — a deliberate, checked
+Anything beyond these (an arbitrary transform) is a [`use`](escapes.md) function - a deliberate, checked
 border, not a hole in the language.
 
 ## See also
-- [State & reactivity](state.md) — list state types and keyed reconciliation.
-- [Actions & mutations](actions.md) — `push`/`patch`/`remove` and the rest.
-- [Escapes](escapes.md) — `use` for transforms the toolkit doesn't cover.
+- [State & reactivity](state.md) - list state types and keyed reconciliation.
+- [Actions & mutations](actions.md) - `push`/`patch`/`remove` and the rest.
+- [Escapes](escapes.md) - `use` for transforms the toolkit doesn't cover.

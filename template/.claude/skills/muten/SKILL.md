@@ -1,32 +1,32 @@
 ---
 name: muten
-description: Read and write Muten — the AI-first frontend DSL this app is built in (.muten and .store files), NOT React/Vue/HTML. Use whenever creating or editing any .muten or .store file, app.muten routes, theme.muten, parts, components, stores, or deciding what can be installed. No model is trained on Muten, so consult this before writing any Muten code or adding a dependency. Assume the human will NOT read the code — you do everything.
+description: Read and write Muten - the AI-first frontend DSL this app is built in (.muten and .store files), NOT React/Vue/HTML. Use whenever creating or editing any .muten or .store file, app.muten routes, theme.muten, parts, components, stores, or deciding what can be installed. No model is trained on Muten, so consult this before writing any Muten code or adding a dependency. Assume the human will NOT read the code - you do everything.
 ---
 
-# Muten — complete language reference
+# Muten - complete language reference
 
 Muten compiles `.muten` files to vanilla JS + fine-grained signals (no virtual DOM). The `@muten/core`
-runner (embedded esbuild) does the compiling. You write a small declarative DSL for the UI — **not** React/JSX/Vue/Svelte/HTML.
+runner (embedded esbuild) does the compiling. You write a small declarative DSL for the UI - **not** React/JSX/Vue/Svelte/HTML.
 Muten ships ZERO framework runtime; foreign code comes in only through explicit escapes (`use` for JS logic
-functions — §14, `Custom` for a vanilla-JS widget — §13). A page with no reactivity compiles to plain
+functions - §14, `Custom` for a vanilla-JS widget - §13). A page with no reactivity compiles to plain
 zero-runtime HTML; a reactive one ships ~1KB of signals.
 
-> **Companion docs (same folder):** [`docs/`](docs/README.md) — the **complete reference** (every
+> **Companion docs (same folder):** [`docs/`](docs/README.md) - the **complete reference** (every
 > primitive/modifier/keyword + full guides: forms, accessibility, SEO, data, stores, …). This SKILL.md is the
 > compressed always-on reference; open a `docs/<topic>.md` on demand when you need the full detail and the *why*.
-> [`design.md`](design.md) — how to make pages look great (styling routes, the auto-Form skin, building blocks).
-> [`patterns.md`](patterns.md) — copy-paste app recipes (store-centric CRUD, dashboard KPIs, kanban, `use` facades).
+> [`design.md`](design.md) - how to make pages look great (styling routes, the auto-Form skin, building blocks).
+> [`patterns.md`](patterns.md) - copy-paste app recipes (store-centric CRUD, dashboard KPIs, kanban, `use` facades).
 
 ## Mental model & golden rules
 - **UI** → `.muten` files (pages, parts, the app root, the theme). **App-global state** → `.store` files.
 - **`src/app.muten` is the entry.** `index.html` loads it; the plugin boots it. **Never create `main.js`** or a `<script>` bootstrap.
 - Primitives are **PascalCase** (`Stack`, `Text`); keywords/control flow are **lowercase** (`when`, `each`, `state`).
-- `class("...")` is the **single way to style** — layout AND look (your CSS / Tailwind utilities); toggle reactively with `class(active when isOpen)`. Muten builds the STRUCTURE (primitives) and ships no skin.
-- A reference is a **bare name** (no sigil) everywhere — `count`, `user.name`, `cart.total`. `{expr}` = interpolation inside a Text/label/path string: `Text "Hi, {user.name}"`. It also works inside `class("…")` to build a **dynamic class token** — `class("status-{user.status}")` → a reactive `status-online`/`status-idle`/… (don't write one toggle per enum value; see §2).
+- `class("...")` is the **single way to style** - layout AND look (your CSS / Tailwind utilities); toggle reactively with `class(active when isOpen)`. Muten builds the STRUCTURE (primitives) and ships no skin.
+- A reference is a **bare name** (no sigil) everywhere - `count`, `user.name`, `cart.total`. `{expr}` = interpolation inside a Text/label/path string: `Text "Hi, {user.name}"`. It also works inside `class("…")` to build a **dynamic class token** - `class("status-{user.status}")` → a reactive `status-online`/`status-idle`/… (don't write one toggle per enum value; see §2).
 - Each page has **one root node**. Reactivity is automatic: reading a state in interpolation / `when` / `each` re-renders just that spot.
 
 ### Where each piece goes (the #1 thing to get right)
-The syntax is small; the real skill is the **boundaries** — pick the right home and the oracle does the rest:
+The syntax is small; the real skill is the **boundaries** - pick the right home and the oracle does the rest:
 
 | You need… | Put it in | Not |
 |---|---|---|
@@ -42,64 +42,64 @@ The syntax is small; the real skill is the **boundaries** — pick the right hom
 | a non-Muten visual widget (chart, map) | a **`Custom`** component | a React/Vue component (there are none) |
 
 Rule of thumb: **declarative first** (`state`/`when`/`each`/`where`), **escape last** (`use`/`Custom`). When a piece
-is in the wrong place, `muten check` says so immediately — the boundaries are *enforced*, so you don't have to memorize them.
+is in the wrong place, `muten check` says so immediately - the boundaries are *enforced*, so you don't have to memorize them.
 
 ## 1. What you CAN install / use
 This is a muten project (with muten's native runner), so the whole npm ecosystem for **styling, build, and data** works:
-- **Tailwind CSS — YES.** Install it (`tailwindcss`, `postcss`, `autoprefixer`), add the config + the
+- **Tailwind CSS - YES.** Install it (`tailwindcss`, `postcss`, `autoprefixer`), add the config + the
   `@tailwind` directives to `src/styles.css`, and use utilities via `class("flex gap-4 rounded")`.
   `class()` emits raw class names, so any CSS framework (Tailwind, UnoCSS, Bootstrap CSS, your own CSS) works.
-- **Sass/SCSS** — supported out of the box if you scaffolded with SCSS (or add `sass`); use `src/styles.scss`.
-- **Any custom Vite/PostCSS plugin (rare)** — drop an OPTIONAL `vite.config.mjs` and run `muten dev --vite` / `muten bundle --vite`; by default no config is needed.
-- **Data / utility npm packages** — usable inside `.store` logic, inside `Custom` host components, and via
+- **Sass/SCSS** - supported out of the box if you scaffolded with SCSS (or add `sass`); use `src/styles.scss`.
+- **Any custom Vite/PostCSS plugin (rare)** - drop an OPTIONAL `vite.config.mjs` and run `muten dev --vite` / `muten bundle --vite`; by default no config is needed.
+- **Data / utility npm packages** - usable inside `.store` logic, inside `Custom` host components, and via
   **`use` logic imports** (date libs, fetch wrappers, zod, etc.).
-- **JS logic via `use … from "./lib.ts"` — YES.** Import named functions and call them in any expression
+- **JS logic via `use … from "./lib.ts"` - YES.** Import named functions and call them in any expression
   (`use fmt from "./lib.ts"` → `Text "{fmt(x)}"`). The `.ts` is a facade over any npm. See §14.
-- **Built-in formatting — NO `use`, NO hand-rolled JS.** Dates / initials / currency / case have **built-in
+- **Built-in formatting - NO `use`, NO hand-rolled JS.** Dates / initials / currency / case have **built-in
   functions, always available**: `upper` · `lower` · `initial` (first letter, for avatars) · `truncate(s, n)` ·
   `money(n)` · `ago` (relative time) · `date` · `time` · `now()` · `daysUntil` / `dayKey` / `addDays` (date math) ·
-  `isToday` / `isPast` / `isFuture`. Call them directly in any expression — **do NOT write
+  `isToday` / `isPast` / `isFuture`. Call them directly in any expression - **do NOT write
   your own `formatTime`/`getInitials`/`Date` logic** (that ships an un-checked, often buggy escape):
   `Text "{ago(msg.time)}"`, `Text "{initial(user.name)}"`, `Text "{money(order.total)}"`,
   `Text "{date(msg.time)} at {time(msg.time)}"`. Timestamps are `text` (ISO strings); `ago`/`date`/`time` parse
   them. Only reach for `use` for logic a built-in does NOT cover (grouping, joins, custom parsing).
-- **Host UI via the `Custom` primitive** — write vanilla JS in `src/components/<Name>.js` (charts,
+- **Host UI via the `Custom` primitive** - write vanilla JS in `src/components/<Name>.js` (charts,
   maps, a third-party widget) and mount it with `Custom`. See §Custom.
 
 ## 2. What you CANNOT do
-- **No React / Vue / Svelte — at all.** Muten ships ZERO framework runtime. Pages are `.muten` → vanilla DOM;
+- **No React / Vue / Svelte - at all.** Muten ships ZERO framework runtime. Pages are `.muten` → vanilla DOM;
   you don't compose the app from MUI/Chakra/shadcn. For a widget Muten can't express, drop to a vanilla-JS
   `Custom` (§13); for JS logic, `use` a function (§14). There is no JSX/hooks/`className` anywhere.
-- **No arbitrary inline CSS** — static styling (layout, colors, borders, shadows) ALL goes through `class("…")`
+- **No arbitrary inline CSS** - static styling (layout, colors, borders, shadows) ALL goes through `class("…")`
   + your CSS (Tailwind utilities, or your own classes backed by `theme.muten` vars). The one exception is a value
   that **changes at runtime** (progress width, dynamic transform): `style(w: "{pct}%")` sets a CSS variable
   `--w` reactively, and your CSS reads `var(--w)`. `style()` can ONLY set CSS variables, never arbitrary
-  properties — it never competes with `class()`. Use it only for a value that changes; `class()` for everything static.
+  properties - it never competes with `class()`. Use it only for a value that changes; `class()` for everything static.
 
-## 3. Limitations & known gaps (current — these are real, plan around them)
+## 3. Limitations & known gaps (current - these are real, plan around them)
 - **The runnable builds are `muten dev` (local dev, surgical HMR) and `muten bundle` (production CSR); `muten build` is the zero-JS SSG.** `muten build` is the zero-JS SSG export: it now
   **inlines the theme + `src/styles.css`** and **pre-renders (SSR) your stores/`query` data**, so pages ship
   fully styled with real content. Its only gaps are inherent to a no-bundler static export: `use` functions
   aren't bundled (it **warns**), and store state doesn't persist across full-page navigations. For a styled
   **stateful** app use `muten bundle`; reach for `muten build` for crawlable static/content pages.
 - **Routing uses quoted string paths** (`"/path"`, History API). Params: `"/product/:id"` + `param id` (see §10).
-- **Forms** (`Form` auto-renders from an entity) render EVERY field — **no conditional fields** (gate the whole
+- **Forms** (`Form` auto-renders from an entity) render EVERY field - **no conditional fields** (gate the whole
   `Form` with a `when`, or split into per-step entities). Field types: `text`/`email`/`number`/`bool`(checkbox)/
-  `enum`(select)/`date`/`password`/`textarea` — anything else (`url`/`tel`/file) is `unknown-field-type` (drop to
+  `enum`(select)/`date`/`password`/`textarea` - anything else (`url`/`tel`/file) is `unknown-field-type` (drop to
   `Custom`). An **enum field can't be `required`**.
   `SearchField` is the single bound text input.
-- **`match` for enums** — `match status { active -> Text "Active"  lead -> Badge … }` renders the matching arm
+- **`match` for enums** - `match status { active -> Text "Active"  lead -> Badge … }` renders the matching arm
   (sugar for N `when status == "x"`). **`DataTable`** shows raw cell
-  text (no per-column formatting — use `each` + `Stack` for formatted/badge cells). **No standalone `Select`** (Form
+  text (no per-column formatting - use `each` + `Stack` for formatted/badge cells). **No standalone `Select`** (Form
   makes one for enum fields; elsewhere build a button group + `class(active when …)`). **`sort by`** takes a
   field name, OR a `text` **state** holding the field name for a user-chosen column (`sortDesc by sortCol`).
 - **`query x live`** needs the server to send a stable `id` per row, or keyed diffing rebuilds every row each push.
-- **`Custom` inputs are a snapshot at mount** (reactive only if `mount` returns an updater fn — §13). **Shell has no local state** (use a `.store`).
+- **`Custom` inputs are a snapshot at mount** (reactive only if `mount` returns an updater fn - §13). **Shell has no local state** (use a `.store`).
   **Pages are single-root** (one top node). **Flip a bool** with `x.toggle()`.
 
 ## 4. Files
 ```
-src/app.muten                    routes (+ optional shell) — the ROOT; read it first
+src/app.muten                    routes (+ optional shell) - the ROOT; read it first
 src/pages/<route>/<route>.muten  one page; the folder name IS the route
 src/parts/<name>.muten           reusable component (inlined at build time)
 src/components/<Name>.js          host-JS escape hatch, mounted via Custom
@@ -107,7 +107,7 @@ src/<domain>.store               app-global state slice (domain = file name)
 theme.muten                      token scale (space/font/weight/leading/breakpoints)
 src/styles.css                   reset + look (or styles.scss)
 index.html                       loads /src/app.muten via @muten/core; don't hand-edit the boot
-muten.config                     build config in muten (theme adapter) — present ONLY with Tailwind/DaisyUI
+muten.config                     build config in muten (theme adapter) - present ONLY with Tailwind/DaisyUI
 ```
 
 ## 5. Declarations
@@ -125,17 +125,17 @@ state {                          # page-LOCAL reactive state
   users = query listUsers : list<User>   # query → async; exposes users.loading/.error/.data
   # state types: scalar (text/number/bool/email/uuid), list<Entity>, OR list<scalar> (list<text>/list<uuid>/…).
   # an enum lives in an entity field, NOT as a state type; hold its value as text. A list of plain strings is list<text>.
-  # PERSIST to localStorage — append `persist`: `dark = false : bool persist`, `favs = [] : list<number> persist`.
+  # PERSIST to localStorage - append `persist`: `dark = false : bool persist`, `favs = [] : list<number> persist`.
   #   Auto-hydrates on load (falls back to the initial) + saves on every change → survives reload. It is THE
   #   declarative localStorage. Works HERE (page-local) AND in a `.store` for app-GLOBAL persisted state
-  #   (favorites, cart, settings, theme). NEVER hand-roll load/save in a `use` fn — `persist` already does it.
+  #   (favorites, cart, settings, theme). NEVER hand-roll load/save in a `use` fn - `persist` already does it.
 }
 
 const TAX = 0.21                 # compile-time immutable scalar (inlined, never reactive)
 
 action add(item: User) mutates users {   # mutation; typed params in (…); `mutates` lists what it may change (enforced)
   users.push(item)               # local ops: push | set | reset | remove | toggle | patch
-  users.push({ name: item.name, role: "admin" })   # inline object literal — build a record inline
+  users.push({ name: item.name, role: "admin" })   # inline object literal - build a record inline
   if item.vip { rating.set(5) } else { rating.set(1) }   # if/else = the only branching in actions
 }
 
@@ -143,7 +143,7 @@ mock    { listUsers: [ { name: "Ana", role: "admin" } ] }        # mock data (qu
 sources { listUsers: { url: "https://api…", at: "results" } }    # real data source for a query
 ```
 
-A `sources` entry is a complete HTTP request — a bare URL, or `{ url, method?, headers?, body?, at? }`:
+A `sources` entry is a complete HTTP request - a bare URL, or `{ url, method?, headers?, body?, at? }`:
 ```
 sources {
   products: "https://api.shop.com/products"                              # GET, response is the array
@@ -151,17 +151,17 @@ sources {
   search:   { url: "https://api…/graphql", method: "POST", body: { query: "…" }, at: "data" }
 }
 ```
-- `at` reads the array out of `json[at]` — dotted for nested envelopes (`"data.posts"`). Else the response IS the array. `body` is JSON-encoded (sets `content-type`).
+- `at` reads the array out of `json[at]` - dotted for nested envelopes (`"data.posts"`). Else the response IS the array. `body` is JSON-encoded (sets `content-type`).
 - At build (`muten build`), **GET** sources are fetched and baked into the HTML (SSG); non-GET run only client-side (no build side-effects).
-- **Headers ship to the client** like any browser fetch — use public keys or a per-user token, never a server secret.
+- **Headers ship to the client** like any browser fetch - use public keys or a per-user token, never a server secret.
 
-**Don't repeat the backend — `api { }` in `src/app.muten`** sets the base URL + default headers for ALL sources:
+**Don't repeat the backend - `api { }` in `src/app.muten`** sets the base URL + default headers for ALL sources:
 ```
 # src/app.muten
 api { base: "https://api.shop.com/v1"  headers: { Authorization: "Bearer KEY" } }
 ```
 ```
-# any page — only what differs
+# any page - only what differs
 sources {
   products: { url: "/products", at: "data" }     # → https://api.shop.com/v1/products, with the Authorization header
   orders:   { url: "/orders",   at: "data" }
@@ -169,7 +169,7 @@ sources {
 ```
 A **relative** source url is joined to `base`; an **absolute** one (`https://…`) ignores it (other host). Source headers override the api defaults. Define the backend once.
 
-**Multiple backends** — name the clients, pick one per source with `{ api: "name" }`:
+**Multiple backends** - name the clients, pick one per source with `{ api: "name" }`:
 ```
 # src/app.muten
 api {
@@ -185,7 +185,7 @@ sources {
 ```
 No `api` field → the client named `default`. The flat `api { base, headers }` form is just a single default client.
 
-**Writing to the backend (POST/PUT/DELETE)** — a source-backed list gets `create`/`update`/`delete` in an action, fired by an event; each hits the resource endpoint (reusing the source's `api` base + headers) and updates the list reactively:
+**Writing to the backend (POST/PUT/DELETE)** - a source-backed list gets `create`/`update`/`delete` in an action, fired by an event; each hits the resource endpoint (reusing the source's `api` base + headers) and updates the list reactively:
 ```
 state { orders = query orders : list<Order> }
 sources { orders: { api: "shop", url: "/orders", at: "data" } }
@@ -196,14 +196,14 @@ action drop(item: Order) mutates orders { orders.delete(item) }   # DELETE /orde
 
 Button "Buy" -> buy(product)
 ```
-The write action is **async** and exposes reactive **`buy.pending`** (true while in flight) and **`buy.error`** — use them for UX:
+The write action is **async** and exposes reactive **`buy.pending`** (true while in flight) and **`buy.error`** - use them for UX:
 ```
 when buy.pending { Text "Saving…" }
 when buy.error { Text "Could not save: {buy.error}" }
 ```
-`create`/`update`/`delete` are **optimistic** — the list changes instantly, reconciles with the server response, and **reverts** if the request fails (with `.error` set). REST convention: create = POST to the collection, update/delete target `/{item.id}`. Local-only mutations stay `push`/`set`/`reset`/`remove`; `create/update/delete` talk to the server.
+`create`/`update`/`delete` are **optimistic** - the list changes instantly, reconciles with the server response, and **reverts** if the request fails (with `.error` set). REST convention: create = POST to the collection, update/delete target `/{item.id}`. Local-only mutations stay `push`/`set`/`reset`/`remove`; `create/update/delete` talk to the server.
 
-**Re-running a query — `refetch` (search / pagination / filters)** — call it in an action with **N named params**; they become the query string (`?q=…&page=…`, url-encoded) and the list reloads. Works for any web-app, not just lists:
+**Re-running a query - `refetch` (search / pagination / filters)** - call it in an action with **N named params**; they become the query string (`?q=…&page=…`, url-encoded) and the list reloads. Works for any web-app, not just lists:
 ```
 state { q = "" : text  page = 1 : number  products = query products : list<Product> }
 sources { products: { url: "/products", at: "data" } }
@@ -217,15 +217,15 @@ Button "Next"   -> next
 ```
 Pass as many params as you need (`q`, `page`, `sort`, `category`, …). The query's `.loading`/`.error` reflect the refetch.
 
-**Live data — `query x live` (WebSocket)** — append `live` to a query to subscribe to a **WebSocket** instead of fetching: the server PUSHES, muten reacts (event-driven, NOT polling). Each message replaces the data; the **keyed reconciliation** updates only the rows whose fields changed (focus/scroll survive) and writes **batch** into one render per frame:
+**Live data - `query x live` (WebSocket)** - append `live` to a query to subscribe to a **WebSocket** instead of fetching: the server PUSHES, muten reacts (event-driven, NOT polling). Each message replaces the data; the **keyed reconciliation** updates only the rows whose fields changed (focus/scroll survive) and writes **batch** into one render per frame:
 ```
 state   { prices = query prices live : list<Price> }
 sources { prices: { url: "ws://feed.example.com/prices", at: "data" } }
-# each prices.data as p { Text "{p.symbol}  {p.value}" }   — only changed rows touch the DOM
+# each prices.data as p { Text "{p.symbol}  {p.value}" }   - only changed rows touch the DOM
 ```
-Plain `WebSocket` under the hood, exposed as one keyword; it **auto-reconnects with backoff** if the socket drops and closes automatically when the page unmounts (a malformed frame is ignored, not fatal). To SEND (e.g. a chat message) the socket is receive-only — write through an action: a `create`/`post` to the backend, or a `use`'d function that POSTs; the server then pushes the updated list back over the socket. Client-side only (deploy via `muten bundle`). Use `refetch` for user-driven refresh, `live` for server-pushed real-time. (Polling via a timer was intentionally NOT added — it isn't reactive. For *huge* live lists you still virtualize + send server-side deltas, as in any framework.)
+Plain `WebSocket` under the hood, exposed as one keyword; it **auto-reconnects with backoff** if the socket drops and closes automatically when the page unmounts (a malformed frame is ignored, not fatal). To SEND (e.g. a chat message) the socket is receive-only - write through an action: a `create`/`post` to the backend, or a `use`'d function that POSTs; the server then pushes the updated list back over the socket. Client-side only (deploy via `muten bundle`). Use `refetch` for user-driven refresh, `live` for server-pushed real-time. (Polling via a timer was intentionally NOT added - it isn't reactive. For *huge* live lists you still virtualize + send server-side deltas, as in any framework.)
 
-**Escape hatch — explicit request** (when the API isn't RESTful): `post`/`put`/`delete` a `"client:/path"` (interpolated) with an optional `body`, in an action:
+**Escape hatch - explicit request** (when the API isn't RESTful): `post`/`put`/`delete` a `"client:/path"` (interpolated) with an optional `body`, in an action:
 ```
 action buy(item: Order) { post "shop:/orders" body item }        # any method, any path
 action cancel(o: Order) { delete "shop:/orders/{o.id}/cancel" }   # custom path, interpolated
@@ -264,16 +264,16 @@ Modifiers (after a primitive): `class("css")` · `bind(state)` · `submit(action
 `class()` also toggles reactively (`class(active when isOpen)`); a **hyphenated OR multi-class** name must be QUOTED
 in a reactive toggle: `class("is-open" when x)`, `class("ring-2 ring-primary" when x)` (each token toggles
 independently; bare `is-open` parses as a subtraction and errors). Stack several toggles on one node freely.
-**Class from a value — `class("prefix-{x}")`** interpolates a state/enum value into a reactive class token
+**Class from a value - `class("prefix-{x}")`** interpolates a state/enum value into a reactive class token
 (swapped on change): `class("status-{member.status}")` → `status-online` / `status-idle` / …. Use THIS for an
-enum-driven class — **don't write one `when` toggle per value** (`class("online" when s=="online") class("idle" when …)`
+enum-driven class - **don't write one `when` toggle per value** (`class("online" when s=="online") class("idle" when …)`
 is the verbose anti-pattern). The reference is oracle-checked. `on(event: action)` works on **any** element
-(keydown, mouseenter, change, blur, …) and calls the action — use `Button -> action(arg)` when you need an arg.
+(keydown, mouseenter, change, blur, …) and calls the action - use `Button -> action(arg)` when you need an arg.
 **`on(enter: action)`** is a synthetic event for inputs: it fires only on the Enter key. So a chat/search box that
 submits on Enter is `SearchField bind(draft) on(enter: send)` (the action reads `draft` and `draft.reset()` clears
-it via the two-way bind) — no `Custom` needed for "Enter to send + clear".
+it via the two-way bind) - no `Custom` needed for "Enter to send + clear".
 
-### Accessibility — `aria(...)` + what the compiler emits for free
+### Accessibility - `aria(...)` + what the compiler emits for free
 Muten is HTML + logic, so accessibility is **expressible in the code**, not a styling concern. Two layers:
 
 **1 · Free, by the compiler (you write nothing):** semantic tags (`Header`→`<header>`, `Nav`→`<nav>`, `Sidebar`→`<aside>`,
@@ -281,7 +281,7 @@ Muten is HTML + logic, so accessibility is **expressible in the code**, not a st
 `Form` fields get a real `<label for/id>` + `aria-required` + the error linked via `aria-describedby`; `DataTable` headers get
 `scope="col"`; `Icon` is `aria-hidden` (decorative); the shell emits a keyboard **skip-link** and focus moves to `<main>` on navigation.
 
-**2 · `aria(key: value, …)` — write any `aria-*` / `role` on ANY node** (the bounded escape-free way to express a11y):
+**2 · `aria(key: value, …)` - write any `aria-*` / `role` on ANY node** (the bounded escape-free way to express a11y):
 ```
 Button "✕" -> close aria(label: "Close dialog")             # icon-only button gets an accessible name
 Stack aria(role: "dialog", modal: true) { … }              # role → role; other keys → aria-<key>
@@ -290,13 +290,13 @@ Stack aria(live: "polite") { Text "{results.length} results" }             # YOU
 ```
 - Each `key` → `aria-<key>`; the special key `role` → the `role` attribute.
 - A **literal** value (`"Close"`, `true`) is a static attribute; a value that **reads state** (`ui.open`) compiles to an
-  `effect`, so it stays in sync — e.g. `aria(expanded: ui.open)` flips `aria-expanded` as the state flips. The oracle checks
+  `effect`, so it stays in sync - e.g. `aria(expanded: ui.open)` flips `aria-expanded` as the state flips. The oracle checks
   the refs like any expression (a renamed state → `unknown-ref`, not a silent runtime bug).
 - Reach for `aria(...)` for accessible interactive widgets (menus, dialogs, tabs, disclosure) **instead of** a `Custom` escape.
 
-## 7. Theme — how it works
+## 7. Theme - how it works
 `theme.muten` is the agnostic **source of design values**. muten emits each entry as a `:root` CSS custom
-property your CSS / `class()` consumes — `space.md "16px"` → `--space-md: 16px`, `font.lg` → `--font-lg`,
+property your CSS / `class()` consumes - `space.md "16px"` → `--space-md: 16px`, `font.lg` → `--font-lg`,
 `colors.primary` → `--color-primary`.
 ```
 theme {
@@ -308,10 +308,10 @@ theme {
 }
 ```
 Consume the vars from `src/styles.css`: `.card { padding: var(--space-lg); font-size: var(--font-lg) }`, then
-apply with `class("card")`. **No CSS/reset goes in `theme.muten`** — the reset and the look live in `src/styles.css`.
+apply with `class("card")`. **No CSS/reset goes in `theme.muten`** - the reset and the look live in `src/styles.css`.
 
-### With a CSS framework (Tailwind / DaisyUI) — muten is AGNOSTIC
-`theme.muten` holds your theme VALUES; a **styling adapter** (data, in `muten.config` — the scaffolder wires it
+### With a CSS framework (Tailwind / DaisyUI) - muten is AGNOSTIC
+`theme.muten` holds your theme VALUES; a **styling adapter** (data, in `muten.config` - the scaffolder wires it
 per library) tells muten how to emit them for your library. The **muten engine knows no library**; you bring
 the styling, muten emits your theme into its format. When you scaffold with Tailwind/DaisyUI you get a theme
 skeleton seeded for you; plain css/scss gets an empty `theme { }` (muten emits plain `:root` vars). **Hyphenated
@@ -324,11 +324,11 @@ theme {
 }
 ```
 Style with `class()` using your library's utilities (`class("bg-primary p-4 hover:bg-primary")`). **Validation of
-class names is your library's job** (its IntelliSense / build) — muten doesn't check them (it's agnostic; a future
+class names is your library's job** (its IntelliSense / build) - muten doesn't check them (it's agnostic; a future
 muten styling *plugin* could add per-library linting).
 
-### Styling: one path — `class("...")`
-Everything (layout AND look) is a `class("...")`. Two equivalent backings — pick ONE per app:
+### Styling: one path - `class("...")`
+Everything (layout AND look) is a `class("...")`. Two equivalent backings - pick ONE per app:
 - **Tailwind** (the default scaffold): write utilities directly. A `Stack` is flex-column by default;
   a horizontal row is `class("flex flex-row")`.
   ```
@@ -356,29 +356,29 @@ Everything (layout AND look) is a `class("...")`. Two equivalent backings — pi
 - Mutate **only** through `action`s, and only the state in `mutates` (the linter enforces it):
   - `list.push(x)` (append; auto-fills uuid fields) · `s.set(v)` · `s.reset()` · `s.toggle()` (flip a bool) · `list.remove where id == itemId`
   - **Inline object literal** (build a record without leaving Muten): `posts.push({ title: draft.title, body: draft.body })`, `draft.set({ name: c.name })`. Keys must be real fields of the entity.
-  - **Edit / move / toggle an item in place**: `list.patch where id == c.id with { done: not done }` — position-preserving, list ONLY the changed fields. This is the right tool for toggle/update/move (NOT remove+push, which reorders the item to the end).
-  - **Item fields are bare inside `where`/`with`** (item-implicit, like a `where`-filter). So a param must be named DIFFERENTLY from any field: `remove where id == id` is an error (both mean the field) — write `remove where id == itemId` with the param named `itemId`. The oracle flags the clash and tells you to rename.
+  - **Edit / move / toggle an item in place**: `list.patch where id == c.id with { done: not done }` - position-preserving, list ONLY the changed fields. This is the right tool for toggle/update/move (NOT remove+push, which reorders the item to the end).
+  - **Item fields are bare inside `where`/`with`** (item-implicit, like a `where`-filter). So a param must be named DIFFERENTLY from any field: `remove where id == id` is an error (both mean the field) - write `remove where id == itemId` with the param named `itemId`. The oracle flags the clash and tells you to rename.
 - Control flow in the tree: `when <expr> { … }` (mount/unmount), `each <list> as item { … }` (item is a scope var). Filter a list with `where`: `each posts as p where p.published { … }` renders only matching items.
 - Expressions: `== != < > <= >=`, `and or not`, `contains` (case-insensitive substring / list membership),
   `+ - * /`, ternary `c ? a : b`, parentheses, refs (`user.name`, `cart.total`, `$item.x`).
-- **List aggregates** — `by` projects a value per item, `where` is a predicate; item fields are bare (item-implicit). For a cart total / KPI count / "N active", NO JS needed:
+- **List aggregates** - `by` projects a value per item, `where` is a predicate; item fields are bare (item-implicit). For a cart total / KPI count / "N active", NO JS needed:
   - `lines.sum by price * qty` · `todos.count where not done` · `reviews.avg by score` · `prices.min by amount` · `prices.max by amount`.
   - `.length` is the count-all; `count where cond` is the filtered count. Works in interpolation, `when`, and a `get`.
   - **Embedding in a bigger expression needs grouping `()`** (the `by`/`where` body runs to the end): `when (todos.count where not done) > 0 { … }`. Standalone (in a `get`) needs none: `get openCount = todos.count where not done`.
-- **Membership — "is it selected / favorited / in the set"** — store the IDs as a **scalar list** and use `contains`:
+- **Membership - "is it selected / favorited / in the set"** - store the IDs as a **scalar list** and use `contains`:
   `state { favs = [] : list<number> persist }` (in a `.store` file), then `when favs contains movie.id { … }` or `class("on" when favs contains movie.id)`.
   `contains` is list membership for scalars (and case-insensitive substring for text). If you kept whole OBJECTS instead
   of ids, use the count form: `(favs.count where id == movie.id) > 0`. **NEVER write a `use` fn doing `items.some(x => x.id === id)`**
-  — `contains` IS that, declaratively, and `persist` gives the localStorage for free. (`list<Entity> contains scalar` is
-  always false — it compares object identity — which is exactly why you store the *ids*, not the objects.)
+  - `contains` IS that, declaratively, and `persist` gives the localStorage for free. (`list<Entity> contains scalar` is
+  always false - it compares object identity - which is exactly why you store the *ids*, not the objects.)
 - **Sort a list** (`sort by` ascending / `sortDesc by` descending; returns a sorted COPY): `each contacts.sort by name as c { … }` ·
-  `each scores.sortDesc by points as s { … }`. Use in `each` or a `get`. The key is a field name — OR a `text`
+  `each scores.sortDesc by points as s { … }`. Use in `each` or a `get`. The key is a field name - OR a `text`
   **state** holding the field name for a **user-chosen column**: `get sorted = rows.sortDesc by sortCol` (a
   literal `by price` stays static; a ref to a `text` state `by sortCol` is the dynamic column).
-- **Paginate / top-N** — `list.take(n)` returns the first `n` items (`n` = a literal or a `number` state). A
+- **Paginate / top-N** - `list.take(n)` returns the first `n` items (`n` = a literal or a `number` state). A
   reactive "load more": `get page = posts.take(limit)` + a button that bumps `limit`. Chains after sort:
   `posts.sortDesc by date` then `.take(10)` = "latest 10".
-- **Add ⇄ remove from a set** — `list.toggle(x)` in an action adds `x` if absent, removes if present (the
+- **Add ⇄ remove from a set** - `list.toggle(x)` in an action adds `x` if absent, removes if present (the
   un-favorite / unsubscribe that a scalar `remove where` can't do): `action fav(id: number) mutates favs { favs.toggle(id) }`.
 - **`match` for enums** (sugar over N `when`): renders the arm whose value the subject equals. Each arm is `value -> node`
   or `value -> { … }`; the value is the enum literal (bare or quoted). Cleaner than repeating `when status == "x"`:
@@ -391,7 +391,7 @@ Everything (layout AND look) is a `class("...")`. Two equivalent backings — pi
   ```
   A reactive class per value works too: `class("badge-high" when item.priority == "high")` (quote hyphenated names).
 
-## 9. Stores — app-global state
+## 9. Stores - app-global state
 A `.store` file = state shared across pages, **no prop drilling**. The file name is the domain.
 ```
 # src/ui.store   → referenced everywhere as ui.<member>
@@ -402,15 +402,15 @@ effect { /* runs whenever the store state it reads changes */ }
 ```
 Use it from any page/shell by name: `when ui.menuOpen { … }`, `Button "☰" -> ui.toggleMenu`. The runner
 auto-detects every `.store` file. `get` = memoized; `effect` = reactive side-effect (Angular-style).
-**`effect { }` also works on a PAGE** — the home for an ON-MOUNT side effect (init a 3rd-party SDK, analytics,
+**`effect { }` also works on a PAGE** - the home for an ON-MOUNT side effect (init a 3rd-party SDK, analytics,
 focus): it runs when the page mounts and re-runs on its reactive deps. (Body = mutations + `use`-fn calls.)
-**A page action can CALL a store action** (composition) — `action add(d: Item) mutates draft { cart.add(d)  draft.reset() }` does
+**A page action can CALL a store action** (composition) - `action add(d: Item) mutates draft { cart.add(d)  draft.reset() }` does
 store work AND local work in one handler (e.g. add to the store, then clear the form). Wire it with `Form submit(add)`.
 
-## 10. Routing — how it works
-`src/app.muten` maps URLs to pages. It uses **quoted string paths** (`"/about"`, History API — client-side nav, no
+## 10. Routing - how it works
+`src/app.muten` maps URLs to pages. It uses **quoted string paths** (`"/about"`, History API - client-side nav, no
 reload); the **first route is the default**. The folder under `src/pages/` must match the page name.
-*(Deploy: the host must serve `index.html` for any path — standard SPA fallback.)*
+*(Deploy: the host must serve `index.html` for any path - standard SPA fallback.)*
 ```
 routes {
   "/"       -> home               # src/pages/home/home.muten
@@ -439,11 +439,11 @@ Navigating `/product/1` → `/product/2` re-mounts the page with the new `id` (r
 (`og:title`/`og:description` auto-derived). Applied on navigation and baked into the SSG HTML at build.
 Optional `meta { lang "es" }` sets `<html lang>` (default `en`).
 
-**SEO by nature (the build emits it — you write nothing):** `muten build` already pre-renders every route to
+**SEO by nature (the build emits it - you write nothing):** `muten build` already pre-renders every route to
 real crawlable HTML, and on top of that emits, for free:
-- **`sitemap.xml` + `robots.txt`** — derived from your `routes` (every page is auto-discoverable; add a route → it's in the sitemap).
+- **`sitemap.xml` + `robots.txt`** - derived from your `routes` (every page is auto-discoverable; add a route → it's in the sitemap).
 - per page: **`<link rel="canonical">`**, **`og:url`**, **`og:type`**, and a **JSON-LD `WebPage`** block (name/description/url) from the page's `meta {}`.
-- Pass the deploy origin for ABSOLUTE urls: **`muten build --url=https://your-site.com`** (without it, sitemap/canonical are relative). The author never hand-writes a sitemap, canonical, or schema block — adding a page is enough.
+- Pass the deploy origin for ABSOLUTE urls: **`muten build --url=https://your-site.com`** (without it, sitemap/canonical are relative). The author never hand-writes a sitemap, canonical, or schema block - adding a page is enough.
 
 ### Shell (persistent chrome)
 Wrap routes in a `shell { … slot … }` for a nav/footer around every page. `slot` is where the active
@@ -471,7 +471,7 @@ action create(t: Task) mutates tasks, draft { tasks.push(t)  draft.reset() }
 # in the page:  Form bind(draft) submit(create) "Add task"
 ```
 `Form` renders EVERY field, no `when` inside it (gate the whole Form with a `when`, or split entities for a wizard).
-Field types: `text`/`email`/`number`/`bool`(checkbox)/`enum`(select)/`date`/`password`/`textarea` — anything else (`url`/file) is flagged `unknown-field-type`; use a `Custom`.
+Field types: `text`/`email`/`number`/`bool`(checkbox)/`enum`(select)/`date`/`password`/`textarea` - anything else (`url`/file) is flagged `unknown-field-type`; use a `Custom`.
 An enum field **cannot be `required`**. See §3.
 
 **Constraints** live on the entity field and are checked on submit (a failure blocks the action and shows a per-field error):
@@ -479,10 +479,10 @@ An enum field **cannot be `required`**. See §3.
 An **`email`** field validates its format automatically (a malformed value blocks submit). For a rule across TWO fields
 (`end > start`) or async uniqueness, do it inside the submit `action` with an `if` (use a `use` fn for the async part).
 
-## 12. Parts — reusable composition
+## 12. Parts - reusable composition
 `part` = a reusable fragment, **inlined at build** (not a runtime component). Pass OBJECTS (`$x.field`)
 and ACTION callbacks (`-> $onPick(...)`). A scalar param (`text`/`number`) also takes a **literal or a ref**:
-`Stat(label: "Users", value: userCount)` — quoted literals stay literals, bare names are refs.
+`Stat(label: "Users", value: userCount)` - quoted literals stay literals, bare names are refs.
 ```
 # src/parts/feature.muten
 part Feature(item: Feature, onPick: action) {
@@ -495,26 +495,26 @@ part Feature(item: Feature, onPick: action) {
 # use it:  Feature(item: f, onPick: select)
 ```
 
-## 13. Custom — the host-JS escape hatch
+## 13. Custom - the host-JS escape hatch
 For anything Muten can't express (a chart, a 3rd-party widget), write vanilla JS in
 `src/components/<Name>.js` and mount it with `Custom`. It receives `inputs` (values/state) and wires
 DOM events to your actions via `on`. This is the ONLY way to use non-Muten UI code.
 ```
 Custom Chart inputs(data: @sales) on(pointSelect: select)
-# → src/components/Chart.js defines `function mount(el, inputs, on) { ... }` (NOT `export` — see below).
+# → src/components/Chart.js defines `function mount(el, inputs, on) { ... }` (NOT `export` - see below).
 #   THREE positional args: el = the host <div>, inputs = { data }, on = { pointSelect }.
 #   Call a handler with `on.pointSelect(payload)`; read a value with `inputs.data`.
 ```
 - Signature is **`mount(el, inputs, on)`** (three positional args), NOT `mount(el, { inputs, on })`.
-- Define it as a plain `function mount(...)`, **not** `export function mount` — the file is inlined, so an
+- Define it as a plain `function mount(...)`, **not** `export function mount` - the file is inlined, so an
   `export` is a syntax error and leaves the screen blank.
 - **An input value needs `@` to pass STATE: `inputs(data: @sales)` passes the array; bare `inputs(data: sales)`
   passes the literal string "sales".** Inputs are a **snapshot at mount** by default. For a Custom that must
-  track LIVE data, **return an updater function** from `mount` — `return (inputs) => { …redraw… }` — and muten
+  track LIVE data, **return an updater function** from `mount` - `return (inputs) => { …redraw… }` - and muten
   re-runs it whenever a bound `@` state it reads changes (a `mount` that returns nothing stays a snapshot,
   backward compatible). To pass a query's rows, make a `get` first: `get rows = orders.data` then `inputs(data: @rows)`.
 
-## 14. `use` — JS logic functions
+## 14. `use` - JS logic functions
 One escape that pulls in real JS/npm behind a typed, **synchronous** border. `use` named exports from a
 `.ts`/`.js` file and call them in any expression:
 ```
@@ -522,10 +522,10 @@ use fmt, slug from "~/lib/format.ts"        # named exports ONLY (the .ts is a f
 Text "{fmt(order.total)}"                    # called like any expression
 Link "{slug(post.title)}" -> "/blog/{post.id}"
 ```
-**Paths: prefer `~/` (absolute, from `src/`).** `~/lib/format.ts` resolves the SAME from EVERY file — no
+**Paths: prefer `~/` (absolute, from `src/`).** `~/lib/format.ts` resolves the SAME from EVERY file - no
 counting `../`. Write `use x from "~/lib/format.ts"` whether you're in `src/pages/a/b.muten` or a part; it's
 always `src/lib/format.ts`. (`./`/`../` relative still works, but `~/` is the canonical, location-independent form.)
-A `use` function can ALSO be **called as a statement inside an action or `effect`** — a side effect (scroll,
+A `use` function can ALSO be **called as a statement inside an action or `effect`** - a side effect (scroll,
 focus, analytics) that Muten can't express:
 ```
 use track, scrollBottom from "./fx.ts"
@@ -539,22 +539,22 @@ action send(text: text) mutates messages {
 > • **localStorage persistence** → the **`persist`** keyword on a state (§5), NOT a `use` fn that does `localStorage.setItem`.
 > • **"is X selected / favorited"** → **`contains`** on a `list<number>` of ids (§8), NOT a JS `.some(x => x.id === id)`.
 > • **filter / find / aggregate a list** → **`where` / `count where` / `sum by`** (§8), NOT `.filter`/`.find`/`.reduce`.
-> A `use` fn is for genuine foreign logic (date math, a formatting lib, a 3rd-party SDK) — never to reimplement a built-in.
+> A `use` fn is for genuine foreign logic (date math, a formatting lib, a 3rd-party SDK) - never to reimplement a built-in.
 The call is checked like any other (undeclared → `unknown-function`). This replaces the old "every side effect
 needs a `Custom` component" pattern. Keep the border **synchronous** (no async/`await`); for async I/O use a
 `query` / `create` / `update` / `delete` (those are async with `.pending`/`.error`).
 
 Import zod/date-fns/nanoid/whatever *inside* `format.ts` and expose tidy named functions; Muten sees only the
 names, so the oracle still checks your calls. For a visual widget Muten can't express (a chart, a map, a
-date-picker), drop to a vanilla-JS `Custom` (§13) — there is no framework-component escape; Muten owns the whole UI.
+date-picker), drop to a vanilla-JS `Custom` (§13) - there is no framework-component escape; Muten owns the whole UI.
 
 ## 15. Gotchas
-- It is NOT JSX — PascalCase primitives + `{ }` children; no JSX/hooks/`className` anywhere.
-- No `main.js`/`<script>` — `app.muten` is the entry.
-- `class()` is the ONLY way to style — layout AND look (Tailwind utilities, or your CSS backed by `theme.muten` vars).
+- It is NOT JSX - PascalCase primitives + `{ }` children; no JSX/hooks/`className` anywhere.
+- No `main.js`/`<script>` - `app.muten` is the entry.
+- `class()` is the ONLY way to style - layout AND look (Tailwind utilities, or your CSS backed by `theme.muten` vars).
 - `Image` without `alt` fails validation (`alt("")` for decorative).
 - Actions may only touch their declared `mutates`.
-- **The runnable builds are `muten dev` (local dev, surgical HMR) and `muten bundle` (production CSR); `muten build` is the zero-JS SSG** (styled + SSR'd, but no `use` bundling / no cross-page state — §3).
+- **The runnable builds are `muten dev` (local dev, surgical HMR) and `muten bundle` (production CSR); `muten build` is the zero-JS SSG** (styled + SSR'd, but no `use` bundling / no cross-page state - §3).
 - **Paths are quoted strings** (`-> "/x"`, `routes { "/x" -> p }`); a hyphenated reactive class must be quoted (`class("is-open" when x)`).
 - **`Custom` inputs need `@` to pass state** (`inputs(data: @items)`); a snapshot at mount, reactive only if `mount` returns an updater fn (§13).
 - Want a library? CSS → `class()`. JS function → `use` (§14, also callable in actions). A widget → `Custom` (§13). There is no framework-component escape.

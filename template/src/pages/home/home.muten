@@ -1,5 +1,5 @@
-# The starter welcome page. Skin with class(…) + src/styles.css. Delete it and build your own — or just
-# ask your AI assistant; it has the full muten reference in .claude/. Pure muten — no JS, no escape hatch.
+# The starter welcome page. Skin with class(…) + src/styles.css. Delete it and build your own - or just
+# ask your AI assistant; it has the full muten reference in .claude/. Pure muten - no JS, no escape hatch.
 # (Classes are `mw-*`-prefixed so the starter never collides with a CSS framework's components.)
 screen home
 
@@ -10,7 +10,7 @@ Page class("mw-welcome") {
       Image "/muten.svg" alt("muten logo") class("mw-logo")
       Title "muten" class("mw-brand")
       Text "An AI-first frontend framework." class("mw-tagline")
-      Text "You write small .muten files. muten compiles them to vanilla JS plus fine-grained signals — no virtual DOM, no runtime to ship. The language stays small and analyzable, so an AI can locate and mutate your app cheaply." class("mw-lead")
+      Text "You write small .muten files. muten compiles them to vanilla JS plus fine-grained signals - no virtual DOM, no runtime to ship. The language stays small and analyzable, so an AI can locate and mutate your app cheaply." class("mw-lead")
     }
 
     Stack class("mw-stats") {
@@ -24,15 +24,15 @@ Page class("mw-welcome") {
       Stack class("mw-cards") {
         Stack class("mw-card") { Title "Edit this page" h3 class("mw-card-title")  Text "src/pages/home/home.muten" class("mw-card-text") }
         Stack class("mw-card") { Title "Add a route" h3 class("mw-card-title")  Text "Map URLs to pages in src/app.muten" class("mw-card-text") }
-        Stack class("mw-card") { Title "Style it" h3 class("mw-card-title")  Text "class(…) plus your CSS in src/styles.css — Tailwind optional" class("mw-card-text") }
+        Stack class("mw-card") { Title "Style it" h3 class("mw-card-title")  Text "class(…) plus your CSS in src/styles.css - Tailwind optional" class("mw-card-text") }
         Stack class("mw-card") { Title "Need a JS widget?" h3 class("mw-card-title")  Text "Mount any vanilla-JS library with a Custom component" class("mw-card-text") }
       }
     }
 
     Stack class("mw-section") {
       Title "Your AI already knows muten" h2 class("mw-h2")
-      Text "The full language reference ships in this project under .claude — an AGENTS guide plus a Claude skill. Ask your assistant to build a page; it reads that instead of guessing." class("mw-lead")
-      Text "More Claude skills: docs.claude.com — Claude Code, Skills." class("mw-note")
+      Text "The full language reference ships in this project under .claude - an AGENTS guide plus a Claude skill. Ask your assistant to build a page; it reads that instead of guessing." class("mw-lead")
+      Text "More Claude skills: docs.claude.com - Claude Code, Skills." class("mw-note")
     }
 
   }

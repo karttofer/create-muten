@@ -14,11 +14,11 @@ sources { products: "https://api.shop.com/products" }      # GET, the response I
 
 Page {
   when products.loading { Text "Loading…" }
-  each products.data as p { Text "{p.name} — ${p.price}" }
+  each products.data as p { Text "{p.name} - ${p.price}" }
 }
 ```
 
-A `sources` entry is a complete HTTP request — a bare URL, or an object:
+A `sources` entry is a complete HTTP request - a bare URL, or an object:
 
 ```muten
 sources {
@@ -27,13 +27,13 @@ sources {
 }
 ```
 
-- **`at`** reads the array out of `json[at]` — dotted for nested envelopes (`"data.posts"`). Without `at`, the
+- **`at`** reads the array out of `json[at]` - dotted for nested envelopes (`"data.posts"`). Without `at`, the
   response itself is the array.
 - **`body`** is JSON-encoded (and sets `content-type`).
-- **Headers ship to the client** like any browser fetch — use public keys or per-user tokens, never a server secret.
+- **Headers ship to the client** like any browser fetch - use public keys or per-user tokens, never a server secret.
 - At `muten build`, **GET** sources are fetched and **baked into the HTML** (SSG); non-GET run only client-side.
 
-## One backend, declared once — `api {}`
+## One backend, declared once - `api {}`
 
 Put the base URL + default headers in `app.muten` so every source inherits them:
 
@@ -42,7 +42,7 @@ Put the base URL + default headers in `app.muten` so every source inherits them:
 api { base: "https://api.shop.com/v1"  headers: { Authorization: "Bearer KEY" } }
 ```
 ```muten
-# any page — only what differs
+# any page - only what differs
 sources {
   products: { url: "/products", at: "data" }   # → https://api.shop.com/v1/products, with the header
 }
@@ -68,7 +68,7 @@ sources {
 
 No `api` field → the client named `default`.
 
-## Writing — REST CRUD
+## Writing - REST CRUD
 
 A source-backed list gets `create` / `update` / `delete`, fired from an action. Each hits the resource endpoint
 (reusing the source's base + headers), updates the list **optimistically**, and reverts on failure:
@@ -86,7 +86,7 @@ when buy.pending { Text "Saving…" }
 when buy.error   { Text "Could not save: {buy.error}" }
 ```
 
-## Re-running a query — `refetch`
+## Re-running a query - `refetch`
 
 For search / pagination / filters, call `refetch` with **named params** in an action; they become the query
 string (url-encoded) and the list reloads:
@@ -100,7 +100,7 @@ action next   mutates products, page       { page.set(page + 1)  products.refetc
 
 The query's `.loading` / `.error` reflect the refetch.
 
-**Path params — `{name}` in the source URL.** A refetch param that matches a `{name}` placeholder in the source
+**Path params - `{name}` in the source URL.** A refetch param that matches a `{name}` placeholder in the source
 URL is substituted into the **path** (the rest become the query string). This is how you fetch a nested or
 detail resource:
 
@@ -112,9 +112,9 @@ action loadUser(uid: number) mutates posts { posts.refetch(id: uid) }   # → GE
 ```
 
 A `{name}` with no matching param is left literal, so call `refetch` (e.g. on mount via an action, or from a
-route param) before the data is valid — the **initial** auto-fetch has no params to fill the placeholder.
+route param) before the data is valid - the **initial** auto-fetch has no params to fill the placeholder.
 
-## Real-time — `query x live` (WebSocket)
+## Real-time - `query x live` (WebSocket)
 
 Append `live` to subscribe to a **WebSocket** instead of fetching: the server **pushes**, Muten reacts
 (event-driven, not polling). Each message replaces the data; keyed reconciliation updates only the changed
@@ -127,11 +127,11 @@ sources { prices: { url: "ws://feed.example.com/prices", at: "data" } }
 each prices.data as p { Text "{p.symbol}  {p.value}" }
 ```
 
-It auto-reconnects with backoff and closes on unmount. The socket is **receive-only** — to *send* (a chat
+It auto-reconnects with backoff and closes on unmount. The socket is **receive-only** - to *send* (a chat
 message), write through an action (a `create`/`post`, or a `use` fn that POSTs); the server then pushes the
 updated list back.
 
-## Escape hatch — explicit request
+## Escape hatch - explicit request
 
 When the API isn't RESTful, `post`/`put`/`delete` a `"client:/path"` (interpolated) with an optional `body`,
 in an action:
@@ -146,6 +146,6 @@ It uses the named client's base + headers and is async with `.pending`/`.error`.
 `delete` when the API is RESTful (those also update the list); reach for this only when the convention doesn't fit.
 
 ## See also
-- [State](state.md) — `query` state and `.loading`/`.error`/`.data`.
-- [Actions](actions.md) — where CRUD and `refetch` are called.
-- [SEO](seo.md) — GET sources are baked into the static HTML at build.
+- [State](state.md) - `query` state and `.loading`/`.error`/`.data`.
+- [Actions](actions.md) - where CRUD and `refetch` are called.
+- [SEO](seo.md) - GET sources are baked into the static HTML at build.

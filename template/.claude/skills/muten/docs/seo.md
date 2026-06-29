@@ -1,11 +1,11 @@
 # SEO
 
 Muten is strong on SEO **by construction**: `muten build` pre-renders every route to real, crawlable HTML
-(no JS required to see the content), and on top of that the build emits the standard SEO machinery — sitemap,
-robots, canonical, Open Graph, structured data — **derived from your routes and `meta {}`**. You write the
+(no JS required to see the content), and on top of that the build emits the standard SEO machinery - sitemap,
+robots, canonical, Open Graph, structured data - **derived from your routes and `meta {}`**. You write the
 title and description; the rest is automatic.
 
-## Per-page `<head>` — the `meta {}` block
+## Per-page `<head>` - the `meta {}` block
 
 A page declares its metadata; the compiler turns it into `<head>` tags:
 
@@ -14,7 +14,7 @@ screen product
 param id
 
 meta {
-  title       "Acme Widget — Store"
+  title       "Acme Widget - Store"
   description "A durable widget for everyday use."
   lang        "en"        # optional → <html lang="en"> (the default is en)
 }
@@ -25,9 +25,9 @@ Page { Title "Widget {id}" }
 Emitted:
 
 ```html
-<title>Acme Widget — Store</title>
+<title>Acme Widget - Store</title>
 <meta name="description" content="A durable widget for everyday use.">
-<meta property="og:title" content="Acme Widget — Store">         <!-- auto-derived from title -->
+<meta property="og:title" content="Acme Widget - Store">         <!-- auto-derived from title -->
 <meta property="og:description" content="A durable widget for everyday use."> <!-- auto-derived -->
 ```
 
@@ -38,17 +38,17 @@ Emitted:
 ## Pre-rendered, crawlable HTML (SSG)
 
 `muten build` writes `dist/<route>/index.html` for every route as **real HTML with the content already in it**
-— a crawler (or a user with JS off) sees the full page. Data-backed pages whose `sources` are `GET` are
+- a crawler (or a user with JS off) sees the full page. Data-backed pages whose `sources` are `GET` are
 **fetched at build** and baked in, so lists render with real rows, not just placeholders.
 
-## SEO by nature — what the build emits for free
+## SEO by nature - what the build emits for free
 
 After building the routes, `muten build` also emits, with **no per-page work**:
 
-- **`dist/sitemap.xml`** — one `<url>` per built route. Add a page (a route in `app.muten`) and it's in the sitemap.
-- **`dist/robots.txt`** — allows crawling and points to the sitemap.
+- **`dist/sitemap.xml`** - one `<url>` per built route. Add a page (a route in `app.muten`) and it's in the sitemap.
+- **`dist/robots.txt`** - allows crawling and points to the sitemap.
 - per page, injected into `<head>`:
-  - **`<link rel="canonical">`** and **`og:url`** — the page's canonical address.
+  - **`<link rel="canonical">`** and **`og:url`** - the page's canonical address.
   - **`og:type` `website`**.
   - a **JSON-LD `WebPage`** block (`name` / `description` / `url`) from the page's `meta {}`.
 
@@ -60,7 +60,7 @@ After building the routes, `muten build` also emits, with **no per-page work**:
 <script type="application/ld+json">{"@context":"https://schema.org","@type":"WebPage","name":"Products","description":"…","url":"https://your-site.com/products"}</script>
 ```
 
-### Absolute URLs — `--url=`
+### Absolute URLs - `--url=`
 
 Sitemaps and canonical links should be absolute, which needs your deploy origin. Pass it at build:
 
@@ -70,7 +70,7 @@ muten build --url=https://your-site.com
 
 Without `--url=`, the sitemap and canonical are emitted **relative** (and the build prints a note). Pass the
 origin in CI / your deploy command and every SEO URL becomes absolute. The origin is a deploy detail, so it's
-a build flag — not something in the app source.
+a build flag - not something in the app source.
 
 ## Which build?
 
@@ -96,5 +96,5 @@ Use `muten build` for content/marketing/catalog sites where crawlability matters
 You never hand-author a sitemap, a canonical tag, or a schema block. Adding a page is enough.
 
 ## See also
-- [Pages & routing](routing.md) — where routes (and thus the sitemap) come from.
-- [Deployment](deployment.md) — SSG vs SPA, hosting, the SPA fallback.
+- [Pages & routing](routing.md) - where routes (and thus the sitemap) come from.
+- [Deployment](deployment.md) - SSG vs SPA, hosting, the SPA fallback.

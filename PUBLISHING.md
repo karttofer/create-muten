@@ -19,7 +19,7 @@ repository is private), in your **global** `~/.npmrc` (never commit a token):
 npm publish
 ```
 
-Ships `index.js` + `template/` — including `template/_npmrc`, which the CLI renames to `.npmrc` in
+Ships `index.js` + `template/` - including `template/_npmrc`, which the CLI renames to `.npmrc` in
 every new app so the app's install resolves `@karttofer/muten`. After it succeeds the package shows up
 under **Packages** on the repo page. Bump `version` in `package.json` before each release.
 

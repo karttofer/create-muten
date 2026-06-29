@@ -1,8 +1,8 @@
-# Stores — app-global state
+# Stores - app-global state
 
 A `.store` file holds state shared across pages, with **no prop drilling**. The file name is the domain, and
 every member is referenced as `domain.member` from any page or shell. The runner auto-detects every
-`.store` file — you don't register them.
+`.store` file - you don't register them.
 
 ## A store
 
@@ -28,11 +28,11 @@ Button "☰" -> ui.toggleMenu
 | `state { … }` | the app-global reactive cells (same types + `persist` as page state) |
 | `get name = <expr>` | a **memoized** derived value (recomputes when its inputs change) |
 | `action … mutates …` | a global mutation (same op set as a page action) |
-| `effect { … }` | a reactive side-effect — re-runs when the store state it reads changes (Angular-style) |
+| `effect { … }` | a reactive side-effect - re-runs when the store state it reads changes (Angular-style) |
 
 ## App-global persistence
 
-`persist` works in a store, which is the right home for state that must **survive reload and be shared** —
+`persist` works in a store, which is the right home for state that must **survive reload and be shared** -
 favorites, a cart, settings, theme:
 
 ```muten
@@ -83,6 +83,6 @@ routes { "/cart" -> cart guard auth.loggedIn else "/login" }
 See [Routing § Guards](routing.md#guards).
 
 ## See also
-- [State & reactivity](state.md) — types, signals, `persist`.
-- [Actions](actions.md) — the mutation op set (shared with stores).
-- [Routing](routing.md) — guards.
+- [State & reactivity](state.md) - types, signals, `persist`.
+- [Actions](actions.md) - the mutation op set (shared with stores).
+- [Routing](routing.md) - guards.
