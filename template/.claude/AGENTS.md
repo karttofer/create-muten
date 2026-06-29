@@ -13,7 +13,7 @@ escapes — `use` for JS functions, `Custom` for a vanilla-JS widget — never a
 >   KPIs, kanban, calendar via a `use` date facade, async queries).
 
 ## Golden rules
-- UI → `.muten` files. App-global state → `.store` files. Both compile via the `@muten/core` Vite plugin.
+- UI → `.muten` files. App-global state → `.store` files. Both compile via the `@muten/core` runner (embedded esbuild).
 - **No `main.js`.** `src/app.muten` IS the entry (loaded by `index.html`). Never add a JS entry/bootstrap.
 - Primitives are **PascalCase** (`Stack`, `Text`, `Button`); control flow is lowercase (`when`, `each`).
 - **`class("...")`** = the single way to style (your CSS / Tailwind utilities) — layout AND look. Muten
@@ -58,14 +58,14 @@ Page class("flex flex-col gap-4 p-6") {
 - **Styling:** ONE path — `class("…")`. Tailwind utilities (`class("flex flex-row gap-4 p-6")`) or your own CSS classes backed by `theme.muten`'s CSS vars (`class("card")` + `.card { padding: var(--space-lg) }`).
 
 ## Dependencies & limits
-- **CSS / Tailwind / SCSS: YES** — it's a Vite app; install them and use `class("…")` + your CSS.
+- **CSS / Tailwind / SCSS: YES** — it's a muten app; install them and use `class("…")` + your CSS.
 - **React / Vue / Svelte: NO — at all.** Muten ships ZERO framework runtime; pages are `.muten` (vanilla DOM).
   A widget Muten can't express enters as a vanilla `Custom` component (SKILL §13); JS logic via `use` (§14) —
   for the foreign piece, never the whole UI.
 - Routing uses **quoted string paths** (`routes { "/path" -> page }`, `Link -> "/x"`, History API; deploy serves `index.html` for any path); params (`"/product/:id"` → `param id`). SEO: `meta { title "…" description "…" }` per page → `<head>` tags (og auto-derived). Shell has no local state → use a
   `.store`. Flip a bool with `x.toggle()`. All styling — layout and visuals — goes through `class()`.
-- **Known limits (plan around these):** the **runnable** build is `vite build` / `npm run dev`; `muten build` is the zero-JS SSG (styled + SSR'd, but can't bundle `use` functions or keep store state across full-page navigations). `Form` renders ALL entity fields (types text/email/number/bool/enum/date/password/textarea; **no** conditional fields; an unknown type is flagged `unknown-field-type`; an enum can't be `required`). `DataTable` cells are raw (format with `each`). No standalone `Select`. An `Icon` name is a static literal — a per-value icon is `match` over static Icons, a data-URL icon is an `Image`. `Custom` inputs need `@` and are a snapshot. `query x live` needs the server to send a row `id`.
+- **Known limits (plan around these):** the runnable builds are `muten dev` (local dev, surgical HMR) and `muten bundle` (production CSR); `muten build` is the zero-JS SSG (styled + SSR'd, but can't bundle `use` functions or keep store state across full-page navigations). `Form` renders ALL entity fields (types text/email/number/bool/enum/date/password/textarea; **no** conditional fields; an unknown type is flagged `unknown-field-type`; an enum can't be `required`). `DataTable` cells are raw (format with `each`). No standalone `Select`. An `Icon` name is a static literal — a per-value icon is `match` over static Icons, a data-URL icon is an `Image`. `Custom` inputs need `@` and are a snapshot. `query x live` needs the server to send a row `id`.
 - The full reference (stores, routing, theme, every primitive, the limits in §3) is in [`skills/muten/SKILL.md`](skills/muten/SKILL.md).
 
 ## Commands
-`npm run dev` (dev server + HMR) · `npm run build` (production) · `npm run lint` (validate `.muten`).
+`npm run dev` (`muten dev` — esbuild dev server + surgical HMR) · `npm run build` (`muten bundle` — production CSR) · `npm run lint` (`muten check`).

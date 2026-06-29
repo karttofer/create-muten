@@ -60,7 +60,7 @@ The **Doc** (a flat, addressable, JSON-serializable tree) is the one thing valid
 
 ## 8. Two build modes
 
-- **`vite build`** → a single-page app (client-side router, ships the tiny signals runtime).
+- **`muten bundle`** → a single-page app (client-side router, ships the tiny signals runtime).
 - **`muten build`** → static SSG (zero-JS where possible, real crawlable HTML, sitemap/SEO).
 
 See [Deployment](deployment.md).

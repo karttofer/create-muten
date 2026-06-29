@@ -37,6 +37,9 @@ a { color: inherit; text-decoration: none; }
 /* a11y: skip-link (muten emits it in the shell) — off-screen until keyboard-focused */
 .mu-skip-link { position: absolute; left: -9999px; top: 8px; padding: 8px 16px; background: #111; color: #fff; border-radius: 6px; z-index: 1000; }
 .mu-skip-link:focus { left: 8px; }
+/* <main> is the skip-link / on-navigation focus target (tabindex=-1): a reading-position anchor, not an
+   interactive control, so it gets no focus ring when clicked/focused. */
+#mu-main:focus { outline: none; }
 `;
 // CSS + Tailwind v4: one @import + the @tailwindcss/vite plugin. Preflight does the reset, so this stays
 // minimal — only `.mu-stack` (Muten's Stack primitive; `mu-` so it never collides with DaisyUI's own
@@ -52,6 +55,10 @@ const tailwindStyles = (daisyui) => `@import "tailwindcss";${daisyui ? '\n@plugi
   .mu-stack, .mu-page, .mu-header, .mu-nav, .mu-sidebar, .mu-footer { display: flex; flex-direction: column; min-height: 0; }
   .mu-button, .mu-link { display: inline-flex; align-items: center; gap: 6px; }
   .muten-outlet { flex: 1 1 auto; min-width: 0; }
+  /* a11y skip link the runtime injects — visually hidden until keyboard-focused. */
+  .mu-skip-link { position: absolute; left: -9999px; top: 8px; padding: 8px 16px; border-radius: 6px; z-index: 1000; }
+  .mu-skip-link:focus { left: 8px; }
+  #mu-main:focus { outline: none; } /* the <main> focus target (tabindex=-1) is a reading anchor, not a control: no click ring. */
 }
 `;
 // Starter welcome page styles (used by the scaffolded home.muten). Self-contained plain CSS — looks good
@@ -98,59 +105,73 @@ const FORM_CSS = `
   background: var(--color-primary, #4f46e5); color: var(--color-onprimary, #ffffff); }
 .mu-submit:hover { filter: brightness(1.08); }
 `;
-// vite.config composed from the chosen options — muten always; tailwind last. `styling` is the theme
-// ADAPTER (data) for the chosen library, passed to muten() so it emits theme.muten in that format.
-const viteConfig = ({ tailwind, styling, classes }) => {
-  const imports = [`import muten from '@muten/core/vite-plugin-muten.js';`];
-  if (tailwind) imports.push(`import tailwindcss from '@tailwindcss/vite';`);
-  const stylingObj = {}; // { theme, classes } — both pure data; the engine ships neither
-  if (styling) stylingObj.theme = styling;
-  if (classes) stylingObj.classes = classes;
-  const mutenCall = Object.keys(stylingObj).length
-    ? `muten({\n    styling: ${JSON.stringify(stylingObj, null, 2).replace(/\n/g, '\n    ')},\n  })`
-    : 'muten()';
-  const plugins = [mutenCall, ...(tailwind ? ['tailwindcss()'] : [])];
-  return `${imports.join('\n')}\n\nexport default {\n  plugins: [${plugins.join(', ')}],\n};\n`;
+// muten.config (muten syntax) composed from the chosen options. The styling block is the theme ADAPTER for
+// the chosen library: muten emits theme.muten in that format. Selectors drop the trailing ` {` and use single
+// quotes (muten strings can't hold `{`/`"`); muten.config wraps them back into blocks. css-only is zero-config
+// (no file — muten emits :root vars). There is no muten.config for css-only: `muten dev`/`muten bundle` is the
+// runner (embedded esbuild) and needs no config; a muten.config is only written for Tailwind/DaisyUI.
+const mutenConfigText = ({ styling, classes }) => {
+  const key = (k) => /^[a-z][a-z0-9]*$/i.test(k) ? k : `"${k}"`;            // quote hyphenated/non-ident keys
+  const sel = (open) => open.replace(/\s*\{\s*$/, '').replace(/"/g, "'");   // "@theme {" -> "@theme"; double -> single quotes
+  const L = [
+    '# muten.config — the build, in muten. The styling block maps theme.muten -> CSS variables for your',
+    '# library (the engine ships none). The only .js/.ts in a muten app are the escapes (Custom / use).',
+    '', 'styling {',
+    `  prefix { ${Object.entries(styling.prefix).map(([s, p]) => `${s} "${p}"`).join('  ')} }`,
+    '  blocks {',
+  ];
+  styling.blocks.forEach((b, i) => {
+    const name = (b.attrs && b.attrs.name) || ['base', 'light', 'extra'][i] || `b${i}`;
+    const attrs = b.attrs ? ` attrs { ${Object.entries(b.attrs).map(([k, v]) => `${key(k)} "${v}"`).join('  ')} }` : '';
+    L.push(`    ${name} { selector "${sel(b.open)}"${attrs} sections [${b.sections.join(', ')}] }`);
+  });
+  L.push('  }');
+  if (classes) { L.push('  classes {'); for (const [slot, v] of Object.entries(classes)) L.push(`    ${key(slot)} "${v}"`); L.push('  }'); }
+  L.push('}');
+  return L.join('\n') + '\n';
 };
-// theme.muten is AGNOSTIC values; a `styling` ADAPTER (data, in vite.config) tells muten how to emit them
+// theme.muten is AGNOSTIC values; a `styling` ADAPTER (data, in muten.config) tells muten how to emit them
 // for the chosen library. The scaffolder seeds a skeleton + the matching adapter per backend (the ENGINE
 // itself knows no library). Plain css/scss gets an EMPTY theme.muten (just the object) — fill it and muten
 // emits :root vars.
 
 // DaisyUI skeleton: DaisyUI's theme slots, pre-filled with a clean light starter. Edit freely; Daisy
 // inherits any slot you omit. Emitted via the daisy adapter as `@plugin "daisyui/theme" { … }`.
-const DAISY_THEME = `# Your theme (DaisyUI slots). muten emits these via the styling adapter in vite.config.
+const DAISY_THEME = `# Your theme (DaisyUI slots) — the SINGLE source for BOTH schemes. \`colors {}\` is the shared brand; the
+# scheme-specific surfaces (base-*, neutral) live in \`dark {}\` / \`light {}\`. muten emits TWO DaisyUI themes via
+# the adapter; flip <html data-theme="light"> to switch. Edit freely; Daisy inherits any slot you omit.
 theme {
   colors {
-    primary             "#4f46e5"
-    "primary-content"   "#ffffff"
-    secondary           "#0ea5e9"
-    "secondary-content" "#ffffff"
-    accent              "#14b8a6"
-    "accent-content"    "#ffffff"
-    neutral             "#1f2937"
-    "neutral-content"   "#e5e7eb"
-    "base-100"          "#ffffff"
-    "base-200"          "#f3f4f6"
-    "base-300"          "#e5e7eb"
-    "base-content"      "#1f2937"
-    info                "#0ea5e9"
-    success             "#16a34a"
-    warning             "#f59e0b"
-    error               "#dc2626"
+    primary "#4f46e5"  "primary-content" "#ffffff"
+    secondary "#0ea5e9"  "secondary-content" "#ffffff"
+    accent "#14b8a6"  "accent-content" "#ffffff"
+    info "#0ea5e9"  success "#16a34a"  warning "#f59e0b"  error "#dc2626"
+  }
+  dark {
+    neutral "#1f2937"  "neutral-content" "#e5e7eb"
+    "base-100" "#1a1a1f"  "base-200" "#141418"  "base-300" "#26262e"  "base-content" "#e5e7eb"
+  }
+  light {
+    neutral "#e5e7eb"  "neutral-content" "#1f2937"
+    "base-100" "#ffffff"  "base-200" "#f3f4f6"  "base-300" "#e5e7eb"  "base-content" "#1f2937"
   }
   radius { box "0.5rem"  field "0.375rem"  selector "0.5rem" }
-  scheme { mode "light" }
+  scheme { mode "dark" }
 }
 `;
 // Tailwind skeleton: brand colors + the token scale. Emitted via the tailwind adapter into `@theme { … }`.
-const TAILWIND_THEME = `# Your theme. muten emits these into Tailwind's @theme via the styling adapter in vite.config.
+const TAILWIND_THEME = `# Your theme — the SINGLE source for BOTH color schemes. \`colors {}\` is shared (brand); \`dark {}\` and
+# \`light {}\` hold the per-scheme tokens. muten emits the dark set into Tailwind's @theme (the default) and the
+# light set under [data-theme="light"]. Flip <html data-theme="light"> to switch; everything re-themes from here.
+# Use as bg-bg / bg-surface / text-fg / border-border in class(), or var(--color-…) in your CSS.
 theme {
-  colors      { primary "#4f46e5"  secondary "#0ea5e9"  accent "#14b8a6" }
-  space       { xs "0.25rem"  sm "0.5rem"  md "1rem"  lg "1.5rem"  xl "2rem" }
-  font        { sm "0.875rem"  md "1rem"  lg "1.125rem"  xl "1.25rem" }
-  radius      { sm "0.25rem"  md "0.5rem"  lg "0.75rem" }
+  colors { primary "#4f46e5"  secondary "#0ea5e9"  accent "#14b8a6" }
+  dark   { bg "#0b0b0f"  surface "#16161d"  border "#26262e"  fg "#fafafa"  muted "#a1a1aa" }
+  light  { bg "#ffffff"  surface "#f7f7f8"  border "#e6e6e9"  fg "#18181b"  muted "#52525b" }
+  scheme { mode "dark" }
 }
+# Tailwind owns spacing/sizing/radius (p-6, gap-4, rounded-lg, max-w-md). Don't add space/font/radius named
+# sm/md/lg/xl here — they emit --spacing-md etc. and collide with Tailwind's max-w-md / rounded-md.
 `;
 // Base (no framework): empty theme.muten — the bare object. Fill it and muten emits :root CSS vars.
 const EMPTY_THEME = `# Your theme. Empty for now. Add sections (e.g. \`colors { primary "#4f46e5" }\`) and muten
@@ -158,11 +179,15 @@ const EMPTY_THEME = `# Your theme. Empty for now. Add sections (e.g. \`colors { 
 theme {
 }
 `;
-// Styling ADAPTERS (pure data): how muten renders theme.muten for each library. Live in YOUR vite.config
+// Styling ADAPTERS (pure data): how muten renders theme.muten for each library. Live in YOUR muten.config
 // (editable) — the engine ships none. A new library = a new adapter here, no muten change.
 const DAISY_ADAPTER = {
-  prefix: { colors: '--color-', radius: '--radius-' },
-  blocks: [{ open: '@plugin "daisyui/theme" {', close: '}', attrs: { name: 'app', default: 'true', 'color-scheme': '$scheme' }, sections: ['colors', 'radius'] }],
+  // shared brand + each scheme -> its own DaisyUI theme block (dark is the default). Toggle <html data-theme>.
+  prefix: { colors: '--color-', dark: '--color-', light: '--color-', radius: '--radius-' },
+  blocks: [
+    { open: '@plugin "daisyui/theme" {', close: '}', attrs: { name: 'dark', default: 'true', 'color-scheme': 'dark' }, sections: ['colors', 'dark', 'radius'] },
+    { open: '@plugin "daisyui/theme" {', close: '}', attrs: { name: 'light', 'color-scheme': 'light' }, sections: ['colors', 'light', 'radius'] },
+  ],
 };
 // CLASS MAP (pure data): muten's auto-generated <Form> parts — the input/label/submit class() can't reach —
 // emit THESE DaisyUI classes instead of the default mu-*. No bridge CSS; the engine stays agnostic.
@@ -173,8 +198,12 @@ const DAISY_CLASSES = {
   submit: 'btn btn-primary w-full',
 };
 const TAILWIND_ADAPTER = {
-  prefix: { colors: '--color-', space: '--spacing-', font: '--font-', radius: '--radius-' },
-  blocks: [{ open: '@theme {', close: '}', sections: ['colors', 'space', 'font', 'radius'] }],
+  // COLORS only (Tailwind owns spacing/sizing). shared + `dark` -> @theme defaults; `light` -> [data-theme="light"].
+  prefix: { colors: '--color-', dark: '--color-', light: '--color-' },
+  blocks: [
+    { open: '@theme {', close: '}', sections: ['colors', 'dark'] },
+    { open: '[data-theme="light"] {', close: '}', sections: ['light'] },
+  ],
 };
 const TAILWIND_NOTE = `
 ## Styling: Tailwind CSS v4 (installed)
@@ -300,7 +329,7 @@ async function main() {
     writeFileSync(join(target, 'src', style === 'scss' ? 'styles.scss' : 'styles.css'), RESET + WELCOME_CSS + FORM_CSS);
     writeFileSync(join(target, 'theme.muten'), EMPTY_THEME);             // no framework -> empty theme.muten (you fill it; muten emits :root vars)
   }
-  const styling = daisyui ? DAISY_ADAPTER : tailwind ? TAILWIND_ADAPTER : null; // the theme adapter wired into vite.config
+  const styling = daisyui ? DAISY_ADAPTER : tailwind ? TAILWIND_ADAPTER : null; // the theme adapter wired into muten.config
   const classes = daisyui ? DAISY_CLASSES : null;                               // the Form class map (DaisyUI only — it has component classes; Tailwind-only keeps mu-* + your own rules)
   addDev({ '@iconify-json/lucide': '^1.2.0' }); // default icon set for `Icon "lucide:…"` (build-inlined). Add more sets with `npm i -D @iconify-json/<set>`.
   if (style === 'scss') addDev({ sass: '^1.101.0' });
@@ -320,7 +349,7 @@ async function main() {
     pkg.scripts = { ...pkg.scripts, tauri: 'tauri', 'tauri:dev': 'tauri dev', 'tauri:build': 'tauri build' };
     appendAgents(TAURI_NOTE(pm));
   }
-  writeFileSync(join(target, 'vite.config.mjs'), viteConfig({ tailwind, styling, classes })); // composed: muten (+ theme adapter + Form class map) + chosen plugins
+  if (styling) writeFileSync(join(target, 'muten.config'), mutenConfigText({ styling, classes })); // the build config, in muten (theme adapter + Form class map); css-only is zero-config
   writeFileSync(pkgPath, JSON.stringify(pkg, null, 2) + '\n');
 
   const desc = `muten, ${style}${tailwind ? ' + Tailwind' : ''}${daisyui ? ' + DaisyUI' : ''}${vercel ? ' + Vercel' : ''}${tauri ? ' + Tauri' : ''}`;

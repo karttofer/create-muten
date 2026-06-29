@@ -1,7 +1,7 @@
 # Stores — app-global state
 
 A `.store` file holds state shared across pages, with **no prop drilling**. The file name is the domain, and
-every member is referenced as `domain.member` from any page or shell. The Vite plugin auto-detects every
+every member is referenced as `domain.member` from any page or shell. The runner auto-detects every
 `.store` file — you don't register them.
 
 ## A store

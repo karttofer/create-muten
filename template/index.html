@@ -1,7 +1,7 @@
 <!doctype html>
-<!-- data-theme="app" forces the theme.muten → DaisyUI theme (so the OS dark preference can't override your
-     light theme). Inert without DaisyUI. -->
-<html lang="en" data-theme="app">
+<!-- data-theme picks the active scheme from theme.muten (dark | light). It's the default; toggle it at runtime
+     to switch themes (a theme.store + a `use` fn that sets document.documentElement.dataset.theme). -->
+<html lang="en" data-theme="dark">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">

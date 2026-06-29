@@ -14,9 +14,9 @@ npm create muten@latest
 Muten ships as **two** packages - the same split as `vue` ↔ `create-vue`:
 
 - **[`@muten/core`](https://www.npmjs.com/package/@muten/core)**: the engine (compiler + runtime +
-  Vite plugin). Your app installs it as a normal dependency and it stays up to date on its own.
+  the runner: `muten dev` / `muten bundle`). Your app installs it as a normal dependency and it stays up to date on its own.
 - **`create-muten`** (this package) - a tiny, **zero-dependency** CLI whose only job is to generate a
-  new project already wired to the engine: `index.html`, the Vite config, a `theme.muten`, a first
+  new project already wired to the engine: `index.html`, a `theme.muten`, a first
   page and the right `package.json`.
 
 You run `create-muten` **once** to scaffold; after that you just work inside your project.
@@ -115,10 +115,10 @@ A minimal, conventional Muten app:
 
 ```
 my-app/
-├─ index.html              # entry - loads /src/app.muten through the Vite plugin
-├─ vite.config.mjs         # the @muten/core Vite plugin (dev server, HMR, routing)
+├─ index.html              # entry - loads /src/app.muten through muten's runner
+├─ muten.config            # the build, in muten (dev port; theme adapter with Tailwind/DaisyUI)
 ├─ theme.muten             # your design tokens: spacing, fonts, weights, breakpoints
-├─ package.json            # depends on @muten/core + vite
+├─ package.json            # depends on @muten/core (the runner is built in)
 └─ src/
    ├─ app.muten            # the ROOT: routes (+ an optional persistent shell)
    ├─ styles.css           # your look (.scss if you chose SCSS)
@@ -126,7 +126,7 @@ my-app/
       └─ home/home.muten   # a page - the folder name is its route
 ```
 
-There is **no hand-written `main.js`**: the Vite plugin compiles `src/app.muten` into the app's entry,
+There is **no hand-written `main.js`**: muten's runner compiles `src/app.muten` into the app's entry,
 so the whole app is `.muten` from the first line.
 
 ## What you can build
@@ -146,26 +146,26 @@ declarative 80% - CRUD, dashboards, catalogs, content, internal tools. For the r
 **Deploy, honestly:** `npm run dev` runs both tiers. For production:
 
 - `muten build` (CLI SSG) ships zero-JS HTML per route — now **fully styled** (it inlines the theme + project `styles.css`) and **pre-rendered** (it SSRs your store/`query` data). A no-bundler static export still can't bundle `use` functions (it warns) or persist store state across full-page navigations. Great for crawlable static/content pages.
-- **`vite build`** is the path for any **stateful** app. It bundles everything - `use` functions, `Custom` components, shared cross-page state - and is what most Muten apps ship with.
+- **`muten bundle`** is the path for any **stateful** app. It bundles everything - `use` functions, `Custom` components, shared cross-page state - and is what most Muten apps ship with.
 
-Most real apps use `vite build`.
+Most real apps use `muten bundle`.
 
 Full reference (every primitive, the tiers, the roadmap): [`@muten/core`](https://www.npmjs.com/package/@muten/core).
 
-> **Status: pre-1.0.** The core (language, compiler, CLI, Vite plugin, extension) is solid; the
-> ecosystem is young. Great for real apps, not yet for critical production.
+> **Status: pre-1.0.** The core (language, compiler, CLI, the runner — `muten dev`/`bundle` with surgical
+> HMR — and the VS Code extension) is solid; the ecosystem is young. Great for real apps, not yet for critical production.
 
 ## Known limitations
 
 These are honest gaps found during stress-testing. They are tracked; none are design mistakes.
 
-- **`muten build`** ships styled, SSR'd HTML, but a no-bundler static export can't bundle `use` functions or keep store state across full-page navigations (see Deploy above) — use `vite build` for a stateful app.
+- **`muten build`** ships styled, SSR'd HTML, but a no-bundler static export can't bundle `use` functions or keep store state across full-page navigations (see Deploy above) — use `muten bundle` for a stateful app.
 - `DataTable` renders raw cell values; no per-column formatting yet (use `each` + a `Part` for formatted cells).
 - No standalone `Select`: a `Form` auto-generates one for enum fields; outside a `Form`, build a button group.
 - An `Icon` name is a static literal; a per-value icon is a `match` over static Icons, a data-URL icon is an `Image`.
 - `Form` renders all entity fields (no conditional fields), enum fields cannot be `required`. Field types: `text`/`number`/`email`/`bool`/`enum`/`date`/`password`/`textarea` (an unknown type is flagged `unknown-field-type`; drop it to a `Custom`).
 - `query x live` (WebSocket) requires the server to send an `id` per row for keyed diffing.
-- `Custom` inputs receive a snapshot of state at mount; pass state via `@` props for reactivity.
+- `Custom` inputs get a snapshot of state at mount by default; for reactivity, `mount` returns an updater function that re-runs when the bound `@` state changes.
 
 ## Requirements
 

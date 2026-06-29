@@ -38,7 +38,7 @@ compiles them to vanilla JS + fine-grained signals (no virtual DOM, no framework
 - [CLI](reference/cli.md) — `build` (+ `--url=`), `check`/`lint`, `map`.
 
 ## Deployment
-- [Building & deploying](deployment.md) — `vite build` (SPA) vs `muten build` (SSG), the SPA fallback, Vercel, Tauri.
+- [Building & deploying](deployment.md) — `muten bundle` (SPA) vs `muten build` (SSG), the SPA fallback, Vercel, Tauri.
 
 ---
 

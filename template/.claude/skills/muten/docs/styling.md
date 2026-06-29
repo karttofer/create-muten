@@ -116,10 +116,17 @@ No reset or rules go in `theme.muten` — only values. The reset and look live i
 
 ### With a CSS framework — the agnostic adapter
 
-`theme.muten` holds your **values**; a **styling adapter** (pure data in `vite.config`, wired by the
+`theme.muten` holds your **values**; a **styling adapter** (pure data in `muten.config`, wired by the
 scaffolder per library) tells Muten how to emit them for Tailwind/DaisyUI. The **engine knows no library** —
-you bring the styling, Muten emits your theme into its format. Plain css/scss gets generic `:root` vars.
-Validation of class names is your library's job (its IntelliSense / build) — Muten stays agnostic.
+you bring the styling, Muten emits your theme into its format. Plain css/scss gets generic `:root` vars (no
+`muten.config` — only Tailwind/DaisyUI scaffolds get one). Validation of class names is your library's job
+(its IntelliSense / build) — Muten stays agnostic.
+
+The adapter is written in muten in `muten.config` under a `styling { … }` block: a `prefix { … }` map (section →
+CSS-var prefix) and `blocks { name { selector "…" sections [ … ] } }` (each `name` wraps the listed theme
+sections into one CSS block under that `selector`). Selectors drop the trailing `{` and use single quotes
+(muten strings can't hold `{`/`"`) — e.g. `selector "@theme"` or `selector "[data-theme='light']"`. DaisyUI
+also gets a `classes { … }` block that maps the auto-`Form` slots to its component classes.
 
 ## Why one path
 

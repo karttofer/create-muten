@@ -22,9 +22,10 @@ Every keyword, grouped by role. Keywords are **lowercase**.
 | `meta` | page | `<head>` metadata (title/description/lang) |
 | `routes` | `app.muten` | URL → page map |
 | `shell` | `app.muten` | persistent chrome wrapping every route; holds `slot` |
+| `slot` | `shell` / `part` | outlet: the active route in a `shell`, or the caller's children in a `part` (one per part) |
 | `guard` | a route | redirect on a store boolean: `guard auth.loggedIn else "/login"` |
 | `param` | page | a route param: `param id` |
-| `part` | `parts/*.muten` | a reusable, inlined fragment |
+| `part` | `parts/*.muten` | a reusable, inlined fragment; can hold one `slot` to wrap arbitrary content |
 | `use` | page / store | import host-JS functions: `use fmt from "~/lib/x.ts"` |
 | `from` | with `use` | the module path |
 

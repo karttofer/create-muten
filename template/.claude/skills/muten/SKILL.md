@@ -6,7 +6,7 @@ description: Read and write Muten — the AI-first frontend DSL this app is buil
 # Muten — complete language reference
 
 Muten compiles `.muten` files to vanilla JS + fine-grained signals (no virtual DOM). The `@muten/core`
-Vite plugin does the compiling. You write a small declarative DSL for the UI — **not** React/JSX/Vue/Svelte/HTML.
+runner (embedded esbuild) does the compiling. You write a small declarative DSL for the UI — **not** React/JSX/Vue/Svelte/HTML.
 Muten ships ZERO framework runtime; foreign code comes in only through explicit escapes (`use` for JS logic
 functions — §14, `Custom` for a vanilla-JS widget — §13). A page with no reactivity compiles to plain
 zero-runtime HTML; a reactive one ships ~1KB of signals.
@@ -45,12 +45,12 @@ Rule of thumb: **declarative first** (`state`/`when`/`each`/`where`), **escape l
 is in the wrong place, `muten check` says so immediately — the boundaries are *enforced*, so you don't have to memorize them.
 
 ## 1. What you CAN install / use
-This is a normal **Vite** project, so the whole Vite/npm ecosystem for **styling, build, and data** works:
+This is a muten project (with muten's native runner), so the whole npm ecosystem for **styling, build, and data** works:
 - **Tailwind CSS — YES.** Install it (`tailwindcss`, `postcss`, `autoprefixer`), add the config + the
   `@tailwind` directives to `src/styles.css`, and use utilities via `class("flex gap-4 rounded")`.
   `class()` emits raw class names, so any CSS framework (Tailwind, UnoCSS, Bootstrap CSS, your own CSS) works.
 - **Sass/SCSS** — supported out of the box if you scaffolded with SCSS (or add `sass`); use `src/styles.scss`.
-- **Any Vite plugin / PostCSS plugin** — add it to `vite.config.mjs` alongside `muten()`.
+- **Any custom Vite/PostCSS plugin (rare)** — drop an OPTIONAL `vite.config.mjs` and run `muten dev --vite` / `muten bundle --vite`; by default no config is needed.
 - **Data / utility npm packages** — usable inside `.store` logic, inside `Custom` host components, and via
   **`use` logic imports** (date libs, fetch wrappers, zod, etc.).
 - **JS logic via `use … from "./lib.ts"` — YES.** Import named functions and call them in any expression
@@ -77,11 +77,11 @@ This is a normal **Vite** project, so the whole Vite/npm ecosystem for **styling
   properties — it never competes with `class()`. Use it only for a value that changes; `class()` for everything static.
 
 ## 3. Limitations & known gaps (current — these are real, plan around them)
-- **The runnable build is `vite build` / `npm run dev`.** `muten build` is the zero-JS SSG export: it now
+- **The runnable builds are `muten dev` (local dev, surgical HMR) and `muten bundle` (production CSR); `muten build` is the zero-JS SSG.** `muten build` is the zero-JS SSG export: it now
   **inlines the theme + `src/styles.css`** and **pre-renders (SSR) your stores/`query` data**, so pages ship
   fully styled with real content. Its only gaps are inherent to a no-bundler static export: `use` functions
   aren't bundled (it **warns**), and store state doesn't persist across full-page navigations. For a styled
-  **stateful** app use Vite; reach for `muten build` for crawlable static/content pages.
+  **stateful** app use `muten bundle`; reach for `muten build` for crawlable static/content pages.
 - **Routing uses quoted string paths** (`"/path"`, History API). Params: `"/product/:id"` + `param id` (see §10).
 - **Forms** (`Form` auto-renders from an entity) render EVERY field — **no conditional fields** (gate the whole
   `Form` with a `when`, or split into per-step entities). Field types: `text`/`email`/`number`/`bool`(checkbox)/
@@ -94,7 +94,7 @@ This is a normal **Vite** project, so the whole Vite/npm ecosystem for **styling
   makes one for enum fields; elsewhere build a button group + `class(active when …)`). **`sort by`** takes a
   field name, OR a `text` **state** holding the field name for a user-chosen column (`sortDesc by sortCol`).
 - **`query x live`** needs the server to send a stable `id` per row, or keyed diffing rebuilds every row each push.
-- **`Custom` inputs are a snapshot at mount** (not reactive — §13). **Shell has no local state** (use a `.store`).
+- **`Custom` inputs are a snapshot at mount** (reactive only if `mount` returns an updater fn — §13). **Shell has no local state** (use a `.store`).
   **Pages are single-root** (one top node). **Flip a bool** with `x.toggle()`.
 
 ## 4. Files
@@ -106,7 +106,8 @@ src/components/<Name>.js          host-JS escape hatch, mounted via Custom
 src/<domain>.store               app-global state slice (domain = file name)
 theme.muten                      token scale (space/font/weight/leading/breakpoints)
 src/styles.css                   reset + look (or styles.scss)
-index.html / vite.config.mjs     wired to @muten/core; don't hand-edit the boot
+index.html                       loads /src/app.muten via @muten/core; don't hand-edit the boot
+muten.config                     build config in muten (theme adapter) — present ONLY with Tailwind/DaisyUI
 ```
 
 ## 5. Declarations
@@ -222,7 +223,7 @@ state   { prices = query prices live : list<Price> }
 sources { prices: { url: "ws://feed.example.com/prices", at: "data" } }
 # each prices.data as p { Text "{p.symbol}  {p.value}" }   — only changed rows touch the DOM
 ```
-Plain `WebSocket` under the hood, exposed as one keyword; it **auto-reconnects with backoff** if the socket drops and closes automatically when the page unmounts (a malformed frame is ignored, not fatal). To SEND (e.g. a chat message) the socket is receive-only — write through an action: a `create`/`post` to the backend, or a `use`'d function that POSTs; the server then pushes the updated list back over the socket. Client-side only (deploy via `vite build`). Use `refetch` for user-driven refresh, `live` for server-pushed real-time. (Polling via a timer was intentionally NOT added — it isn't reactive. For *huge* live lists you still virtualize + send server-side deltas, as in any framework.)
+Plain `WebSocket` under the hood, exposed as one keyword; it **auto-reconnects with backoff** if the socket drops and closes automatically when the page unmounts (a malformed frame is ignored, not fatal). To SEND (e.g. a chat message) the socket is receive-only — write through an action: a `create`/`post` to the backend, or a `use`'d function that POSTs; the server then pushes the updated list back over the socket. Client-side only (deploy via `muten bundle`). Use `refetch` for user-driven refresh, `live` for server-pushed real-time. (Polling via a timer was intentionally NOT added — it isn't reactive. For *huge* live lists you still virtualize + send server-side deltas, as in any framework.)
 
 **Escape hatch — explicit request** (when the API isn't RESTful): `post`/`put`/`delete` a `"client:/path"` (interpolated) with an optional `body`, in an action:
 ```
@@ -252,7 +253,7 @@ A bare string is the node's main prop. `{ }` = children. Style everything (layou
 | `Form` | auto-form from an entity draft | `Form bind(draft) submit(create) "Save"` |
 | `DataTable` | table over a list/query (`@` sigil; raw cells, no per-column format) | `DataTable @users columns(name, email)` |
 | `RowAction` | a button inside each table row | `RowAction "Delete" -> remove(row.id)` |
-| `slot` | outlet inside `shell` | `slot` |
+| `slot` | outlet inside `shell` or `part` | `slot` |
 | `Custom` | host-JS escape hatch | `Custom Chart inputs(data: sales) on(pick: select)` |
 
 Horizontal layout = a region with `class("flex flex-row")` (a `Stack` is flex-column by default; there is no
@@ -310,7 +311,7 @@ Consume the vars from `src/styles.css`: `.card { padding: var(--space-lg); font-
 apply with `class("card")`. **No CSS/reset goes in `theme.muten`** — the reset and the look live in `src/styles.css`.
 
 ### With a CSS framework (Tailwind / DaisyUI) — muten is AGNOSTIC
-`theme.muten` holds your theme VALUES; a **styling adapter** (data, in `vite.config` — the scaffolder wires it
+`theme.muten` holds your theme VALUES; a **styling adapter** (data, in `muten.config` — the scaffolder wires it
 per library) tells muten how to emit them for your library. The **muten engine knows no library**; you bring
 the styling, muten emits your theme into its format. When you scaffold with Tailwind/DaisyUI you get a theme
 skeleton seeded for you; plain css/scss gets an empty `theme { }` (muten emits plain `:root` vars). **Hyphenated
@@ -399,8 +400,8 @@ get    isOpen = menuOpen                 # derived/memoized value (read as ui.is
 action toggleMenu mutates menuOpen { menuOpen.toggle() }
 effect { /* runs whenever the store state it reads changes */ }
 ```
-Use it from any page/shell by name: `when ui.menuOpen { … }`, `Button "☰" -> ui.toggleMenu`. The Vite
-plugin auto-detects every `.store` file. `get` = memoized; `effect` = reactive side-effect (Angular-style).
+Use it from any page/shell by name: `when ui.menuOpen { … }`, `Button "☰" -> ui.toggleMenu`. The runner
+auto-detects every `.store` file. `get` = memoized; `effect` = reactive side-effect (Angular-style).
 **`effect { }` also works on a PAGE** — the home for an ON-MOUNT side effect (init a 3rd-party SDK, analytics,
 focus): it runs when the page mounts and re-runs on its reactive deps. (Body = mutations + `use`-fn calls.)
 **A page action can CALL a store action** (composition) — `action add(d: Item) mutates draft { cart.add(d)  draft.reset() }` does
@@ -508,8 +509,10 @@ Custom Chart inputs(data: @sales) on(pointSelect: select)
 - Define it as a plain `function mount(...)`, **not** `export function mount` — the file is inlined, so an
   `export` is a syntax error and leaves the screen blank.
 - **An input value needs `@` to pass STATE: `inputs(data: @sales)` passes the array; bare `inputs(data: sales)`
-  passes the literal string "sales".** The value is a **snapshot** at mount time (not reactive) — to feed a
-  query's rows, make a `get` first: `get rows = orders.data` then `inputs(data: @rows)`.
+  passes the literal string "sales".** Inputs are a **snapshot at mount** by default. For a Custom that must
+  track LIVE data, **return an updater function** from `mount` — `return (inputs) => { …redraw… }` — and muten
+  re-runs it whenever a bound `@` state it reads changes (a `mount` that returns nothing stays a snapshot,
+  backward compatible). To pass a query's rows, make a `get` first: `get rows = orders.data` then `inputs(data: @rows)`.
 
 ## 14. `use` — JS logic functions
 One escape that pulls in real JS/npm behind a typed, **synchronous** border. `use` named exports from a
@@ -551,9 +554,9 @@ date-picker), drop to a vanilla-JS `Custom` (§13) — there is no framework-com
 - `class()` is the ONLY way to style — layout AND look (Tailwind utilities, or your CSS backed by `theme.muten` vars).
 - `Image` without `alt` fails validation (`alt("")` for decorative).
 - Actions may only touch their declared `mutates`.
-- **The runnable build is `vite build` / `npm run dev`**; `muten build` is the zero-JS SSG (styled + SSR'd, but no `use` bundling / no cross-page state — §3).
+- **The runnable builds are `muten dev` (local dev, surgical HMR) and `muten bundle` (production CSR); `muten build` is the zero-JS SSG** (styled + SSR'd, but no `use` bundling / no cross-page state — §3).
 - **Paths are quoted strings** (`-> "/x"`, `routes { "/x" -> p }`); a hyphenated reactive class must be quoted (`class("is-open" when x)`).
-- **`Custom` inputs need `@` to pass state** (`inputs(data: @items)`) and are a snapshot, not reactive (§13).
+- **`Custom` inputs need `@` to pass state** (`inputs(data: @items)`); a snapshot at mount, reactive only if `mount` returns an updater fn (§13).
 - Want a library? CSS → `class()`. JS function → `use` (§14, also callable in actions). A widget → `Custom` (§13). There is no framework-component escape.
 
 ## 16. Minimal full app

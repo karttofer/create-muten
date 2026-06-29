@@ -37,7 +37,7 @@ my-app/
 ├─ theme.muten             # the project's design values (space/font/colors/…)
 ├─ src/styles.css          # the look (Muten ships structure; the skin is yours)
 ├─ index.html              # loads /src/app.muten — don't hand-edit the boot
-└─ vite.config.mjs         # the Muten Vite plugin
+└─ muten.config            # the build, in muten (theme adapter) — only with Tailwind/DaisyUI
 ```
 
 `src/app.muten` is the single source of truth — `index.html` loads it, the plugin boots it. **Never create a
@@ -46,16 +46,16 @@ my-app/
 ## The dev loop
 
 ```sh
-npm run dev      # Vite dev server + HMR + client-side routing
+npm run dev      # `muten dev` — esbuild dev server + surgical HMR + client-side routing
 npm run lint     # `muten check` — the deterministic oracle (validate every page, no browser)
-npm run build    # production build
+npm run build    # `muten bundle` — production CSR build
 ```
 
-- **Author** in `.muten`. The Vite plugin compiles on the fly with HMR.
+- **Author** in `.muten`. muten's runner compiles on the fly; a text/class edit re-renders just that node (surgical HMR), bigger changes reload.
 - **Check** with `muten check` (alias `lint`): structured diagnostics (code + location + "did you mean…?") in
   milliseconds, no browser. This is the AI-first feedback loop — and the VS Code extension surfaces the same
   diagnostics inline as you type, with one-click quick-fixes.
-- **Build** with `vite build` (a SPA bundle) or `muten build` (static SSG with SEO). See [Deployment](deployment.md).
+- **Build** with `muten bundle` (a SPA/CSR bundle) or `muten build` (static SSG with SEO). See [Deployment](deployment.md).
 
 ## Your first edit
 

@@ -80,7 +80,7 @@ DataTable @users columns(name, email, role) {
 
 | Primitive | Element | Notes |
 |---|---|---|
-| `slot` | — | the outlet inside a `shell` where the active page mounts |
+| `slot` | — | the outlet for caller content: the active page inside a `shell`, or the caller's children inside a `part` |
 | `Custom` | host `<div>` | mount a vanilla-JS widget: `Custom Chart inputs(data: @sales) on(pick: select)` — see [Escapes](../escapes.md) |
 
 ## Control flow (lowercase keywords, not primitives)

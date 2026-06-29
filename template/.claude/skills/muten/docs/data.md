@@ -2,7 +2,7 @@
 
 Muten's data layer is **HTTP, declared**. A `query` state is backed by a `source`; one `api` block sets the
 backend once; CRUD writes hit REST endpoints and update the list reactively; `refetch` re-runs a query with
-params; and `query x live` subscribes to a WebSocket. It's a normal Vite project, so any backend works.
+params; and `query x live` subscribes to a WebSocket. It's a muten project, so any backend works.
 
 ## Queries & sources
 

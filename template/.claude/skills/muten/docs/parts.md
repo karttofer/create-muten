@@ -43,6 +43,50 @@ part Stat(label: text, value: number) {
 Stat(label: "Active users", value: activeCount)
 ```
 
+## `slot` — wrap arbitrary content
+
+A part can hold a single `slot`: the marker where the **caller's children inline**. This is how you write a
+reusable *frame* — a card, panel, modal, section — that wraps content it doesn't know in advance:
+
+```muten
+# src/parts/panel.muten
+part Panel(title: text) {
+  Stack class("rounded-xl border border-line bg-panel") {
+    Span "{$title}" class("font-semibold px-4 h-11 flex-row items-center border-b border-line")
+    Stack class("p-4") { slot }          # ← the caller's children land here
+  }
+}
+```
+```muten
+# the page provides the body; it can be anything:
+Panel(title: "Revenue") {
+  Stat(label: "MRR", value: mrr)
+  BarChart(@points)
+}
+```
+
+This is the **container / presentational** split: the page is the *container* (it owns the state, actions and
+data); the part is *presentational* (pure UI). The slot content is authored in the page, so it reads the **page's**
+scope — its state, its `each` item, its actions:
+
+```muten
+each users as u {
+  Row { Avatar(src: u.pic)  Span "{u.name}"  Button "Ban" -> ban(u.id) }   # u, ban resolve in the page
+}
+```
+
+Rules (kept deliberately small):
+- **One `slot` per part** (two is a compile error). A single outlet covers cards/panels/modals/sections.
+- **No children passed → the slot renders nothing** (a frame can be used empty).
+- The slot is **unscoped**: the part doesn't expose its params to the content, and the content doesn't call into
+  the part — communication goes through the container (its state/actions), which both sides already see. For
+  per-item context use `each` (above); for a widget that needs its own internal scope (a canvas, a map) use a
+  [`Custom`](escapes.md). muten has no scoped slots / render-props on purpose — that's the runtime-component model
+  it avoids.
+
+Like everything else a part does, the slot **inlines at build**: `Panel { … }` becomes the wrapper tree with the
+children spliced in, zero runtime, identical bundle.
+
 ## When to use a part vs a `Custom`
 
 | Need | Reach for |

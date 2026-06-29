@@ -162,6 +162,12 @@ Stack class("…") { Icon $icon  Text "{$label}" } }`, then `NavItem(icon: "luci
 part inlines with the literal, so the icon stays static + tree-shaken. Use this to DRY a navbar/toolbar (one
 template, N calls) instead of repeating the row — fewer tokens, same bundle.
 
+**Container / presentational.** A part is the *presentational* half: pure UI, no state of its own. The page is the
+*container*: it owns state, actions and data. A part can hold one `slot` (the caller's children inline there), so a
+reusable *frame* — card, panel, modal, the editor-split shell every showcase shares — wraps content it doesn't know
+in advance, and that content reads the page's scope. See [parts.md](docs/parts.md). No scoped slots / render-props:
+slot↔page communication goes through the container (its state/actions), which both sides already see.
+
 For a one-off brand mark / custom SVG that no set has, drop to a `Custom` component (§13 in SKILL.md). Whole image
 files (incl. `.svg`) go through `Image "…"`.
 

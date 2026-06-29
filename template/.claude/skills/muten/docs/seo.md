@@ -79,7 +79,7 @@ SEO lives in the **static** build path:
 | Command | Output | SEO |
 |---|---|---|
 | `muten build` | static HTML per route (SSG, zero-JS where possible) | full: pre-rendered HTML + sitemap/robots/canonical/JSON-LD |
-| `vite build` | a single-page app bundle (SPA) | the SPA updates `<head>` on navigation, but crawlers prefer the SSG output |
+| `muten bundle` | a single-page app bundle (SPA) | the SPA updates `<head>` on navigation, but crawlers prefer the SSG output |
 
 Use `muten build` for content/marketing/catalog sites where crawlability matters; see
 [Deployment](deployment.md) for the trade-off and the SPA fallback.

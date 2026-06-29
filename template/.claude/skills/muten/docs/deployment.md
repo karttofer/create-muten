@@ -2,7 +2,7 @@
 
 Muten has **two build modes**. Pick by what the app is.
 
-| | `vite build` | `muten build` |
+| | `muten bundle` | `muten build` |
 |---|---|---|
 | Output | a single-page app (one `index.html` + JS) | static HTML per route (SSG) |
 | Navigation | client-side router (no reload) | each route is its own page (full load) |
@@ -13,16 +13,16 @@ Muten has **two build modes**. Pick by what the app is.
 | SEO | `<head>` updated on navigation | full: pre-rendered HTML + sitemap/robots/canonical/JSON-LD |
 | Best for | apps (dashboards, SaaS, anything stateful/styled) | content/marketing/catalog where crawlability matters |
 
-**Most real apps use `vite build`** — it bundles everything (your CSS, `use` functions, stores) into a stateful
+**Most real apps use `muten bundle`** — it bundles everything (your CSS, `use` functions, stores) into a stateful
 SPA. `muten build` is the zero-JS SSG path for crawlable static content: it **inlines the theme + project
 stylesheet** and **pre-renders (SSR) your stores/`query` data** into the HTML, so each page ships fully styled
 with real content. The one thing it can't inline is a `use` function (external TS — no bundler in the SSG); it
-**warns** and you switch to `vite build`. Store state also doesn't persist across full-page navigations (each
-static page loads fresh) — again `vite build` for a stateful multi-page app. See [SEO](seo.md) for the metadata.
+**warns** and you switch to `muten bundle`. Store state also doesn't persist across full-page navigations (each
+static page loads fresh) — again `muten bundle` for a stateful multi-page app. See [SEO](seo.md) for the metadata.
 
 ## The SPA fallback
 
-A single-page app (`vite build`) routes on the client, so the host must **serve `index.html` for any path** —
+A single-page app (`muten bundle`) routes on the client, so the host must **serve `index.html` for any path** —
 otherwise a deep link (`/products`) 404s before the router runs. Every static host has a way to do this:
 
 ```json
@@ -46,15 +46,15 @@ runtime to configure.
 
 ## Desktop & mobile — Tauri
 
-Scaffold with `--tauri` (or add Tauri later) to wrap the **same** `vite build` output as a native app. Tauri
-points its `frontendDist` at `dist/` and its `devUrl` at the Vite dev server; the `.muten` frontend runs in the
+Scaffold with `--tauri` (or add Tauri later) to wrap the **same** `muten bundle` output as a native app. Tauri
+points its `frontendDist` at `dist/` and its `devUrl` at the muten dev server (`muten dev`); the `.muten` frontend runs in the
 OS webview with no bundled browser. The SPA build is the right mode for a webview (load `index.html` once,
 route in memory). A backend command (Rust `invoke`) is reached from Muten via a [`use`](escapes.md) function or
 a `Custom`.
 
 ## Package manager / runtime
 
-The app is a normal Vite project, so any package manager works (`--pm npm|pnpm|yarn|bun`). Running the Vite
+The app is a normal muten project, so any package manager works (`--pm npm|pnpm|yarn|bun`). Running the muten
 build under **Bun** is faster to start than Node; the bundler and plugins are unchanged.
 
 ## See also
