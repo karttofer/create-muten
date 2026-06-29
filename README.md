@@ -180,5 +180,5 @@ macOS and Linux**: npm generates the right launcher on each OS.
 ## Links
 
 - Engine - [`@muten/core`](https://www.npmjs.com/package/@muten/core)
-- Source - [github.com/karttofer/create-muten](https://github.com/karttofer/create-muten)
+- Source - [github.com/mutenorg/create-muten](https://github.com/mutenorg/create-muten)
 - License - MIT

@@ -1,10 +1,10 @@
 {
   "name": "create-muten",
-  "version": "0.0.31",
+  "version": "0.0.32",
   "description": "Scaffold a new Muten app.",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/karttofer/create-muten.git"
+    "url": "git+https://github.com/mutenorg/create-muten.git"
   },
   "publishConfig": {
     "access": "public"

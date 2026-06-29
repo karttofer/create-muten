@@ -1,6 +1,6 @@
 # Publishing `@karttofer/create-muten`
 
-Published to **GitHub Packages**, the same way as [`@karttofer/muten`](https://github.com/karttofer/muten).
+Published to **GitHub Packages**, the same way as [`@karttofer/muten`](https://github.com/mutenorg/muten).
 
 ## One-time setup
 
