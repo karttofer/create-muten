@@ -17,6 +17,7 @@ accessibility with [`aria()`](modifiers.md).
 | `Section` | `<section>` | a thematic page band; usually carries its own heading (`Title … h2`) |
 | `Article` | `<article>` | self-contained content (card, post, comment, notification) that stands alone |
 | `List` | `<ul>` / `<ol>` | semantic list; `List ordered` → `<ol>`. Each **direct child renders as `<li>`** - an `each` inside is the common case. Prefer it over a `Stack` for any real list (a11y) |
+| `Details` | `<details>`+`<summary>` | native accordion: the positional string is the summary, the children are the content. `open` starts it expanded. Zero state/JS; reach for state + `when` only for a controlled or animated panel |
 
 ```muten
 Page class("flex flex-col gap-6") {

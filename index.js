@@ -28,7 +28,8 @@ h1 { font-size: 32px; font-weight: 700; letter-spacing: -.02em; }
 /* Every muten container is a column by default (override to row/grid with class("…")). Without this the
    landmark primitives (Nav/Sidebar/Header/Footer) inherit block flow and render their children horizontally —
    the #1 "my sidebar is sideways" surprise. Button/Link default to an inline row (icon + label, centered). */
-.mu-stack, .mu-page, .mu-header, .mu-nav, .mu-sidebar, .mu-footer { display: flex; flex-direction: column; min-height: 0; }
+.mu-stack, .mu-page, .mu-header, .mu-nav, .mu-sidebar, .mu-footer, .mu-section, .mu-article, .mu-list { display: flex; flex-direction: column; min-height: 0; }
+.mu-list { margin: 0; padding: 0; list-style: none; }
 .mu-button, .mu-link { display: inline-flex; align-items: center; gap: 6px; }
 /* the shell's slot wrapper fills the space left by a sidebar/header (else a flex-row shell collapses the page). */
 .muten-outlet { flex: 1 1 auto; min-width: 0; }
@@ -52,7 +53,8 @@ const tailwindStyles = (daisyui) => `@import "tailwindcss";${daisyui ? '\n@plugi
   /* DaisyUI puts the theme on <html>, but nothing fills the body — without this it's transparent and dark
      cards float on black. bg-base-200 (page) sits a shade under the card's bg-base-100. */
   body { @apply bg-base-200 text-base-content; }` : ''}
-  .mu-stack, .mu-page, .mu-header, .mu-nav, .mu-sidebar, .mu-footer { display: flex; flex-direction: column; min-height: 0; }
+  .mu-stack, .mu-page, .mu-header, .mu-nav, .mu-sidebar, .mu-footer, .mu-section, .mu-article, .mu-list { display: flex; flex-direction: column; min-height: 0; }
+  .mu-list { margin: 0; padding: 0; list-style: none; }
   .mu-button, .mu-link { display: inline-flex; align-items: center; gap: 6px; }
   .muten-outlet { flex: 1 1 auto; min-width: 0; }
   /* a11y skip link the runtime injects — visually hidden until keyboard-focused. */
