@@ -76,14 +76,16 @@ Page class("pad-lg gap-lg") {
   SearchField bind(q) "Search…" class("mu-field")
   Form bind(draft) submit(create) "Add customer"          # auto-renders one input per field; skin .mu-field (see design.md)
 
-  each customers.items as c where c.name contains q or c.company contains q {
-    Stack class("row between center pad-lg card") {
-      Stack class("gap-xs") { Text "{c.name}" class("semibold")  Text "{c.company}" class("muted t-sm") }
-      Stack class("row center gap-sm") {
-        when c.status == "active" { Text "active" class("badge badge-active") }
-        when c.status == "lead"   { Text "lead"   class("badge badge-lead") }
-        when c.status == "lead"   { Button "Activate" -> customers.setStatus(c.id, "active") class("btn") }
-        Button "Delete" -> customers.remove(c.id) class("btn-danger")
+  List class("flex flex-col gap-3") {                       # a real <ul>; each row is a self-contained <li><article>
+    each customers.items as c where c.name contains q or c.company contains q {
+      Article class("row between center pad-lg card") {
+        Stack class("gap-xs") { Text "{c.name}" class("semibold")  Text "{c.company}" class("muted t-sm") }
+        Stack class("row center gap-sm") {
+          when c.status == "active" { Text "active" class("badge badge-active") }
+          when c.status == "lead"   { Text "lead"   class("badge badge-lead") }
+          when c.status == "lead"   { Button "Activate" -> customers.setStatus(c.id, "active") class("btn") }
+          Button "Delete" -> customers.remove(c.id) class("btn-danger")
+        }
       }
     }
   }

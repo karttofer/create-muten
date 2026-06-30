@@ -25,7 +25,7 @@ when count > 0 and not done { … }
 Text "{price * qty}"
 Text "{count > 0 ? "in stock" : "sold out"}"
 class("vip" when user.role == "admin")
-when tags contains "sale" { Badge "Sale" }
+when tags contains "sale" { Span "Sale" class("badge") }
 ```
 
 `contains` is **list membership** for scalar lists (`favs contains id`) and **case-insensitive substring** for

@@ -14,11 +14,19 @@ accessibility with [`aria()`](modifiers.md).
 | `Nav` | `<nav>` | landmark; `Nav "Main" …` sets its `aria-label` |
 | `Sidebar` | `<aside>` | complementary landmark |
 | `Footer` | `<footer>` | landmark |
+| `Section` | `<section>` | a thematic page band; usually carries its own heading (`Title … h2`) |
+| `Article` | `<article>` | self-contained content (card, post, comment, notification) that stands alone |
+| `List` | `<ul>` / `<ol>` | semantic list; `List ordered` → `<ol>`. Each **direct child renders as `<li>`** - an `each` inside is the common case. Prefer it over a `Stack` for any real list (a11y) |
 
 ```muten
 Page class("flex flex-col gap-6") {
   Header class("flex flex-row justify-between") { … }
-  Stack class("grid grid-cols-3 gap-4") { … }
+  Section class("flex flex-col gap-4") {
+    Title "Latest" h2
+    List class("flex flex-col gap-2") {
+      each posts as p { Article class("p-4 card") { Title "{p.title}" h3  Text "{p.excerpt}" } }
+    }
+  }
   Footer { … }
 }
 ```

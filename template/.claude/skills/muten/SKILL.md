@@ -88,7 +88,7 @@ This is a muten project (with muten's native runner), so the whole npm ecosystem
   `enum`(select)/`date`/`password`/`textarea` - anything else (`url`/`tel`/file) is `unknown-field-type` (drop to
   `Custom`). An **enum field can't be `required`**.
   `SearchField` is the single bound text input.
-- **`match` for enums** - `match status { active -> Text "Active"  lead -> Badge … }` renders the matching arm
+- **`match` for enums** - `match status { active -> Text "Active"  lead -> Span "Lead" class("badge") }` renders the matching arm
   (sugar for N `when status == "x"`). **`DataTable`** shows raw cell
   text (no per-column formatting - use `each` + `Stack` for formatted/badge cells). **No standalone `Select`** (Form
   makes one for enum fields; elsewhere build a button group + `class(active when …)`). **`sort by`** takes a
@@ -241,6 +241,8 @@ A bare string is the node's main prop. `{ }` = children. Style everything (layou
 | `Stack` | vertical stack (flex column) | `Stack class("gap-4") { … }` |
 | `Page` | page root `<main>` (one per route) | `Page class("p-6") { … }` |
 | `Header`/`Nav`/`Sidebar`/`Footer` | landmarks | `Header class("flex flex-row justify-between items-center") { … }` |
+| `Section`/`Article` | sectioning: a page band / self-contained content (`<section>`/`<article>`) | `Section class("py-16") { Title "Features" h2  … }` |
+| `List` | semantic list `<ul>` (`List ordered` → `<ol>`); each direct child renders as `<li>` | `List class("flex flex-col gap-2") { each todos as t { Span "{t.title}" } }` |
 | `Text` | paragraph, interpolates | `Text "Hi, {user.name}"` |
 | `Title` | heading; level keyword | `Title "Dashboard" h2` |
 | `Span` | inline text | `Span "{cart.total}"` |
@@ -258,6 +260,12 @@ A bare string is the node's main prop. `{ }` = children. Style everything (layou
 
 Horizontal layout = a region with `class("flex flex-row")` (a `Stack` is flex-column by default; there is no
 `Row` primitive). Clickable card = `Button { … }` or `Link "" -> "/x" { … }` with children instead of a label.
+
+**Reach for the semantic container, not always `Stack`** (the output is then accessible + crawlable by default):
+a real list (menu, feed, results, steps) → **`List`** (an `each` inside it becomes `<li>`; screen readers announce
+"list, N items"); a distinct page band with its own heading → **`Section`**; a repeated/standalone content item
+(card, post, comment, notification) → **`Article`**. `Stack` (`<div>`) is the generic fallback for layout-only
+grouping. Bullets are off under `flex`/`grid`; add `class("list-disc list-inside")` to keep them.
 
 Modifiers (after a primitive): `class("css")` · `bind(state)` · `submit(action)` ·
 `where(clauses)` · `columns(a, b)` · `alt("…")` · `inputs(k: v)` · `on(event: action)` · `aria(k: expr)`.

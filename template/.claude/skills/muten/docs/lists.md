@@ -20,6 +20,22 @@ For a `query` state, iterate `.data`:
 each users.data as u { Text "{u.name}" }
 ```
 
+### Semantic lists - `List`
+
+`each` on its own renders items into whatever holds it (a `<div>` when that's a `Stack`). For a **real list**
+(menu, feed, search results, steps), wrap the `each` in a **`List`**: it compiles to a `<ul>` and each row to an
+`<li>`, so screen readers announce "list, N items" and the markup is correct.
+
+```muten
+List class("flex flex-col gap-2") {
+  each todos as t { Span "{t.title}" }      # -> <ul><li><span>…</span></li> …
+}
+```
+
+`List ordered` emits `<ol>`. Static children work too (`List { Span "a"  Span "b" }` → two `<li>`). Bullets are
+off under `flex`/`grid`; add `class("list-disc list-inside")` to keep them. Use a plain `Stack` only when the
+group is layout, not a list.
+
 ### Filtering - `where`
 
 Render only the matching items (the item's fields are bare inside `where`):
