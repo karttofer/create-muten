@@ -83,6 +83,11 @@ to **match Tailwind's scale**, so its emitted CSS vars line up with the utilitie
 plain CSS/SCSS keeps the default scale and you read the same vars from `src/styles.css`. **DaisyUI** adds
 component classes (`btn`, `card`, `modal`) usable in `class("…")` - pure classes; behavior is Muten state + `on()`.
 
+**Component libraries** come as Muten plugins (npm packages with a registry). After scaffolding with `--tailwind`,
+add one - e.g. `npm i @muten/shadcn`, then `muten add card dialog …` to copy the source into `src/parts/`, or
+`plugins { shadcn {} }` in `muten.config` to import its parts as-is: the full [shadcn/ui](https://ui.shadcn.com)
+set ported to Muten. See [`@muten/shadcn`](https://www.npmjs.com/package/@muten/shadcn).
+
 If you accept the last prompt it runs `<pm> install` followed by `<pm> run dev`, your app is live in a
 single step. Choosing SCSS also adds `sass` and switches the stylesheet to `.scss` automatically.
 

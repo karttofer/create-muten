@@ -28,6 +28,7 @@ compiles them to vanilla JS + fine-grained signals (no virtual DOM, no framework
 - [Stores](stores.md) - app-global state, `get`, `effect`, page→store composition.
 - [Parts](parts.md) - reusable fragments, inlined at build, object + action params.
 - [Escapes](escapes.md) - `Custom` (vanilla-JS widgets) and `use` (JS logic functions); when to reach for each, and when NOT to.
+- [Plugins & component libraries](plugins.md) - `muten add` (eject) vs `plugins {}` (import); the registry seam; `@muten/shadcn`.
 
 ## Reference
 - [Primitives](reference/primitives.md) - every primitive, its props, children, and output tag.

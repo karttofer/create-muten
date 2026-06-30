@@ -9,6 +9,7 @@ muten bundle [dir] [--vite]              # production CSR build (per-route chunk
 muten build  [dir] [--url=https://site.com]   # static SSG → crawlable HTML per route
 muten check  [dir] [--json] [--watch]    # the oracle; --watch re-lints the app on every change
 muten map    [dir] [--json]
+muten add    <component...>              # copy components from an installed registry plugin into src/parts/
 ```
 
 `[dir]` defaults to the current directory.
@@ -78,6 +79,20 @@ reads first to understand the whole app.
 muten map                   # writes app.map.json
 muten map --json            # prints it to stdout
 ```
+
+## `muten add`
+
+Copies a component's source from an **installed registry plugin** (e.g. `@muten/shadcn`) into your `src/parts/` -
+the "own the source" path. It scans every dependency that has a `registry.json`, finds each named component,
+copies its `.muten` (and, for a Custom-backed component, its host `.js` into `src/components/`), and pulls in
+dependencies. The alternative is to import a plugin's parts as-is via `plugins {}` in `muten.config`.
+
+```sh
+muten add card badge dialog      # parts -> src/parts/
+muten add slider calendar        # Custom widgets -> src/parts/ + src/components/
+```
+
+See [Plugins & component libraries](../plugins.md).
 
 ## See also
 - [Deployment](../deployment.md) - `muten bundle` vs `muten build`.

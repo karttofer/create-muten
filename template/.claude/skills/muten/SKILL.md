@@ -49,6 +49,10 @@ This is a muten project (with muten's native runner), so the whole npm ecosystem
 - **Tailwind CSS - YES.** Install it (`tailwindcss`, `postcss`, `autoprefixer`), add the config + the
   `@tailwind` directives to `src/styles.css`, and use utilities via `class("flex gap-4 rounded")`.
   `class()` emits raw class names, so any CSS framework (Tailwind, UnoCSS, Bootstrap CSS, your own CSS) works.
+- **Component libraries via muten plugins - YES.** The core ships NO components; plugins do. Install a registry
+  package (e.g. `npm i @muten/shadcn`), then either `muten add <component>` to copy its source into `src/parts/`
+  (eject + own it, the shadcn way) OR declare `plugins { shadcn {} }` in `muten.config` to use its parts as-is.
+  Custom-backed widgets (sliders, calendars, charts) are `muten add`-only. See [`docs/plugins.md`](docs/plugins.md).
 - **Sass/SCSS** - supported out of the box if you scaffolded with SCSS (or add `sass`); use `src/styles.scss`.
 - **Any custom Vite/PostCSS plugin (rare)** - drop an OPTIONAL `vite.config.mjs` and run `muten dev --vite` / `muten bundle --vite`; by default no config is needed.
 - **Data / utility npm packages** - usable inside `.store` logic, inside `Custom` host components, and via
