@@ -32,7 +32,12 @@ h1 { font-size: 32px; font-weight: 700; letter-spacing: -.02em; }
 .mu-list { margin: 0; padding: 0; list-style: none; }
 .mu-button, .mu-link { display: inline-flex; align-items: center; gap: 6px; }
 /* the shell's slot wrapper fills the space left by a sidebar/header (else a flex-row shell collapses the page). */
-.muten-outlet { flex: 1 1 auto; min-width: 0; }
+.muten-outlet { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; }
+  .muten-outlet > * { flex: 1 0 auto; min-height: 0; }
+/* sticky footer, automatic: the shell fills the viewport and its content grows, so a short page still pushes
+   Footer to the bottom — no min-h-screen/grow needed on the shell root. */
+.mu-shell { display: flex; flex-direction: column; min-height: 100vh; }
+  .mu-shell > * { flex: 1 0 auto; min-height: 0; }
 img { max-width: 100%; display: block; }
 a { color: inherit; text-decoration: none; }
 /* a11y: skip-link (muten emits it in the shell) — off-screen until keyboard-focused */
@@ -56,7 +61,11 @@ const tailwindStyles = (daisyui) => `@import "tailwindcss";${daisyui ? '\n@plugi
   .mu-stack, .mu-page, .mu-header, .mu-nav, .mu-sidebar, .mu-footer, .mu-section, .mu-article, .mu-list { display: flex; flex-direction: column; min-height: 0; }
   .mu-list { margin: 0; padding: 0; list-style: none; }
   .mu-button, .mu-link { display: inline-flex; align-items: center; gap: 6px; }
-  .muten-outlet { flex: 1 1 auto; min-width: 0; }
+  .muten-outlet { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; }
+  .muten-outlet > * { flex: 1 0 auto; min-height: 0; }
+  /* sticky footer, automatic: shell fills the viewport, its content grows, short pages still pin Footer down. */
+  .mu-shell { display: flex; flex-direction: column; min-height: 100vh; }
+  .mu-shell > * { flex: 1 0 auto; min-height: 0; }
   /* a11y skip link the runtime injects — visually hidden until keyboard-focused. */
   .mu-skip-link { position: absolute; left: -9999px; top: 8px; padding: 8px 16px; border-radius: 6px; z-index: 1000; }
   .mu-skip-link:focus { left: 8px; }
